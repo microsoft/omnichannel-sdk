@@ -2,10 +2,10 @@ name: Release CI
 
 on:
   push:
-    branches: [ main ]
-  create:
+    branches:
+      - main
     tags:
-      - v*
+      - 'v*'
 
 env:
   CACHE_CONTROL_HEADER: public, max-age=86400, s-maxage=259200, must-revalidate
