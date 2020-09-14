@@ -1,0 +1,99 @@
+name: Release CI
+
+on:
+  push:
+    branches: [ main ]
+  create:
+    tags:
+      - v*
+
+env:
+  CACHE_CONTROL_HEADER: public, max-age=86400, s-maxage=259200, must-revalidate
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install az
+        run: |
+          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+          az
+
+      - name: Checking out for ${{ github.ref }}
+        uses: actions/checkout@v2
+
+      - name: Use Node.js
+        uses: actions/setup-node@v1.4.3
+        with:
+          node-version: 12.X
+
+      - name: Update package version
+        run: npx version-from-git --no-git-tag-version
+        if: ${{ startsWith(github.ref, 'refs/heads/') }}
+
+      - name: Read package.json
+        id: read-package-json
+        run: |
+          echo "::set-output name=name::$(cat package.json | jq -r '.name')"
+          echo "::set-output name=version::$(cat package.json | jq -r '.version')"
+
+      - name: Install packages
+        run: npm install
+
+      - name: Build CDN & NPM packages
+        run: |
+          npm run build:dev
+          npm run build:prod
+
+      - name: Prepare CDN packages
+        run: |
+          mkdir ${{ steps.read-package-json.outputs.version }}
+          cp dist/SDK.js ${{ steps.read-package-json.outputs.version }}
+          cp dist/SDK.min.js ${{ steps.read-package-json.outputs.version }}
+
+      - name: Publish CDN package to versioned blob (dev)
+        run: |
+          az storage blob upload-batch --connection-string "${{ secrets.BLOBCONNECTIONSTRINGDEV }}" --source "${{ steps.read-package-json.outputs.version }}" --destination "prerelease/${{ steps.read-package-json.outputs.version }}" --content-cache-control "${{ env.CACHE_CONTROL_HEADER }}"
+
+      - name: Publish CDN package to latest blob (dev)
+        run: |
+          az storage blob upload-batch --connection-string "${{ secrets.BLOBCONNECTIONSTRINGDEV }}" --source "${{ steps.read-package-json.outputs.version }}" --destination "prerelease/latest" --content-cache-control "${{ env.CACHE_CONTROL_HEADER }}"
+
+      - name: Publish CDN package to versioned blob (prod)
+        run: |
+          az storage blob upload-batch --connection-string "${{ secrets.BLOBCONNECTIONSTRINGPROD }}" --source "${{ steps.read-package-json.outputs.version }}" --destination "release/${{ steps.read-package-json.outputs.version }}" --content-cache-control "${{ env.CACHE_CONTROL_HEADER }}"
+
+      - name: Publish CDN package to latest blob (prod)
+        run: |
+          az storage blob upload-batch --connection-string "${{ secrets.BLOBCONNECTIONSTRINGPROD }}" --source "${{ steps.read-package-json.outputs.version }}" --destination "release/latest" --content-cache-control "${{ env.CACHE_CONTROL_HEADER }}"
+
+      - name: Npm packaging
+        run: npm pack
+
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v2.1.4
+        with:
+          name: npm-tarball
+          path: '*.tgz'
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    if: ${{ startsWith(github.ref, 'refs/heads/') || startsWith(github.ref, 'refs/tags/') }}
+
+    steps:
+      - uses: actions/download-artifact@v2.0.5
+        with:
+          name: npm-tarball
+
+      - name: Read package.json
+        id: read-package-json
+        run: |
+          echo "::set-output name=name::$(tar xOf *.tgz package/package.json | jq -r '.name')"
+          echo "::set-output name=version::$(tar xOf *.tgz package/package.json | jq -r '.version')"
+          echo "::set-output name=tarball::$(ls *.tgz)"
+          echo "::set-output name=date::$(date +%Y-%m-%d)"
+
+      - name: Run npm publish ${{ steps.read-package-json.outputs.name }}@${{ steps.read-package-json.outputs.version }}
+        run: "echo ${{ steps.read-package-json.outputs.name }}@${{ steps.read-package-json.outputs.version }}"
