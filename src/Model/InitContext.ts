@@ -7,4 +7,5 @@ export default class InitContext {
   public longitude?: string;
   public latitude?: string;
   public preChatResponse?: object;
+  public chatId?: string;
 }
