@@ -23,6 +23,7 @@ import IOCSDKLogData from "../src/Model/IOCSDKLogData";
 import ILogger from "../src/Model/ILogger";
 import OCSDKLogger from "../src/Common/OCSDKLogger";
 import IGetSurveyInviteLinkOptionalParams from "../src/Interfaces/IGetSurveyInviteLinkOptionalParams";
+import IValidateAuthChatRecordOptionalParams from "../src/Interfaces/IValidateAuthChatRecordOptionalParams";
 
 describe("SDK unit tests", () => {
 
@@ -478,6 +479,55 @@ describe("SDK unit tests", () => {
             spyOn(ocsdkLogger, "log").and.callFake(() => { });
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
             const result = sdk.makeSecondaryChannelEventRequest(requestId, requestBody, secondaryChannelEventOpt as ISecondaryChannelEventOptionalParams);
+            result.then(() => {}, () => {
+                expect(ocsdkLogger.log).toHaveBeenCalled();
+                done();
+            });
+        });
+    });
+
+    describe("Test validateAuthChatRecord method", () => {
+
+        const validateAuthChatRecordOptionalParams = {
+            authenticatedUserToken: "asdas",
+            chatId: "chatId"
+        };
+
+        it("Should return promise when auth chat exists", (done) => {
+            const dataMockValid = { data: { authChatExist: true }, headers: {"transaction-id": "tid"} };
+            const axiosInstMockValid = jasmine.createSpy("axiosInstance").and.returnValue(dataMockValid);
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockValid);
+            spyOn(ocsdkLogger, "log").and.callFake(() => { });
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
+            const result = sdk.validateAuthChatRecord(requestId, validateAuthChatRecordOptionalParams as IValidateAuthChatRecordOptionalParams);
+            result.then(() => {
+                expect(axiosInstMockValid).toHaveBeenCalled();
+                done();
+            }).catch(() => {
+                throw Error("Promise should resolve");
+            });
+        });
+
+        it("Should return promise reject when auth chat does not exist", (done) => {
+            const dataMockInvalid = { data: { authChatExist: false }, headers: {"transaction-id": "tid"} };
+            const axiosInstMockInvalid = jasmine.createSpy("axiosInstance").and.returnValue(dataMockInvalid);
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockInvalid);
+            spyOn(ocsdkLogger, "log").and.callFake(() => { });
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+            const result = sdk.validateAuthChatRecord(requestId, validateAuthChatRecordOptionalParams as IValidateAuthChatRecordOptionalParams);
+            result.then(() => {
+                throw Error("Promise should reject");
+            }).catch(() => {
+                expect(axiosInstMockInvalid).toHaveBeenCalled();
+                done();
+            });
+        });
+
+        it("Should reject when axiosInstance throws an error", (done) => {
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockWithError);
+            spyOn(ocsdkLogger, "log").and.callFake(() => { });
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
+            const result = sdk.validateAuthChatRecord(requestId, validateAuthChatRecordOptionalParams as IValidateAuthChatRecordOptionalParams);
             result.then(() => {}, () => {
                 expect(ocsdkLogger.log).toHaveBeenCalled();
                 done();

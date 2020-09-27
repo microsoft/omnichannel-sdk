@@ -32,6 +32,7 @@ import { Timer } from "./Utils/Timer";
 import { uuidv4 } from "./Utils/uuid";
 import IGetSurveyInviteLinkOptionalParams from "./Interfaces/IGetSurveyInviteLinkOptionalParams";
 import ReconnectAvailability from "./Model/ReconnectAvailability";
+import IValidateAuthChatRecordOptionalParams from "./Interfaces/IValidateAuthChatRecordOptionalParams";
 
 export default class SDK implements ISDK {
   private static defaultConfiguration: ISDKConfiguration = {
@@ -474,9 +475,11 @@ export default class SDK implements ISDK {
     const axiosInstance = axios.create();
     axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
 
-    const { authenticatedUserToken, isReconnectChat, isPersistentChat} = sessionCloseOptionalParams;
+    const { authenticatedUserToken, isReconnectChat, isPersistentChat, chatId} = sessionCloseOptionalParams;
 
     const headers: StringMap = Constants.defaultHeaders;
+    let data: any = {};
+    data.chatId = chatId;
 
     if (authenticatedUserToken) {
       endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthSessionClosePath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
@@ -492,6 +495,7 @@ export default class SDK implements ISDK {
     }
 
     const options: AxiosRequestConfig = {
+      data,
       headers,
       method: "POST",
       url: endpoint
@@ -519,6 +523,62 @@ export default class SDK implements ISDK {
         reject();
       }
     });
+  }
+  /**
+   * Validate the auth chat record exists in database.
+   * @param requestId: RequestId for validateAuthChatRecord (same request id for session init).
+   * @param validateAuthChatRecordOptionalParams: Optional parameters for validateAuthChatRecord.
+   */
+  public async validateAuthChatRecord(requestId: string, validateAuthChatRecordOptionalParams: IValidateAuthChatRecordOptionalParams): Promise<object> {
+    const timer = Timer.TIMER();
+    if (this.logger) {
+      this.logger.log(LogLevel.INFO,
+        OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDSTARTED,
+        { RequestId: requestId },
+        "Validate Auth Chat Record Started");
+    }
+    const { authenticatedUserToken, chatId } = validateAuthChatRecordOptionalParams;
+    let endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatValidateAuthChatMapRecordPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
+    const axiosInstance = axios.create();
+    axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
+    const headers: StringMap = Constants.defaultHeaders;
+    if (authenticatedUserToken) {
+      headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+    }
+    const options: AxiosRequestConfig = {
+      headers,
+      method: "GET",
+      url: endpoint
+    };
+
+    try {
+      const response = await axiosInstance(options);
+      const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+      if (response.data?.authChatExist === true) {
+        this.logger?.log(LogLevel.INFO,
+          OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDSUCCEEDED,
+          { RequestId: requestId, Region: response.data.Region, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds, TransactionId: response.headers["transaction-id"] },
+          "Validate Auth Chat Record Succeeded");
+        return Promise.resolve(response.data);
+      } else {
+        this.logger?.log(LogLevel.INFO,
+          OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDFAILED,
+          { RequestId: requestId, Region: response.data.Region, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds, TransactionId: response.headers["transaction-id"], ErrorCode: response.status},
+          "Validate Auth Chat Record Failed. Record is not found or request is not authorized");
+        return Promise.reject(new Error("Validate Auth Chat Record Failed. Record is not found or request is not authorized"));
+      }
+    } catch (error) {
+      const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+      this.logger?.log(LogLevel.ERROR,
+        OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDFAILED,
+        { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds },
+        "Validate Auth Chat Record Failed");
+        if (error.toString() === "Error: Request failed with status code 404") { // backward compatibility
+          return Promise.resolve({});
+        } else {
+          return Promise.reject();
+        }
+    }
   }
 
   /**
