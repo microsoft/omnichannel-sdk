@@ -573,7 +573,11 @@ export default class SDK implements ISDK {
         OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDFAILED,
         { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds },
         "Validate Auth Chat Record Failed");
-        return Promise.reject();
+        if (error.toString() === "Error: Request failed with status code 404") { // backward compatibility
+          return Promise.resolve({});
+        } else {
+          return Promise.reject();
+        }
     }
   }
 

@@ -486,7 +486,7 @@ describe("SDK unit tests", () => {
         });
     });
 
-    fdescribe("Test validateAuthChatRecord method", () => {
+    describe("Test validateAuthChatRecord method", () => {
 
         const validateAuthChatRecordOptionalParams = {
             authenticatedUserToken: "asdas",
