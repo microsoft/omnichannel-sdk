@@ -550,32 +550,31 @@ export default class SDK implements ISDK {
       method: "GET",
       url: endpoint
     };
-    return new Promise(async (resolve, reject) => {
-      try {
-        const response = await axiosInstance(options);
-        const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        if (response.status == 200) {
-          this.logger?.log(LogLevel.INFO,
-            OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDSUCCEEDED,
-            { RequestId: requestId, Region: response.data.Region, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds, TransactionId: response.headers["transaction-id"] },
-            "Validate Auth Chat Record Succeeded");
-          resolve();
-        } else {
-          this.logger?.log(LogLevel.INFO,
-            OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDFAILED,
-            { RequestId: requestId, Region: response.data.Region, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds, TransactionId: response.headers["transaction-id"], ErrorCode: response.status},
-            "Validate Auth Chat Record Failed. Record is not found or request is not authorized");
-          reject(new Error("Validate Auth Chat Record Failed. Record is not found or request is not authorized"));
-        }
-      } catch (error) {
-        const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logger?.log(LogLevel.ERROR,
+
+    try {
+      const response = await axiosInstance(options);
+      const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+      if (response.data?.authChatExist === true) {
+        this.logger?.log(LogLevel.INFO,
+          OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDSUCCEEDED,
+          { RequestId: requestId, Region: response.data.Region, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds, TransactionId: response.headers["transaction-id"] },
+          "Validate Auth Chat Record Succeeded");
+        return Promise.resolve(response.data);
+      } else {
+        this.logger?.log(LogLevel.INFO,
           OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDFAILED,
-          { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds },
-          "Validate Auth Chat Record Failed");
-        reject();
+          { RequestId: requestId, Region: response.data.Region, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds, TransactionId: response.headers["transaction-id"], ErrorCode: response.status},
+          "Validate Auth Chat Record Failed. Record is not found or request is not authorized");
+        return Promise.reject(new Error("Validate Auth Chat Record Failed. Record is not found or request is not authorized"));
       }
-    });
+    } catch (error) {
+      const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+      this.logger?.log(LogLevel.ERROR,
+        OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDFAILED,
+        { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds },
+        "Validate Auth Chat Record Failed");
+        return Promise.reject();
+    }
   }
 
   /**
