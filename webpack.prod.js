@@ -1,5 +1,4 @@
 const path = require('path');
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
 console.log("webpack config: prod");
 module.exports = {
@@ -8,6 +7,6 @@ module.exports = {
     filename: 'SDK.min.js'
   },
   optimization: {
-    minimizer: [new UglifyJsPlugin()],
+    minimize: true
   }
 }
