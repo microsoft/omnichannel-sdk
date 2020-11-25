@@ -1,5 +1,8 @@
 # Omnichannel SDK
 
+[![npm version](https://badge.fury.io/js/%40microsoft%2Focsdk.svg)](https://badge.fury.io/js/%40microsoft%2Focsdk)
+![Release CI](https://github.com/microsoft/omnichannel-sdk/workflows/Release%20CI/badge.svg)
+
 This repo contains the source code for getting up and running with the Omnichannel SDK on the web using standard web technologies and on mobile using React Native.
 
 # Getting Started
