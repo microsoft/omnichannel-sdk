@@ -478,7 +478,7 @@ export default class SDK implements ISDK {
     const { authenticatedUserToken, isReconnectChat, isPersistentChat, chatId} = sessionCloseOptionalParams;
 
     const headers: StringMap = Constants.defaultHeaders;
-    let data: any = {};
+    const data: any = {}; // eslint-disable-line @typescript-eslint/no-explicit-any
     data.chatId = chatId;
 
     if (authenticatedUserToken) {
@@ -538,7 +538,7 @@ export default class SDK implements ISDK {
         "Validate Auth Chat Record Started");
     }
     const { authenticatedUserToken, chatId } = validateAuthChatRecordOptionalParams;
-    let endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatValidateAuthChatMapRecordPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
+    const endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatValidateAuthChatMapRecordPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
     const axiosInstance = axios.create();
     axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
     const headers: StringMap = Constants.defaultHeaders;
