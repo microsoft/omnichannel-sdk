@@ -67,13 +67,13 @@ export class BrowserInfo {
   public static getBrowserVersion(): string | undefined {
     const getIeVersion = () => {
       const userAgent = this.getUserAgent();
-      const classicIeVersionMatches = userAgent.match(new RegExp(BrowserVendor.IE + " " + REGEX_VERSION));
+      const classicIeVersionMatches = userAgent.match(new RegExp(BrowserVendor.IE + " " + REGEX_VERSION)); // eslint-disable-line security/detect-non-literal-regexp
 
       if (classicIeVersionMatches) {
         return classicIeVersionMatches[1];
       }
 
-      const ieVersionMatches: RegExpMatchArray | null = userAgent.match(new RegExp("rv:" + REGEX_VERSION));
+      const ieVersionMatches: RegExpMatchArray | null = userAgent.match(new RegExp("rv:" + REGEX_VERSION)); // eslint-disable-line security/detect-non-literal-regexp
       if (ieVersionMatches) {
         return ieVersionMatches[1];
       }
@@ -94,7 +94,7 @@ export class BrowserInfo {
         browserString = "Edge?";
       }
 
-      const matches: RegExpMatchArray | null = this.getUserAgent().match(new RegExp(browserString + "/" + REGEX_VERSION));
+      const matches: RegExpMatchArray | null = this.getUserAgent().match(new RegExp(browserString + "/" + REGEX_VERSION)); // eslint-disable-line security/detect-non-literal-regexp
 
       if (matches) {
         return matches[1];
