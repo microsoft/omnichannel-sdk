@@ -84,8 +84,8 @@ export enum OCSDKTelemetryEvent {
 
 export enum LiveChatVersionNumber {
   // IC3 live chat
-  V1 = 1,
+  V1 = "1",
   
   // ACS live chat
-  V2 = 2
+  V2 = "2"
 }
