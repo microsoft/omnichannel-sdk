@@ -1,6 +1,6 @@
 import axios, { AxiosRequestConfig } from "axios";
 import Constants from "./Common/Constants";
-import { ChannelId } from "./Common/Enums";
+import { ChannelId, LiveChatVersionNumber } from "./Common/Enums";
 import { OCSDKTelemetryEvent } from "./Common/Enums";
 import Locales from "./Common/Locales";
 import { StringMap } from "./Common/Mappings";
@@ -175,7 +175,7 @@ export default class SDK implements ISDK {
    * @param getChatTokenOptionalParams: Optional parameters for get chat token.
    * @param LiveChatVersionNumber: Optional parameter for LiveChatVersion
    */
-  public async getChatToken(requestId: string,  liveChatVersionNumber: string = "1", getChatTokenOptionalParams: IGetChatTokenOptionalParams = {}, currentRetryCount: number = 0): Promise<FetchChatTokenResponse> { // eslint-disable-line @typescript-eslint/no-inferrable-types
+  public async getChatToken(requestId: string,  liveChatVersionNumber: string = LiveChatVersionNumber.V1, getChatTokenOptionalParams: IGetChatTokenOptionalParams = {}, currentRetryCount: number = 0): Promise<FetchChatTokenResponse> { // eslint-disable-line @typescript-eslint/no-inferrable-types
     const timer = Timer.TIMER();
     const { reconnectId, authenticatedUserToken } = getChatTokenOptionalParams;
     if (this.logger) {
@@ -193,7 +193,7 @@ export default class SDK implements ISDK {
     }
     let endpoint;
     const headers: StringMap = Constants.defaultHeaders;
-    if(liveChatVersionNumber && liveChatVersionNumber=="2"){
+    if(liveChatVersionNumber && liveChatVersionNumber==LiveChatVersionNumber.V2){
       endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatv2GetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
     }
     else{
@@ -388,7 +388,7 @@ export default class SDK implements ISDK {
    * @param sessionInitOptionalParams: Optional parameters for session init.
    * @param liveChatVersionNumber: Optional parameter for livechatversion
    */
-  public async sessionInit(requestId: string,  liveChatVersionNumber: string = "1", sessionInitOptionalParams: ISessionInitOptionalParams = {}): Promise<void> {
+  public async sessionInit(requestId: string,  liveChatVersionNumber: string = LiveChatVersionNumber.V1, sessionInitOptionalParams: ISessionInitOptionalParams = {}): Promise<void> {
     const timer = Timer.TIMER();
     if (this.logger) {
       this.logger.log(LogLevel.INFO,
@@ -404,7 +404,7 @@ export default class SDK implements ISDK {
 
     const headers: StringMap = Constants.defaultHeaders;
 
-    if(liveChatVersionNumber && liveChatVersionNumber == "2"){
+    if(liveChatVersionNumber && liveChatVersionNumber == LiveChatVersionNumber.V2){
       endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatv2SessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
     }
     else{
