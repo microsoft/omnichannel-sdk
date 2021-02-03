@@ -79,5 +79,8 @@ export enum OCSDKTelemetryEvent {
   GETSURVEYINVITELINKFAILED = "GetSurveyInviteLinkFailed",
   VALIDATEAUTHCHATRECORDSTARTED = "ValidateAuthChatRecordStarted",
   VALIDATEAUTHCHATRECORDSUCCEEDED = "ValidateAuthChatRecordSucceeded",
-  VALIDATEAUTHCHATRECORDFAILED = "ValidateAuthChatRecordFailed"
+  VALIDATEAUTHCHATRECORDFAILED = "ValidateAuthChatRecordFailed",
+  GETQUEUEAVAILABILITYSTARTED = "GetQueueAvailabilityStarted",
+  GETQUEUEAVAILABILITYSUCCEEDED = "GetQueueAvailabilitySucceeded",
+  GETQUEUEAVAILABILITYFAILED = "GetQueueAvailabilityFailed"
 }

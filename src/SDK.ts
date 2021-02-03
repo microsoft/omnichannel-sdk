@@ -1,17 +1,17 @@
 import axios, { AxiosRequestConfig } from "axios";
-import Constants from "./Common/Constants";
+
+import { BrowserInfo } from "./Utils/BrowserInfo";
 import { ChannelId } from "./Common/Enums";
-import { OCSDKTelemetryEvent } from "./Common/Enums";
-import Locales from "./Common/Locales";
-import { StringMap } from "./Common/Mappings";
-import OCSDKLogger from "./Common/OCSDKLogger";
-import OmnichannelEndpoints from "./Common/OmnichannelEndpoints";
-import OmnichannelHTTPHeaders from "./Common/OmnichannelHTTPHeaders";
+import Constants from "./Common/Constants";
+import { DeviceInfo } from "./Utils/DeviceInfo";
+import FetchChatTokenResponse from "./Model/FetchChatTokenResponse";
 import IDataMaskingInfo from "./Interfaces/IDataMaskingInfo";
 import IEmailTranscriptOptionalParams from "./Interfaces/IEmailTranscriptOptionalParams";
 import IGetChatTokenOptionalParams from "./Interfaces/IGetChatTokenOptionalParams";
 import IGetChatTranscriptsOptionalParams from "./Interfaces/IGetChatTranscriptsOptionalParams";
 import IGetLWIDetailsOptionalParams from "./Interfaces/IGetLWIDetailsOptionalParams";
+import IGetQueueAvailabilityOptionalParams from "./Interfaces/IGetQueueAvailabilityOptionalParams";
+import IGetSurveyInviteLinkOptionalParams from "./Interfaces/IGetSurveyInviteLinkOptionalParams";
 import IOmnichannelConfiguration from "./Interfaces/IOmnichannelConfiguration";
 import IReconnectableChatsParams from "./Interfaces/IReconnectableChatsParams";
 import ISDK from "./Interfaces/ISDK";
@@ -20,19 +20,21 @@ import ISecondaryChannelEventOptionalParams from "./Interfaces/ISecondaryChannel
 import ISessionCloseOptionalParams from "./Interfaces/ISessionCloseOptionalParams";
 import ISessionInitOptionalParams from "./Interfaces/ISessionInitOptionalParams";
 import ISubmitPostChatResponseOptionalParams from "./Interfaces/ISubmitPostChatResponseOptionalParams";
-import FetchChatTokenResponse from "./Model/FetchChatTokenResponse";
-import InitContext from "./Model/InitContext";
-import { LogLevel } from "./Model/LogLevel";
-import ReconnectMappingRecord from "./Model/ReconnectMappingRecord";
-import axiosRetry from "./Utils/axiosRetry";
-import { BrowserInfo } from "./Utils/BrowserInfo";
-import { DeviceInfo } from "./Utils/DeviceInfo";
-import { OSInfo } from "./Utils/OSInfo";
-import { Timer } from "./Utils/Timer";
-import { uuidv4 } from "./Utils/uuid";
-import IGetSurveyInviteLinkOptionalParams from "./Interfaces/IGetSurveyInviteLinkOptionalParams";
-import ReconnectAvailability from "./Model/ReconnectAvailability";
 import IValidateAuthChatRecordOptionalParams from "./Interfaces/IValidateAuthChatRecordOptionalParams";
+import InitContext from "./Model/InitContext";
+import Locales from "./Common/Locales";
+import { LogLevel } from "./Model/LogLevel";
+import OCSDKLogger from "./Common/OCSDKLogger";
+import { OCSDKTelemetryEvent } from "./Common/Enums";
+import { OSInfo } from "./Utils/OSInfo";
+import OmnichannelEndpoints from "./Common/OmnichannelEndpoints";
+import OmnichannelHTTPHeaders from "./Common/OmnichannelHTTPHeaders";
+import ReconnectAvailability from "./Model/ReconnectAvailability";
+import ReconnectMappingRecord from "./Model/ReconnectMappingRecord";
+import { StringMap } from "./Common/Mappings";
+import { Timer } from "./Utils/Timer";
+import axiosRetry from "./Utils/axiosRetry";
+import { uuidv4 } from "./Utils/uuid";
 
 export default class SDK implements ISDK {
   private static defaultConfiguration: ISDKConfiguration = {
@@ -375,6 +377,90 @@ export default class SDK implements ISDK {
   }
 
   /**
+   * 
+   * @param requestId: RequestId to use for session init.
+   * @param queueAvailabilityOptionalParams: Optional parameters for session init.
+   */
+  public async getQueueAvailability(requestId: string, queueAvailabilityOptionalParams: IGetQueueAvailabilityOptionalParams = {}): Promise<object> {
+    const timer = Timer.TIMER();
+    if (this.logger) {
+      this.logger.log(LogLevel.INFO,
+        OCSDKTelemetryEvent.GETQUEUEAVAILABILITYSTARTED,
+        { RequestId: requestId },
+        "Get queue availability started");
+    }
+
+    let endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatSessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
+    const axiosInstance = axios.create();
+    axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
+
+    const { authenticatedUserToken, initContext, getContext } = queueAvailabilityOptionalParams;
+
+    const headers: StringMap = Constants.defaultHeaders;
+
+    if(authenticatedUserToken == null && authenticatedUserToken === "") {
+        return Promise.reject(new Error(`Get queue availability is supported only for authenticted chat`));
+    }
+    
+    if (authenticatedUserToken) {
+      endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthSessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
+      headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+    }
+
+    const data: InitContext = initContext || {};
+
+    if (getContext && !window.document) {
+      return Promise.reject(new Error(`getContext is only supported on web browsers`));
+    }
+
+    if (getContext) {
+      data.browser = BrowserInfo.getBrowserName();
+      data.device = DeviceInfo.getDeviceType();
+      data.originurl = window.location.href;
+      data.os = OSInfo.getOsType();
+    }
+
+    if (!data.locale) {
+      data.locale = Constants.defaultLocale;
+    }
+
+    // Validate locale
+    if (data.locale && !Locales.supportedLocales.includes(data.locale)) {
+      return Promise.reject(new Error(`Unsupported locale: '${data.locale}'`));
+    }
+
+    const options: AxiosRequestConfig = {
+      data,
+      headers,
+      method: "POST",
+      url: endpoint
+    };
+
+    return new Promise(async (resolve, reject) => {
+      try {
+        const response = await axiosInstance(options);
+        const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+        if (this.logger) {
+          this.logger.log(LogLevel.INFO,
+            OCSDKTelemetryEvent.GETQUEUEAVAILABILITYSUCCEEDED,
+            { RequestId: requestId, Region: response.data.Region, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds, TransactionId: response.headers["transaction-id"] },
+            "Get queue availability Succeeded");
+        }
+        resolve({});
+      } catch (error) {
+        const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+        if (this.logger) {
+          this.logger.log(LogLevel.ERROR,
+            OCSDKTelemetryEvent.GETQUEUEAVAILABILITYFAILED,
+            { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds},
+            "Get queue availability failed");
+        }
+        reject(error);
+      }
+    });
+  }
+
+  /**
    * Starts a session to omnichannel.
    * @param requestId: RequestId to use for session init.
    * @param sessionInitOptionalParams: Optional parameters for session init.
@@ -383,10 +469,11 @@ export default class SDK implements ISDK {
     const timer = Timer.TIMER();
     if (this.logger) {
       this.logger.log(LogLevel.INFO,
-        OCSDKTelemetryEvent.SESSIONINITSTARTED,
+        OCSDKTelemetryEvent.GETQUEUEAVAILABILITYSTARTED,
         { RequestId: requestId },
         "Session Init Started");
     }
+    
     let endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatSessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
     const axiosInstance = axios.create();
     axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
