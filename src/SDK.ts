@@ -29,6 +29,7 @@ import { OCSDKTelemetryEvent } from "./Common/Enums";
 import { OSInfo } from "./Utils/OSInfo";
 import OmnichannelEndpoints from "./Common/OmnichannelEndpoints";
 import OmnichannelHTTPHeaders from "./Common/OmnichannelHTTPHeaders";
+import QueueAvailability from "./Model/QueueAvailability";
 import ReconnectAvailability from "./Model/ReconnectAvailability";
 import ReconnectMappingRecord from "./Model/ReconnectMappingRecord";
 import { StringMap } from "./Common/Mappings";
@@ -381,7 +382,7 @@ export default class SDK implements ISDK {
    * @param requestId: RequestId to use for session init.
    * @param queueAvailabilityOptionalParams: Optional parameters for session init.
    */
-  public async getQueueAvailability(requestId: string, queueAvailabilityOptionalParams: IGetQueueAvailabilityOptionalParams = {}): Promise<object> {
+  public async getQueueAvailability(requestId: string, queueAvailabilityOptionalParams: IGetQueueAvailabilityOptionalParams = {}): Promise<QueueAvailability> {
     const timer = Timer.TIMER();
     if (this.logger) {
       this.logger.log(LogLevel.INFO,
@@ -390,7 +391,7 @@ export default class SDK implements ISDK {
         "Get queue availability started");
     }
 
-    let endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatSessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
+    let endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.GetQueueAvailabilityPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
     const axiosInstance = axios.create();
     axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
 
@@ -398,14 +399,15 @@ export default class SDK implements ISDK {
 
     const headers: StringMap = Constants.defaultHeaders;
 
-    if(authenticatedUserToken == null && authenticatedUserToken === "") {
-        return Promise.reject(new Error(`Get queue availability is supported only for authenticted chat`));
-    }
+    //Test for Unauthenticated
+    // if(authenticatedUserToken == null && authenticatedUserToken === "") {
+    //     return Promise.reject(new Error(`Get queue availability is supported only for authenticted chat`));
+    // }
     
-    if (authenticatedUserToken) {
-      endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthSessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
-      headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
-    }
+    // if (authenticatedUserToken) {
+    //   endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthSessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
+    //   headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+    // }
 
     const data: InitContext = initContext || {};
 
@@ -440,13 +442,14 @@ export default class SDK implements ISDK {
       try {
         const response = await axiosInstance(options);
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+        
         if (this.logger) {
           this.logger.log(LogLevel.INFO,
             OCSDKTelemetryEvent.GETQUEUEAVAILABILITYSUCCEEDED,
             { RequestId: requestId, Region: response.data.Region, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds, TransactionId: response.headers["transaction-id"] },
             "Get queue availability Succeeded");
         }
-        resolve({});
+        resolve(new QueueAvailability());
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         if (this.logger) {
