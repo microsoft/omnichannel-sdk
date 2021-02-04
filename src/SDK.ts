@@ -395,7 +395,7 @@ export default class SDK implements ISDK {
     const axiosInstance = axios.create();
     axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
 
-    const { authenticatedUserToken, initContext, getContext } = queueAvailabilityOptionalParams;
+    const { /*authenticatedUserToken,*/ initContext, getContext } = queueAvailabilityOptionalParams;
 
     const headers: StringMap = Constants.defaultHeaders;
 
