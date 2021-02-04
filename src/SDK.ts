@@ -472,7 +472,7 @@ export default class SDK implements ISDK {
     const timer = Timer.TIMER();
     if (this.logger) {
       this.logger.log(LogLevel.INFO,
-        OCSDKTelemetryEvent.GETQUEUEAVAILABILITYSTARTED,
+        OCSDKTelemetryEvent.SESSIONINITSTARTED,
         { RequestId: requestId },
         "Session Init Started");
     }
