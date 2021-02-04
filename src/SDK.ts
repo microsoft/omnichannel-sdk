@@ -391,7 +391,7 @@ export default class SDK implements ISDK {
         "Get queue availability started");
     }
 
-    let endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.GetQueueAvailabilityPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
+    const endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.GetQueueAvailabilityPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
     const axiosInstance = axios.create();
     axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
 
