@@ -197,14 +197,11 @@ export default class SDK implements ISDK {
     if (!requestId) {
       requestId = uuidv4();
     }
-    let endpoint;
     const headers: StringMap = Constants.defaultHeaders;  
+    let endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatGetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
 
-    if(this.liveChatVersion==LiveChatVersion.V2){
+    if (this.liveChatVersion === LiveChatVersion.V2) {
       endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatv2GetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
-    }
-    else{
-      endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatGetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
     }
     if (authenticatedUserToken) {
       endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthGetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
@@ -265,7 +262,7 @@ export default class SDK implements ISDK {
 
       // Retries until it reaches its limit
       setTimeout(() => {
-        this.getChatToken(requestId,getChatTokenOptionalParams, currentRetryCount + 1).then((response) => resolve(response)).catch((error) => reject(error));
+        this.getChatToken(requestId, getChatTokenOptionalParams, currentRetryCount + 1).then((response) => resolve(response)).catch((error) => reject(error));
       }, this.configuration.getChatTokenTimeBetweenRetriesOnFailure);
     });
   }
@@ -400,19 +397,16 @@ export default class SDK implements ISDK {
         { RequestId: requestId },
         "Session Init Started");
     }
-    let endpoint;
     const axiosInstance = axios.create();
     axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
 
     const { reconnectId, authenticatedUserToken, initContext, getContext } = sessionInitOptionalParams;
 
     const headers: StringMap = Constants.defaultHeaders;
+    let endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatSessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
 
-    if(this.liveChatVersion == LiveChatVersion.V2){
+    if (this.liveChatVersion === LiveChatVersion.V2) {
       endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatv2SessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
-    }
-    else{
-      endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatSessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
     }
     if (authenticatedUserToken) {
       endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthSessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
