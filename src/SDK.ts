@@ -391,23 +391,13 @@ export default class SDK implements ISDK {
         "Get queue availability started");
     }
 
-    const endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.GetQueueAvailabilityPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
+    const endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.GetQueueAvailabilityPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=lcw`;
     const axiosInstance = axios.create();
     axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
 
-    const { /*authenticatedUserToken,*/ initContext, getContext } = queueAvailabilityOptionalParams;
+    const { initContext, getContext } = queueAvailabilityOptionalParams;
 
     const headers: StringMap = Constants.defaultHeaders;
-
-    //Test for Unauthenticated
-    // if(authenticatedUserToken == null && authenticatedUserToken === "") {
-    //     return Promise.reject(new Error(`Get queue availability is supported only for authenticted chat`));
-    // }
-    
-    // if (authenticatedUserToken) {
-    //   endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthSessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
-    //   headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
-    // }
 
     const data: InitContext = initContext || {};
 
