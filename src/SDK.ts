@@ -180,7 +180,6 @@ export default class SDK implements ISDK {
    * Fetches the chat token from Omnichannel to join T1 thread.
    * @param requestId: RequestId to use for getchattoken (Optional).
    * @param getChatTokenOptionalParams: Optional parameters for get chat token.
-   * @param LiveChatVersionNumber: Optional parameter for LiveChatVersion
    */
   public async getChatToken(requestId: string, getChatTokenOptionalParams: IGetChatTokenOptionalParams = {}, currentRetryCount: number = 0): Promise<FetchChatTokenResponse> { // eslint-disable-line @typescript-eslint/no-inferrable-types
     const timer = Timer.TIMER();
@@ -392,7 +391,6 @@ export default class SDK implements ISDK {
    * Starts a session to omnichannel.
    * @param requestId: RequestId to use for session init.
    * @param sessionInitOptionalParams: Optional parameters for session init.
-   * @param liveChatVersionNumber: Optional parameter for livechatversion
    */
   public async sessionInit(requestId: string, sessionInitOptionalParams: ISessionInitOptionalParams = {}): Promise<void> {
     const timer = Timer.TIMER();
