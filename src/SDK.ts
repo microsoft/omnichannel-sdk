@@ -1,6 +1,6 @@
 import axios, { AxiosRequestConfig } from "axios";
 import Constants from "./Common/Constants";
-import { ChannelId, LiveChatVersionNumber } from "./Common/Enums";
+import { ChannelId, LiveChatVersion } from "./Common/Enums";
 import { OCSDKTelemetryEvent } from "./Common/Enums";
 import Locales from "./Common/Locales";
 import { StringMap } from "./Common/Mappings";
@@ -40,6 +40,8 @@ export default class SDK implements ISDK {
     getChatTokenTimeBetweenRetriesOnFailure: 10000,
     maxRequestRetriesOnFailure: 3
   };
+  
+  private liveChatVersion: number  = LiveChatVersion.V1;
 
   public constructor(private omnichannelConfiguration: IOmnichannelConfiguration, private configuration: ISDKConfiguration = SDK.defaultConfiguration, private logger?: OCSDKLogger) {
     // Sets to default configuration if passed configuration is empty or is not an object
@@ -92,6 +94,9 @@ export default class SDK implements ISDK {
     const response = await axiosInstance.get(endpoint);
     const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
     const { data } = response;
+    if(data.LiveChatVersion && data.LiveChatVersion == LiveChatVersion.V2){
+      this.liveChatVersion = data.LiveChatVersion;
+    }
     if (this.logger) {
       this.logger.log(LogLevel.INFO,
         OCSDKTelemetryEvent.GETCHATCONFIGSUCCESS,
@@ -175,7 +180,7 @@ export default class SDK implements ISDK {
    * @param getChatTokenOptionalParams: Optional parameters for get chat token.
    * @param LiveChatVersionNumber: Optional parameter for LiveChatVersion
    */
-  public async getChatToken(requestId: string,  liveChatVersionNumber: string = LiveChatVersionNumber.V1, getChatTokenOptionalParams: IGetChatTokenOptionalParams = {}, currentRetryCount: number = 0): Promise<FetchChatTokenResponse> { // eslint-disable-line @typescript-eslint/no-inferrable-types
+  public async getChatToken(requestId: string, getChatTokenOptionalParams: IGetChatTokenOptionalParams = {}, currentRetryCount: number = 0): Promise<FetchChatTokenResponse> { // eslint-disable-line @typescript-eslint/no-inferrable-types
     const timer = Timer.TIMER();
     const { reconnectId, authenticatedUserToken } = getChatTokenOptionalParams;
     if (this.logger) {
@@ -192,19 +197,18 @@ export default class SDK implements ISDK {
       requestId = uuidv4();
     }
     let endpoint;
-    const headers: StringMap = Constants.defaultHeaders;
-    if(liveChatVersionNumber && liveChatVersionNumber==LiveChatVersionNumber.V2){
+    const headers: StringMap = Constants.defaultHeaders;  
+
+    if(this.liveChatVersion==LiveChatVersion.V2){
       endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatv2GetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
     }
     else{
-      endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatGetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;     
-      if (authenticatedUserToken) {
-        endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthGetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
-        headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
-        
-      }
+      endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatGetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
     }
-
+    if (authenticatedUserToken) {
+      endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthGetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
+      headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+    }
     if (reconnectId) {
       endpoint += `/${reconnectId}`;
     }
@@ -260,7 +264,7 @@ export default class SDK implements ISDK {
 
       // Retries until it reaches its limit
       setTimeout(() => {
-        this.getChatToken(requestId, liveChatVersionNumber,getChatTokenOptionalParams, currentRetryCount + 1).then((response) => resolve(response)).catch((error) => reject(error));
+        this.getChatToken(requestId,getChatTokenOptionalParams, currentRetryCount + 1).then((response) => resolve(response)).catch((error) => reject(error));
       }, this.configuration.getChatTokenTimeBetweenRetriesOnFailure);
     });
   }
@@ -388,7 +392,7 @@ export default class SDK implements ISDK {
    * @param sessionInitOptionalParams: Optional parameters for session init.
    * @param liveChatVersionNumber: Optional parameter for livechatversion
    */
-  public async sessionInit(requestId: string,  liveChatVersionNumber: string = LiveChatVersionNumber.V1, sessionInitOptionalParams: ISessionInitOptionalParams = {}): Promise<void> {
+  public async sessionInit(requestId: string, sessionInitOptionalParams: ISessionInitOptionalParams = {}): Promise<void> {
     const timer = Timer.TIMER();
     if (this.logger) {
       this.logger.log(LogLevel.INFO,
@@ -404,18 +408,16 @@ export default class SDK implements ISDK {
 
     const headers: StringMap = Constants.defaultHeaders;
 
-    if(liveChatVersionNumber && liveChatVersionNumber == LiveChatVersionNumber.V2){
+    if(this.liveChatVersion == LiveChatVersion.V2){
       endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatv2SessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
     }
     else{
       endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatSessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
-  
-      if (authenticatedUserToken) {
-        endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthSessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
-        headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
-      }
-     }
-
+    }
+    if (authenticatedUserToken) {
+      endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthSessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
+      headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+    }
     if (reconnectId) {
       endpoint += `/${reconnectId}`;
     }
