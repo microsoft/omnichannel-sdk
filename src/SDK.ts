@@ -41,7 +41,7 @@ export default class SDK implements ISDK {
     maxRequestRetriesOnFailure: 3
   };
   
-  liveChatVersion: number  = LiveChatVersion.V1;
+  liveChatVersion: number;
 
   public constructor(private omnichannelConfiguration: IOmnichannelConfiguration, private configuration: ISDKConfiguration = SDK.defaultConfiguration, private logger?: OCSDKLogger) {
     // Sets to default configuration if passed configuration is empty or is not an object
@@ -69,6 +69,8 @@ export default class SDK implements ISDK {
         throw new Error(`Missing '${key}' in OmnichannelConfiguration`);
       }
     }
+    
+    this.liveChatVersion = LiveChatVersion.V1;
   }
 
   /**

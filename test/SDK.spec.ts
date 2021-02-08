@@ -129,11 +129,15 @@ describe("SDK unit tests", () => {
     });
     
     it("Test getChatConfig method to set LiveChatVersion", () => {
-        spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return { data: { requestId: "someId", LiveChatVersion: 2 } }; }});        
+        let configmock = {data: { requestId: "someId", LiveChatVersion: 2 }}; 
+        spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return configmock;}});        
         const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
-        const config = sdk.getChatConfig("");
+        axiosInstMock = jasmine.createSpy("axiosInstance").and.returnValue(configmock);
+        const config = sdk.getChatConfig("");       
         expect(axios.create).toHaveBeenCalled();
-        expect(sdk.liveChatVersion).toEqual(LiveChatVersion.V2);
+        config.then(function(result: any){
+            expect(result.LiveChatVersion).toEqual(sdk.liveChatVersion);
+        });
     });
 
     it("Test getLWIDetails method with pluggable telemetry", () => {
