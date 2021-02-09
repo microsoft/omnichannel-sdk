@@ -96,7 +96,7 @@ export default class SDK implements ISDK {
     const response = await axiosInstance.get(endpoint);
     const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
     const { data } = response;
-    if(data.LiveChatVersion && data.LiveChatVersion == LiveChatVersion.V2){
+    if (data.LiveChatVersion && data.LiveChatVersion === LiveChatVersion.V2) {
       this.liveChatVersion = data.LiveChatVersion;
     }
     if (this.logger) {
