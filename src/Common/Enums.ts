@@ -81,3 +81,11 @@ export enum OCSDKTelemetryEvent {
   VALIDATEAUTHCHATRECORDSUCCEEDED = "ValidateAuthChatRecordSucceeded",
   VALIDATEAUTHCHATRECORDFAILED = "ValidateAuthChatRecordFailed"
 }
+
+export enum LiveChatVersion {
+  // IC3 live chat
+  V1 = 1,
+  
+  // ACS live chat
+  V2 = 2
+}

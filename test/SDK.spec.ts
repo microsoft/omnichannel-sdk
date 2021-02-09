@@ -24,6 +24,7 @@ import ILogger from "../src/Model/ILogger";
 import OCSDKLogger from "../src/Common/OCSDKLogger";
 import IGetSurveyInviteLinkOptionalParams from "../src/Interfaces/IGetSurveyInviteLinkOptionalParams";
 import IValidateAuthChatRecordOptionalParams from "../src/Interfaces/IValidateAuthChatRecordOptionalParams";
+import { LiveChatVersion } from "../src/Common/Enums";
 
 describe("SDK unit tests", () => {
 
@@ -125,6 +126,18 @@ describe("SDK unit tests", () => {
         expect(axios.create).toHaveBeenCalled();
         expect(axiosRetry.default).toHaveBeenCalled();
         expect(ocsdkLogger.log).not.toHaveBeenCalled();
+    });
+    
+    it("Test getChatConfig method to set LiveChatVersion", () => {
+        let configmock = {data: { requestId: "someId", LiveChatVersion: 2 }}; 
+        spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return configmock;}});        
+        const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+        axiosInstMock = jasmine.createSpy("axiosInstance").and.returnValue(configmock);
+        const config = sdk.getChatConfig("");       
+        expect(axios.create).toHaveBeenCalled();
+        config.then(function(result: any){
+            expect(result.LiveChatVersion).toEqual(sdk.liveChatVersion);
+        });
     });
 
     it("Test getLWIDetails method with pluggable telemetry", () => {
