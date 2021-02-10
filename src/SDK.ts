@@ -432,14 +432,16 @@ export default class SDK implements ISDK {
       try {
         const response = await axiosInstance(options);
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        
-        if (this.logger) {
-          this.logger.log(LogLevel.INFO,
-            OCSDKTelemetryEvent.GETQUEUEAVAILABILITYSUCCEEDED,
-            { RequestId: requestId, Region: response.data.Region, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds, TransactionId: response.headers["transaction-id"] },
-            "Get queue availability Succeeded");
+        const {data} = response;
+        if(data) {
+          if (this.logger) {
+            this.logger.log(LogLevel.INFO,
+              OCSDKTelemetryEvent.GETQUEUEAVAILABILITYSUCCEEDED,
+              { RequestId: requestId, Region: response.data.Region, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds, TransactionId: response.headers["transaction-id"] },
+              "Get queue availability Succeeded");
+          }
+          resolve(data);
         }
-        resolve(new QueueAvailability());
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         if (this.logger) {
