@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - Uptake [karma@5.2.3](https://www.npmjs.com/package/karma/v/5.2.3)
 - Uptake [webpack-dev-server@3.11.0](https://www.npmjs.com/package/webpack-dev-server/v/3.11.0)
 - Fix eslint errors
+- Uptake [axios@0.21.1](https://www.npmjs.com/package/axios/v/0.21.1)
 
 
 ## [0.1.0] - 2020-09-21
