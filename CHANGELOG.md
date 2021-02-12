@@ -13,7 +13,6 @@ All notable changes to this project will be documented in this file.
 - Fix eslint errors
 - Uptake [axios@0.21.1](https://www.npmjs.com/package/axios/v/0.21.1)
 
-
 ## [0.1.0] - 2020-09-21
 ### Added
 - Initial release of Omnichannel SDK v0.1.0
