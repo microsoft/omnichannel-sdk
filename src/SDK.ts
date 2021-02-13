@@ -405,9 +405,6 @@ export default class SDK implements ISDK {
     const headers: StringMap = Constants.defaultHeaders;
     let endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatSessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
 
-    if (this.liveChatVersion === LiveChatVersion.V2) {
-      endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatv2SessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
-    }
     if (authenticatedUserToken) {
       endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthSessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
       headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;

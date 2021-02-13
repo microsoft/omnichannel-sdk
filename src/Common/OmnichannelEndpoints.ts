@@ -2,7 +2,6 @@ export default class OmnichannelEndpoints {
   public static readonly LiveChatConfigPath = "livechatconnector/config";
   public static readonly LiveChatSessionInitPath = "livechatconnector/sessioninit";
   public static readonly LiveChatAuthSessionInitPath = "livechatconnector/auth/sessioninit";
-  public static readonly LiveChatv2SessionInitPath = "livechatconnector/v2/sessioninit";
   public static readonly LiveChatGetChatTokenPath = "livechatconnector/getchattoken";
   public static readonly LiveChatv2GetChatTokenPath = "livechatconnector/v2/getchattoken";
   public static readonly LiveChatAuthGetChatTokenPath = "livechatconnector/auth/getchattoken";
