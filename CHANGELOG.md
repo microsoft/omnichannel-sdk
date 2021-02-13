@@ -3,7 +3,6 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 ### Added
-- `livechatconnector/v2/sessioninit` endpoint
 - `livechatconnector/v2/getchattoken` endpoint
 
 ### Security
