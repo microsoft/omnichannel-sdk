@@ -2,6 +2,8 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+
+## [0.1.1] - 2021-02-16
 ### Added
 - `livechatconnector/v2/getchattoken` endpoint
 
