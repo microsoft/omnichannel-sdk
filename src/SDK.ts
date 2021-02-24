@@ -202,11 +202,17 @@ export default class SDK implements ISDK {
 
     if (this.liveChatVersion === LiveChatVersion.V2) {
       endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatv2GetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
+      if (authenticatedUserToken) {
+        endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatv2AuthGetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
+        headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+      }
+    } else {
+      if (authenticatedUserToken) {
+        endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthGetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
+        headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+      }
     }
-    if (authenticatedUserToken) {
-      endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthGetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
-      headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
-    }
+    
     if (reconnectId) {
       endpoint += `/${reconnectId}`;
     }
