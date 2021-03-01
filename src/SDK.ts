@@ -77,7 +77,7 @@ export default class SDK implements ISDK {
    * Fetches chat config.
    * @param requestId: RequestId to use to get chat config (Optional).
    */
-  public async getChatConfig(requestId: string, bypassCache: boolean = false): Promise<object> {
+  public async getChatConfig(requestId: string, bypassCache = false): Promise<object> {
     const timer = Timer.TIMER();
     if (this.logger) {
       this.logger.log(LogLevel.INFO,
