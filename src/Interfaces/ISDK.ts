@@ -3,7 +3,7 @@ import IReconnectableChatsParams from "../Interfaces/IReconnectableChatsParams";
 import FetchChatTokenResponse from "../Model/FetchChatTokenResponse";
 
 export default interface ISDK {
-  getChatConfig(requestId: string, bypassCache = false): Promise<object>;
+  getChatConfig(requestId: string, bypassCache: boolean): Promise<object>;
   getLWIDetails(requestId: string): Promise<object>;
   getChatToken(requestId: string): Promise<FetchChatTokenResponse>;
   sessionInit(requestId: string): Promise<void>;
