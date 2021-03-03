@@ -77,7 +77,7 @@ export default class SDK implements ISDK {
    * Fetches chat config.
    * @param requestId: RequestId to use to get chat config (Optional).
    */
-  public async getChatConfig(requestId: string): Promise<object> {
+  public async getChatConfig(requestId: string, bypassCache = false): Promise<object> {
     const timer = Timer.TIMER();
     if (this.logger) {
       this.logger.log(LogLevel.INFO,
@@ -93,7 +93,13 @@ export default class SDK implements ISDK {
     const axiosInstance = axios.create();
     axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
 
-    const response = await axiosInstance.get(endpoint);
+    let headers = {};
+    if (bypassCache) {
+      headers = { ...Constants.bypassCacheHeaders, ...headers };
+    }
+    const response = await axiosInstance.get(endpoint, {
+      headers,
+    });
     const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
     const { data } = response;
     if (data.LiveChatVersion && data.LiveChatVersion === LiveChatVersion.V2) {
