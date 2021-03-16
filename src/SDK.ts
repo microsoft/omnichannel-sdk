@@ -960,7 +960,7 @@ export default class SDK implements ISDK {
   /** Send typing indicator
    * @param requestId RequestId of the omnichannel session.
    */
-  public async sendTypingIndicator(requestId?:string): Promise<void> {
+  public async sendTypingIndicator(requestId:string): Promise<void> {
     // avoiding logging Info for typingindicator to reduce log traffic
     const timer = Timer.TIMER();
     let endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.SendTypingIndicatorPath}/${requestId}`;
