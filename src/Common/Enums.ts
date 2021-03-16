@@ -79,7 +79,8 @@ export enum OCSDKTelemetryEvent {
   GETSURVEYINVITELINKFAILED = "GetSurveyInviteLinkFailed",
   VALIDATEAUTHCHATRECORDSTARTED = "ValidateAuthChatRecordStarted",
   VALIDATEAUTHCHATRECORDSUCCEEDED = "ValidateAuthChatRecordSucceeded",
-  VALIDATEAUTHCHATRECORDFAILED = "ValidateAuthChatRecordFailed"
+  VALIDATEAUTHCHATRECORDFAILED = "ValidateAuthChatRecordFailed",
+  SENDTYPINGINDICATORFAILED = "SendTypingIndicatorFailed"
 }
 
 export enum LiveChatVersion {
