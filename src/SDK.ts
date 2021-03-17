@@ -969,8 +969,6 @@ export default class SDK implements ISDK {
     const headers: StringMap = Constants.defaultHeaders;
     headers[OmnichannelHTTPHeaders.organizationId] = this.omnichannelConfiguration.orgId;
 
-    endpoint += `?channelId=${this.omnichannelConfiguration.channelId}`
-    
     const options: AxiosRequestConfig = {
       headers,
       method: "POST",
