@@ -963,7 +963,7 @@ export default class SDK implements ISDK {
   public async sendTypingIndicator(requestId:string): Promise<void> {
     // avoiding logging Info for typingindicator to reduce log traffic
     const timer = Timer.TIMER();
-    let endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.SendTypingIndicatorPath}/${requestId}`;
+    const endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.SendTypingIndicatorPath}/${requestId}`;
     const axiosInstance = axios.create();
 
     const headers: StringMap = Constants.defaultHeaders;
