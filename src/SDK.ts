@@ -961,6 +961,7 @@ export default class SDK implements ISDK {
    * @param requestId RequestId of the omnichannel session.
    */
   public async sendTypingIndicator(requestId:string): Promise<void> {
+    if (this.liveChatVersion !== LiveChatVersion.V2) { return new Error('Only supported on v2') }
     // avoiding logging Info for typingindicator to reduce log traffic
     const timer = Timer.TIMER();
     const endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.SendTypingIndicatorPath}/${requestId}`;
