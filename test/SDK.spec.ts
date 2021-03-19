@@ -553,6 +553,7 @@ describe("SDK unit tests", () => {
         it("Should return promise resolve", (done) => {
             spyOn<any>(axios, "create").and.returnValue(axiosInstMock);
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+            sdk.liveChatVersion = LiveChatVersion.V2
             const result = sdk.sendTypingIndicator(requestId);
             result.then(() => {
                 expect(axiosInstMock).toHaveBeenCalled();
@@ -564,6 +565,7 @@ describe("SDK unit tests", () => {
             spyOn<any>(axios, "create").and.returnValue(axiosInstMockWithError);
             spyOn(ocsdkLogger, "log").and.callFake(() => { });
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
+            sdk.liveChatVersion = LiveChatVersion.V2
             const result = sdk.sendTypingIndicator(requestId);
             result.then(() => {}, () => {
                 expect(ocsdkLogger.log).toHaveBeenCalled();
