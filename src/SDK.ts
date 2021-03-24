@@ -960,7 +960,7 @@ export default class SDK implements ISDK {
   /** Send typing indicator
    * @param requestId RequestId of the omnichannel session.
    */
-  public async sendTypingIndicator(requestId:string): Promise<void> {
+  public async sendTypingIndicator(requestId: string): Promise<void> {
     if (this.liveChatVersion !== LiveChatVersion.V2) { throw new Error('Only supported on v2') }
     // avoiding logging Info for typingindicator to reduce log traffic
     const timer = Timer.TIMER();
@@ -980,6 +980,12 @@ export default class SDK implements ISDK {
       const response = await axiosInstance(options);
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
       const { data } = response;
+      if (this.logger) {
+        this.logger.log(LogLevel.INFO,
+          OCSDKTelemetryEvent.SENDTYPINGINDICATORSUCCEEDED,
+          { RequestId: requestId, Region: data.Region, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds, TransactionId: response.headers["transaction-id"] },
+          "Send Typing Indicator Succeeded");
+      }
     } catch (error) {
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
       if (this.logger) {
