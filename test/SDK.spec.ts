@@ -2,29 +2,30 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-empty-function */
 
-import axios from "axios";
+import * as axiosRetry from "../src/Utils/axiosRetry";
+import * as uuidvModule from "../src/Utils/uuid";
+
+import { BrowserInfo } from "../src/Utils/BrowserInfo";
+import { DeviceInfo } from "../src/Utils/DeviceInfo";
 import IGetChatTranscriptsOptionalParams from "../src/Interfaces/IGetChatTranscriptsOptionalParams";
+import IGetSurveyInviteLinkOptionalParams from "../src/Interfaces/IGetSurveyInviteLinkOptionalParams";
+import ILogger from "../src/Model/ILogger";
+import IOCSDKLogData from "../src/Model/IOCSDKLogData";
 import IOmnichannelConfiguration from "../src/Interfaces/IOmnichannelConfiguration";
 import IReconnectableChatsParams from "../src/Interfaces/IReconnectableChatsParams";
 import ISDKConfiguration from "../src/Interfaces/ISDKConfiguration";
+import ISecondaryChannelEventOptionalParams from "../src/Interfaces/ISecondaryChannelEventOptionalParams";
 import ISessionCloseOptionalParams from "../src/Interfaces/ISessionCloseOptionalParams";
 import ISessionInitOptionalParams from "../src/Interfaces/ISessionInitOptionalParams";
 import ISubmitPostChatResponseOptionalParams from "../src/Interfaces/ISubmitPostChatResponseOptionalParams";
-import SDK from "../src/SDK";
-import * as axiosRetry from "../src/Utils/axiosRetry";
-import { BrowserInfo } from "../src/Utils/BrowserInfo";
-import { DeviceInfo } from "../src/Utils/DeviceInfo";
-import { LocationInfo } from "../src/Utils/LocationInfo";
-import { OSInfo } from "../src/Utils/OSInfo";
-import * as uuidvModule from "../src/Utils/uuid";
-import ISecondaryChannelEventOptionalParams from "../src/Interfaces/ISecondaryChannelEventOptionalParams";
-import { LogLevel } from "../src/Model/LogLevel";
-import IOCSDKLogData from "../src/Model/IOCSDKLogData";
-import ILogger from "../src/Model/ILogger";
-import OCSDKLogger from "../src/Common/OCSDKLogger";
-import IGetSurveyInviteLinkOptionalParams from "../src/Interfaces/IGetSurveyInviteLinkOptionalParams";
 import IValidateAuthChatRecordOptionalParams from "../src/Interfaces/IValidateAuthChatRecordOptionalParams";
 import { LiveChatVersion } from "../src/Common/Enums";
+import { LocationInfo } from "../src/Utils/LocationInfo";
+import { LogLevel } from "../src/Model/LogLevel";
+import OCSDKLogger from "../src/Common/OCSDKLogger";
+import { OSInfo } from "../src/Utils/OSInfo";
+import SDK from "../src/SDK";
+import axios from "axios";
 
 describe("SDK unit tests", () => {
 
@@ -541,6 +542,31 @@ describe("SDK unit tests", () => {
             spyOn(ocsdkLogger, "log").and.callFake(() => { });
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
             const result = sdk.validateAuthChatRecord(requestId, validateAuthChatRecordOptionalParams as IValidateAuthChatRecordOptionalParams);
+            result.then(() => {}, () => {
+                expect(ocsdkLogger.log).toHaveBeenCalled();
+                done();
+            });
+        });
+    });
+    describe("Test sendtypingindicator method", () => {
+
+        it("Should return promise resolve", (done) => {
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMock);
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+            sdk.liveChatVersion = LiveChatVersion.V2
+            const result = sdk.sendTypingIndicator(requestId);
+            result.then(() => {
+                expect(axiosInstMock).toHaveBeenCalled();
+                done();
+            });
+        });
+
+        it("Should reject when axiosInstance throws an error", (done) => {
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockWithError);
+            spyOn(ocsdkLogger, "log").and.callFake(() => { });
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
+            sdk.liveChatVersion = LiveChatVersion.V2
+            const result = sdk.sendTypingIndicator(requestId);
             result.then(() => {}, () => {
                 expect(ocsdkLogger.log).toHaveBeenCalled();
                 done();
