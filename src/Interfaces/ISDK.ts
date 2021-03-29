@@ -1,9 +1,9 @@
+import FetchChatTokenResponse from "../Model/FetchChatTokenResponse";
 import IDataMaskingInfo from "../Interfaces/IDataMaskingInfo";
 import IReconnectableChatsParams from "../Interfaces/IReconnectableChatsParams";
-import FetchChatTokenResponse from "../Model/FetchChatTokenResponse";
 
 export default interface ISDK {
-  getChatConfig(requestId: string): Promise<object>;
+  getChatConfig(requestId: string, bypassCache?: boolean): Promise<object>;
   getLWIDetails(requestId: string): Promise<object>;
   getChatToken(requestId: string): Promise<FetchChatTokenResponse>;
   sessionInit(requestId: string): Promise<void>;
@@ -16,4 +16,5 @@ export default interface ISDK {
   emailTranscript(requestId: string, token: string, emailRequestBody: object): Promise<void>;
   fetchDataMaskingInfo(requestId: string): Promise<IDataMaskingInfo>;
   makeSecondaryChannelEventRequest(requestId: string, secondaryChannelEventRequestBody: object): Promise<void>;
+  sendTypingIndicator(requestId: string): Promise<void>;
 }
