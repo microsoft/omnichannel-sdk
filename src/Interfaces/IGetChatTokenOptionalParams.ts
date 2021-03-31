@@ -7,4 +7,8 @@ export default interface IGetChatTokenOptionalParams {
    * JWT token from the portal
    */
   authenticatedUserToken?: string;
+  /**
+   * Current livechatversion
+   */
+  currentLiveChatVersion?: number;
 }
