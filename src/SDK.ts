@@ -971,7 +971,7 @@ export default class SDK implements ISDK {
     // avoiding logging Info for typingindicator to reduce log traffic
     const timer = Timer.TIMER();
     const { currentLiveChatVersion } = sendTypingIndicatorOptionalParams;
-    if (!currentLiveChatVersion && currentLiveChatVersion !== LiveChatVersion.V2) { throw new Error('Typing indicator is only supported on v2') }
+    if (!currentLiveChatVersion || currentLiveChatVersion !== LiveChatVersion.V2) { throw new Error('Typing indicator is only supported on v2') }
     const endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.SendTypingIndicatorPath}/${requestId}`;
     const axiosInstance = axios.create();
 
