@@ -16,7 +16,6 @@ import IReconnectableChatsParams from "./Interfaces/IReconnectableChatsParams";
 import ISDK from "./Interfaces/ISDK";
 import ISDKConfiguration from "./Interfaces/ISDKConfiguration";
 import ISecondaryChannelEventOptionalParams from "./Interfaces/ISecondaryChannelEventOptionalParams";
-import ISendTypingIndicatorOptionalParams from "./Interfaces/ISendTypingIndicatorOptionalParams";
 import ISessionCloseOptionalParams from "./Interfaces/ISessionCloseOptionalParams";
 import ISessionInitOptionalParams from "./Interfaces/ISessionInitOptionalParams";
 import ISubmitPostChatResponseOptionalParams from "./Interfaces/ISubmitPostChatResponseOptionalParams";
@@ -967,10 +966,9 @@ export default class SDK implements ISDK {
   /** Send typing indicator
    * @param requestId RequestId of the omnichannel session.
    */
-  public async sendTypingIndicator(requestId: string, sendTypingIndicatorOptionalParams: ISendTypingIndicatorOptionalParams = {}): Promise<void> {   
+  public async sendTypingIndicator(requestId: string, currentLiveChatVersion: number): Promise<void> {   
     // avoiding logging Info for typingindicator to reduce log traffic
     const timer = Timer.TIMER();
-    const { currentLiveChatVersion } = sendTypingIndicatorOptionalParams;
     if (!currentLiveChatVersion || currentLiveChatVersion !== LiveChatVersion.V2) { throw new Error('Typing indicator is only supported on v2') }
     const endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.SendTypingIndicatorPath}/${requestId}`;
     const axiosInstance = axios.create();

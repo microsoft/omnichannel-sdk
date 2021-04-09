@@ -15,7 +15,6 @@ import IOmnichannelConfiguration from "../src/Interfaces/IOmnichannelConfigurati
 import IReconnectableChatsParams from "../src/Interfaces/IReconnectableChatsParams";
 import ISDKConfiguration from "../src/Interfaces/ISDKConfiguration";
 import ISecondaryChannelEventOptionalParams from "../src/Interfaces/ISecondaryChannelEventOptionalParams";
-import ISendTypingIndicatorOptionalParams from "../src/Interfaces/ISendTypingIndicatorOptionalParams";
 import ISessionCloseOptionalParams from "../src/Interfaces/ISessionCloseOptionalParams";
 import ISessionInitOptionalParams from "../src/Interfaces/ISessionInitOptionalParams";
 import ISubmitPostChatResponseOptionalParams from "../src/Interfaces/ISubmitPostChatResponseOptionalParams";
@@ -550,15 +549,12 @@ describe("SDK unit tests", () => {
         });
     });
     describe("Test sendtypingindicator method", () => {
-
-        const sendTypingIndicatorOptionalParams = {
-            currentLiveChatVersion: 2
-        };
         
         it("Should return promise resolve", (done) => {
+            let currentLiveChatVersion = 2;
             spyOn<any>(axios, "create").and.returnValue(axiosInstMock);
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
-            const result = sdk.sendTypingIndicator(requestId, sendTypingIndicatorOptionalParams as ISendTypingIndicatorOptionalParams);
+            const result = sdk.sendTypingIndicator(requestId, currentLiveChatVersion);
             result.then(() => {
                 expect(axiosInstMock).toHaveBeenCalled();
                 done();
@@ -566,10 +562,11 @@ describe("SDK unit tests", () => {
         });
 
         it("Should reject when axiosInstance throws an error", (done) => {
+            let currentLiveChatVersion = 2;
             spyOn<any>(axios, "create").and.returnValue(axiosInstMockWithError);
             spyOn(ocsdkLogger, "log").and.callFake(() => { });
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
-            const result = sdk.sendTypingIndicator(requestId, sendTypingIndicatorOptionalParams as ISendTypingIndicatorOptionalParams);
+            const result = sdk.sendTypingIndicator(requestId, currentLiveChatVersion);
             result.then(() => {}, () => {
                 expect(ocsdkLogger.log).toHaveBeenCalled();
                 done();
@@ -577,15 +574,13 @@ describe("SDK unit tests", () => {
         });
         
         it("Should throw error when currentlivechatversion is 1", (done) => {
+            let currentLiveChatVersion = 1;
             spyOn<any>(axios, "create").and.returnValue(axiosInstMock);
             spyOn(ocsdkLogger, "log").and.callFake(() => { });
-            const mocksendTypingIndicatorOptionalParams = {
-                currentLiveChatVersion: 1
-            };           
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
-            const result = sdk.sendTypingIndicator(requestId, mocksendTypingIndicatorOptionalParams as ISendTypingIndicatorOptionalParams);
-            result.then(() => {}, () => {
-                expect(ocsdkLogger.log).toHaveBeenCalled();
+            const result = sdk.sendTypingIndicator(requestId, currentLiveChatVersion);
+            result.then(() => {}, (error) => {
+                expect(error).toEqual(new Error('Typing indicator is only supported on v2'));
                 done();
             });
         });
