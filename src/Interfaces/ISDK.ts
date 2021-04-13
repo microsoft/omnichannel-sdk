@@ -16,5 +16,5 @@ export default interface ISDK {
   emailTranscript(requestId: string, token: string, emailRequestBody: object): Promise<void>;
   fetchDataMaskingInfo(requestId: string): Promise<IDataMaskingInfo>;
   makeSecondaryChannelEventRequest(requestId: string, secondaryChannelEventRequestBody: object): Promise<void>;
-  sendTypingIndicator(requestId: string): Promise<void>;
+  sendTypingIndicator(requestId: string, currentLiveChatVersion: number): Promise<void>;
 }

@@ -972,10 +972,10 @@ export default class SDK implements ISDK {
   /** Send typing indicator
    * @param requestId RequestId of the omnichannel session.
    */
-  public async sendTypingIndicator(requestId: string): Promise<void> {
-    if (this.liveChatVersion !== LiveChatVersion.V2) { throw new Error('Only supported on v2') }
+  public async sendTypingIndicator(requestId: string, currentLiveChatVersion: number): Promise<void> {   
     // avoiding logging Info for typingindicator to reduce log traffic
     const timer = Timer.TIMER();
+    if (!currentLiveChatVersion || currentLiveChatVersion !== LiveChatVersion.V2) { throw new Error('Typing indicator is only supported on v2') }
     const endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.SendTypingIndicatorPath}/${requestId}`;
     const axiosInstance = axios.create();
 
