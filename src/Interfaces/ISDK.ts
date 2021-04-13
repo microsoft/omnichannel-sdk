@@ -4,7 +4,7 @@ import IGetQueueAvailabilityOptionalParams from "./IGetQueueAvailabilityOptional
 import IReconnectableChatsParams from "../Interfaces/IReconnectableChatsParams";
 
 export default interface ISDK {
-  getChatConfig(requestId: string): Promise<object>;
+  getChatConfig(requestId: string, bypassCache?: boolean): Promise<object>;
   getLWIDetails(requestId: string): Promise<object>;
   getChatToken(requestId: string): Promise<FetchChatTokenResponse>;
   sessionInit(requestId: string): Promise<void>;
@@ -18,4 +18,5 @@ export default interface ISDK {
   fetchDataMaskingInfo(requestId: string): Promise<IDataMaskingInfo>;
   makeSecondaryChannelEventRequest(requestId: string, secondaryChannelEventRequestBody: object): Promise<void>;
   getQueueAvailability(requestId: string, queueAvailabilityOptionalParams: IGetQueueAvailabilityOptionalParams): Promise<object>
+  sendTypingIndicator(requestId: string, currentLiveChatVersion: number): Promise<void>;
 }

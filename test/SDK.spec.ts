@@ -20,6 +20,7 @@ import ISessionCloseOptionalParams from "../src/Interfaces/ISessionCloseOptional
 import ISessionInitOptionalParams from "../src/Interfaces/ISessionInitOptionalParams";
 import ISubmitPostChatResponseOptionalParams from "../src/Interfaces/ISubmitPostChatResponseOptionalParams";
 import IValidateAuthChatRecordOptionalParams from "../src/Interfaces/IValidateAuthChatRecordOptionalParams";
+import { LiveChatVersion } from "../src/Common/Enums";
 import { LocationInfo } from "../src/Utils/LocationInfo";
 import { LogLevel } from "../src/Model/LogLevel";
 import OCSDKLogger from "../src/Common/OCSDKLogger";
@@ -127,6 +128,18 @@ describe("SDK unit tests", () => {
         expect(axios.create).toHaveBeenCalled();
         expect(axiosRetry.default).toHaveBeenCalled();
         expect(ocsdkLogger.log).not.toHaveBeenCalled();
+    });
+    
+    it("Test getChatConfig method to set LiveChatVersion", () => {
+        let configmock = {data: { requestId: "someId", LiveChatVersion: 2 }}; 
+        spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return configmock;}});        
+        const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+        axiosInstMock = jasmine.createSpy("axiosInstance").and.returnValue(configmock);
+        const config = sdk.getChatConfig("");       
+        expect(axios.create).toHaveBeenCalled();
+        config.then(function(result: any){
+            expect(result.LiveChatVersion).toEqual(sdk.liveChatVersion);
+        });
     });
 
     it("Test getLWIDetails method with pluggable telemetry", () => {
@@ -596,6 +609,43 @@ describe("SDK unit tests", () => {
             const result = sdk.validateAuthChatRecord(requestId, validateAuthChatRecordOptionalParams as IValidateAuthChatRecordOptionalParams);
             result.then(() => {}, () => {
                 expect(ocsdkLogger.log).toHaveBeenCalled();
+                done();
+            });
+        });
+    });
+    describe("Test sendtypingindicator method", () => {
+        
+        it("Should return promise resolve", (done) => {
+            let currentLiveChatVersion = 2;
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMock);
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+            const result = sdk.sendTypingIndicator(requestId, currentLiveChatVersion);
+            result.then(() => {
+                expect(axiosInstMock).toHaveBeenCalled();
+                done();
+            });
+        });
+
+        it("Should reject when axiosInstance throws an error", (done) => {
+            let currentLiveChatVersion = 2;
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockWithError);
+            spyOn(ocsdkLogger, "log").and.callFake(() => { });
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
+            const result = sdk.sendTypingIndicator(requestId, currentLiveChatVersion);
+            result.then(() => {}, () => {
+                expect(ocsdkLogger.log).toHaveBeenCalled();
+                done();
+            });
+        });
+        
+        it("Should throw error when currentlivechatversion is 1", (done) => {
+            let currentLiveChatVersion = 1;
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMock);
+            spyOn(ocsdkLogger, "log").and.callFake(() => { });
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
+            const result = sdk.sendTypingIndicator(requestId, currentLiveChatVersion);
+            result.then(() => {}, (error) => {
+                expect(error).toEqual(new Error('Typing indicator is only supported on v2'));
                 done();
             });
         });

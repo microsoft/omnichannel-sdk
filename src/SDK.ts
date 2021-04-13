@@ -1,7 +1,6 @@
+import { ChannelId, LiveChatVersion } from "./Common/Enums";
 import axios, { AxiosRequestConfig } from "axios";
-
 import { BrowserInfo } from "./Utils/BrowserInfo";
-import { ChannelId } from "./Common/Enums";
 import Constants from "./Common/Constants";
 import { DeviceInfo } from "./Utils/DeviceInfo";
 import FetchChatTokenResponse from "./Model/FetchChatTokenResponse";
@@ -43,6 +42,8 @@ export default class SDK implements ISDK {
     getChatTokenTimeBetweenRetriesOnFailure: 10000,
     maxRequestRetriesOnFailure: 3
   };
+  
+  liveChatVersion: number;
 
   public constructor(private omnichannelConfiguration: IOmnichannelConfiguration, private configuration: ISDKConfiguration = SDK.defaultConfiguration, private logger?: OCSDKLogger) {
     // Sets to default configuration if passed configuration is empty or is not an object
@@ -70,13 +71,15 @@ export default class SDK implements ISDK {
         throw new Error(`Missing '${key}' in OmnichannelConfiguration`);
       }
     }
+    
+    this.liveChatVersion = LiveChatVersion.V1;
   }
 
   /**
    * Fetches chat config.
    * @param requestId: RequestId to use to get chat config (Optional).
    */
-  public async getChatConfig(requestId: string): Promise<object> {
+  public async getChatConfig(requestId: string, bypassCache = false): Promise<object> {
     const timer = Timer.TIMER();
     if (this.logger) {
       this.logger.log(LogLevel.INFO,
@@ -92,9 +95,18 @@ export default class SDK implements ISDK {
     const axiosInstance = axios.create();
     axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
 
-    const response = await axiosInstance.get(endpoint);
+    let headers = {};
+    if (bypassCache) {
+      headers = { ...Constants.bypassCacheHeaders, ...headers };
+    }
+    const response = await axiosInstance.get(endpoint, {
+      headers,
+    });
     const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
     const { data } = response;
+    if (data.LiveChatVersion && data.LiveChatVersion === LiveChatVersion.V2) {
+      this.liveChatVersion = data.LiveChatVersion;
+    }
     if (this.logger) {
       this.logger.log(LogLevel.INFO,
         OCSDKTelemetryEvent.GETCHATCONFIGSUCCESS,
@@ -179,7 +191,7 @@ export default class SDK implements ISDK {
    */
   public async getChatToken(requestId: string, getChatTokenOptionalParams: IGetChatTokenOptionalParams = {}, currentRetryCount: number = 0): Promise<FetchChatTokenResponse> { // eslint-disable-line @typescript-eslint/no-inferrable-types
     const timer = Timer.TIMER();
-    const { reconnectId, authenticatedUserToken } = getChatTokenOptionalParams;
+    const { reconnectId, authenticatedUserToken, currentLiveChatVersion } = getChatTokenOptionalParams;
     if (this.logger) {
       this.logger.log(LogLevel.INFO,
         OCSDKTelemetryEvent.GETCHATTOKENSTARTED,
@@ -193,13 +205,22 @@ export default class SDK implements ISDK {
     if (!requestId) {
       requestId = uuidv4();
     }
+    const headers: StringMap = Constants.defaultHeaders;  
     let endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatGetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
-    const headers: StringMap = Constants.defaultHeaders;
-    if (authenticatedUserToken) {
-      endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthGetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
-      headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
-    }
 
+    if (this.liveChatVersion === LiveChatVersion.V2 || (currentLiveChatVersion && currentLiveChatVersion === LiveChatVersion.V2)) {
+      endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatv2GetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
+      if (authenticatedUserToken) {
+        endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatv2AuthGetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
+        headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+      }
+    } else {
+      if (authenticatedUserToken) {
+        endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthGetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
+        headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+      }
+    }
+    
     if (reconnectId) {
       endpoint += `/${reconnectId}`;
     }
@@ -472,14 +493,14 @@ export default class SDK implements ISDK {
         { RequestId: requestId },
         "Session Init Started");
     }
-    
-    let endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatSessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
+
     const axiosInstance = axios.create();
     axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
 
     const { reconnectId, authenticatedUserToken, initContext, getContext } = sessionInitOptionalParams;
 
     const headers: StringMap = Constants.defaultHeaders;
+    let endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatSessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
 
     if (authenticatedUserToken) {
       endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthSessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
@@ -809,15 +830,21 @@ export default class SDK implements ISDK {
     const axiosInstance = axios.create();
     axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
 
-    const { authenticatedUserToken } = getChatTranscriptsOptionalParams;
+    const { authenticatedUserToken, currentLiveChatVersion } = getChatTranscriptsOptionalParams;
 
     const headers: StringMap = Constants.defaultHeaders;
     headers[OmnichannelHTTPHeaders.organizationId] = this.omnichannelConfiguration.orgId;
     headers[OmnichannelHTTPHeaders.widgetAppId] = this.omnichannelConfiguration.widgetId;
     headers[OmnichannelHTTPHeaders.authorization] = token;
 
-    if (authenticatedUserToken) {
-      endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthGetChatTranscriptPath}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
+    if (this.liveChatVersion === LiveChatVersion.V2 || (currentLiveChatVersion && currentLiveChatVersion === LiveChatVersion.V2)){
+      endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatv2GetChatTranscriptPath}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
+      if (authenticatedUserToken) {
+        endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatv2AuthGetChatTranscriptPath}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
+      }
+    }
+    else if (authenticatedUserToken) {
+      endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthGetChatTranscriptPath}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;      
     }
 
     const options: AxiosRequestConfig = {
@@ -1021,6 +1048,47 @@ export default class SDK implements ISDK {
           OCSDKTelemetryEvent.SECONDARYCHANNELEVENTREQUESTFAILED,
           { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds},
           "Secondary Channel Event Request Failed");
+      }
+      throw error;
+    }
+  }
+  
+  /** Send typing indicator
+   * @param requestId RequestId of the omnichannel session.
+   */
+  public async sendTypingIndicator(requestId: string, currentLiveChatVersion: number): Promise<void> {   
+    // avoiding logging Info for typingindicator to reduce log traffic
+    const timer = Timer.TIMER();
+    if (!currentLiveChatVersion || currentLiveChatVersion !== LiveChatVersion.V2) { throw new Error('Typing indicator is only supported on v2') }
+    const endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.SendTypingIndicatorPath}/${requestId}`;
+    const axiosInstance = axios.create();
+
+    const headers: StringMap = Constants.defaultHeaders;
+    headers[OmnichannelHTTPHeaders.organizationId] = this.omnichannelConfiguration.orgId;
+
+    const options: AxiosRequestConfig = {
+      headers,
+      method: "POST",
+      url: endpoint
+    };
+    
+    try {
+      const response = await axiosInstance(options);
+      const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+      const { data } = response;
+      if (this.logger) {
+        this.logger.log(LogLevel.INFO,
+          OCSDKTelemetryEvent.SENDTYPINGINDICATORSUCCEEDED,
+          { RequestId: requestId, Region: data.Region, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds, TransactionId: response.headers["transaction-id"] },
+          "Send Typing Indicator Succeeded");
+      }
+    } catch (error) {
+      const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+      if (this.logger) {
+        this.logger.log(LogLevel.ERROR,
+          OCSDKTelemetryEvent.SENDTYPINGINDICATORFAILED,
+          { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds},
+          "Send Typing Indicator Failed");
       }
       throw error;
     }
