@@ -968,7 +968,7 @@ export default class SDK implements ISDK {
    */
   public async sendTypingIndicator(requestId: string, currentLiveChatVersion: number): Promise<void> {   
     // avoiding logging Info for typingindicator to reduce log traffic
-    if (currentLiveChatVersion && currentLiveChatVersion === LiveChatVersion.V2) {
+    if (!currentLiveChatVersion || currentLiveChatVersion !== LiveChatVersion.V2) {
       return Promise.resolve();
     }
     const timer = Timer.TIMER();
@@ -1003,8 +1003,7 @@ export default class SDK implements ISDK {
             { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds},
             "Send Typing Indicator Failed");
         }
-        throw error;
-        reject();
+        reject(error);
       }
     });
   }
