@@ -969,38 +969,39 @@ export default class SDK implements ISDK {
   public async sendTypingIndicator(requestId: string, currentLiveChatVersion: number): Promise<void> {   
     // avoiding logging Info for typingindicator to reduce log traffic
     const timer = Timer.TIMER();
-    if (!currentLiveChatVersion || currentLiveChatVersion !== LiveChatVersion.V2) { throw new Error('Typing indicator is only supported on v2') }
-    const endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.SendTypingIndicatorPath}/${requestId}`;
-    const axiosInstance = axios.create();
+    if (currentLiveChatVersion && currentLiveChatVersion === LiveChatVersion.V2) {
+      const endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.SendTypingIndicatorPath}/${requestId}`;
+      const axiosInstance = axios.create();
 
-    const headers: StringMap = Constants.defaultHeaders;
-    headers[OmnichannelHTTPHeaders.organizationId] = this.omnichannelConfiguration.orgId;
+      const headers: StringMap = Constants.defaultHeaders;
+      headers[OmnichannelHTTPHeaders.organizationId] = this.omnichannelConfiguration.orgId;
 
-    const options: AxiosRequestConfig = {
-      headers,
-      method: "POST",
-      url: endpoint
-    };
-    
-    try {
-      const response = await axiosInstance(options);
-      const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-      const { data } = response;
-      if (this.logger) {
-        this.logger.log(LogLevel.INFO,
-          OCSDKTelemetryEvent.SENDTYPINGINDICATORSUCCEEDED,
-          { RequestId: requestId, Region: data.Region, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds, TransactionId: response.headers["transaction-id"] },
-          "Send Typing Indicator Succeeded");
+      const options: AxiosRequestConfig = {
+        headers,
+        method: "POST",
+        url: endpoint
+      };
+      
+      try {
+        const response = await axiosInstance(options);
+        const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+        const { data } = response;
+        if (this.logger) {
+          this.logger.log(LogLevel.INFO,
+            OCSDKTelemetryEvent.SENDTYPINGINDICATORSUCCEEDED,
+            { RequestId: requestId, Region: data.Region, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds, TransactionId: response.headers["transaction-id"] },
+            "Send Typing Indicator Succeeded");
+        }
+      } catch (error) {
+        const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+        if (this.logger) {
+          this.logger.log(LogLevel.ERROR,
+            OCSDKTelemetryEvent.SENDTYPINGINDICATORFAILED,
+            { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds},
+            "Send Typing Indicator Failed");
+        }
+        throw error;
       }
-    } catch (error) {
-      const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-      if (this.logger) {
-        this.logger.log(LogLevel.ERROR,
-          OCSDKTelemetryEvent.SENDTYPINGINDICATORFAILED,
-          { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds},
-          "Send Typing Indicator Failed");
-      }
-      throw error;
     }
   }
 }
