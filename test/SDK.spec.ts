@@ -549,7 +549,6 @@ describe("SDK unit tests", () => {
         });
     });
     describe("Test sendtypingindicator method", () => {
-        
         it("Should return promise resolve", (done) => {
             let currentLiveChatVersion = 2;
             spyOn<any>(axios, "create").and.returnValue(axiosInstMock);
