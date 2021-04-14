@@ -968,20 +968,22 @@ export default class SDK implements ISDK {
    */
   public async sendTypingIndicator(requestId: string, currentLiveChatVersion: number): Promise<void> {   
     // avoiding logging Info for typingindicator to reduce log traffic
-    const timer = Timer.TIMER();
     if (currentLiveChatVersion && currentLiveChatVersion === LiveChatVersion.V2) {
-      const endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.SendTypingIndicatorPath}/${requestId}`;
-      const axiosInstance = axios.create();
+      return Promise.resolve();
+    }
+    const timer = Timer.TIMER();
+    const endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.SendTypingIndicatorPath}/${requestId}`;
+    const axiosInstance = axios.create();
 
-      const headers: StringMap = Constants.defaultHeaders;
-      headers[OmnichannelHTTPHeaders.organizationId] = this.omnichannelConfiguration.orgId;
+    const headers: StringMap = Constants.defaultHeaders;
+    headers[OmnichannelHTTPHeaders.organizationId] = this.omnichannelConfiguration.orgId;
 
-      const options: AxiosRequestConfig = {
-        headers,
-        method: "POST",
-        url: endpoint
-      };
-      
+    const options: AxiosRequestConfig = {
+      headers,
+      method: "POST",
+      url: endpoint
+    };
+    return new Promise(async (resolve, reject) => {
       try {
         const response = await axiosInstance(options);
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
@@ -992,6 +994,7 @@ export default class SDK implements ISDK {
             { RequestId: requestId, Region: data.Region, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds, TransactionId: response.headers["transaction-id"] },
             "Send Typing Indicator Succeeded");
         }
+        resolve();
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         if (this.logger) {
@@ -1001,7 +1004,8 @@ export default class SDK implements ISDK {
             "Send Typing Indicator Failed");
         }
         throw error;
+        reject();
       }
-    }
+    });
   }
 }
