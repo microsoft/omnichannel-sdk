@@ -571,17 +571,5 @@ describe("SDK unit tests", () => {
                 done();
             });
         });
-        
-        it("Should throw error when currentlivechatversion is 1", (done) => {
-            let currentLiveChatVersion = 1;
-            spyOn<any>(axios, "create").and.returnValue(axiosInstMock);
-            spyOn(ocsdkLogger, "log").and.callFake(() => { });
-            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
-            const result = sdk.sendTypingIndicator(requestId, currentLiveChatVersion);
-            result.then(() => {}, (error) => {
-                expect(error).toEqual(new Error('Typing indicator is only supported on v2'));
-                done();
-            });
-        });
     });
 });
