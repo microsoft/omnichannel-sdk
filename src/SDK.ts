@@ -1,6 +1,5 @@
 import { ChannelId, LiveChatVersion } from "./Common/Enums";
 import axios, { AxiosRequestConfig } from "axios";
-
 import { BrowserInfo } from "./Utils/BrowserInfo";
 import Constants from "./Common/Constants";
 import { DeviceInfo } from "./Utils/DeviceInfo";
@@ -10,6 +9,7 @@ import IEmailTranscriptOptionalParams from "./Interfaces/IEmailTranscriptOptiona
 import IGetChatTokenOptionalParams from "./Interfaces/IGetChatTokenOptionalParams";
 import IGetChatTranscriptsOptionalParams from "./Interfaces/IGetChatTranscriptsOptionalParams";
 import IGetLWIDetailsOptionalParams from "./Interfaces/IGetLWIDetailsOptionalParams";
+import IGetQueueAvailabilityOptionalParams from "./Interfaces/IGetQueueAvailabilityOptionalParams";
 import IGetSurveyInviteLinkOptionalParams from "./Interfaces/IGetSurveyInviteLinkOptionalParams";
 import IOmnichannelConfiguration from "./Interfaces/IOmnichannelConfiguration";
 import IReconnectableChatsParams from "./Interfaces/IReconnectableChatsParams";
@@ -28,6 +28,7 @@ import { OCSDKTelemetryEvent } from "./Common/Enums";
 import { OSInfo } from "./Utils/OSInfo";
 import OmnichannelEndpoints from "./Common/OmnichannelEndpoints";
 import OmnichannelHTTPHeaders from "./Common/OmnichannelHTTPHeaders";
+import QueueAvailability from "./Model/QueueAvailability";
 import ReconnectAvailability from "./Model/ReconnectAvailability";
 import ReconnectMappingRecord from "./Model/ReconnectMappingRecord";
 import { StringMap } from "./Common/Mappings";
@@ -398,6 +399,88 @@ export default class SDK implements ISDK {
   }
 
   /**
+   * 
+   * @param requestId: RequestId to use for session init.
+   * @param queueAvailabilityOptionalParams: Optional parameters for session init.
+   */
+  public async getQueueAvailability(requestId: string, queueAvailabilityOptionalParams: IGetQueueAvailabilityOptionalParams = {}): Promise<QueueAvailability> {
+    const timer = Timer.TIMER();
+    if (this.logger) {
+      this.logger.log(LogLevel.INFO,
+        OCSDKTelemetryEvent.GETQUEUEAVAILABILITYSTARTED,
+        { RequestId: requestId },
+        "Get queue availability started");
+    }
+
+    const endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.GetQueueAvailabilityPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=lcw`;
+    const axiosInstance = axios.create();
+    axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
+
+    const {authenticatedUserToken, initContext, getContext } = queueAvailabilityOptionalParams;
+
+    const headers: StringMap = Constants.defaultHeaders;
+
+    if (authenticatedUserToken) {
+      headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+    }
+
+    const data: InitContext = initContext || {};
+
+    if (getContext && !window.document) {
+      return Promise.reject(new Error(`getContext is only supported on web browsers`));
+    }
+
+    if (getContext) {
+      data.browser = BrowserInfo.getBrowserName();
+      data.device = DeviceInfo.getDeviceType();
+      data.originurl = window.location.href;
+      data.os = OSInfo.getOsType();
+    }
+
+    if (!data.locale) {
+      data.locale = Constants.defaultLocale;
+    }
+
+    // Validate locale
+    if (data.locale && !Locales.supportedLocales.includes(data.locale)) {
+      return Promise.reject(new Error(`Unsupported locale: '${data.locale}'`));
+    }
+
+    const options: AxiosRequestConfig = {
+      data,
+      headers,
+      method: "POST",
+      url: endpoint
+    };
+
+    return new Promise(async (resolve, reject) => {
+      try {
+        const response = await axiosInstance(options);
+        const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+        const {data} = response;
+        if(data) {
+          if (this.logger) {
+            this.logger.log(LogLevel.INFO,
+              OCSDKTelemetryEvent.GETQUEUEAVAILABILITYSUCCEEDED,
+              { RequestId: requestId, Region: response.data.Region, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds, TransactionId: response.headers["transaction-id"] },
+              "Get queue availability Succeeded");
+          }
+          resolve(data);
+        }
+      } catch (error) {
+        const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+        if (this.logger) {
+          this.logger.log(LogLevel.ERROR,
+            OCSDKTelemetryEvent.GETQUEUEAVAILABILITYFAILED,
+            { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds},
+            "Get queue availability failed");
+        }
+        reject(error);
+      }
+    });
+  }
+
+  /**
    * Starts a session to omnichannel.
    * @param requestId: RequestId to use for session init.
    * @param sessionInitOptionalParams: Optional parameters for session init.
@@ -410,6 +493,7 @@ export default class SDK implements ISDK {
         { RequestId: requestId },
         "Session Init Started");
     }
+
     const axiosInstance = axios.create();
     axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
 

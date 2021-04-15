@@ -80,6 +80,9 @@ export enum OCSDKTelemetryEvent {
   VALIDATEAUTHCHATRECORDSTARTED = "ValidateAuthChatRecordStarted",
   VALIDATEAUTHCHATRECORDSUCCEEDED = "ValidateAuthChatRecordSucceeded",
   VALIDATEAUTHCHATRECORDFAILED = "ValidateAuthChatRecordFailed",
+  GETQUEUEAVAILABILITYSTARTED = "GetQueueAvailabilityStarted",
+  GETQUEUEAVAILABILITYSUCCEEDED = "GetQueueAvailabilitySucceeded",
+  GETQUEUEAVAILABILITYFAILED = "GetQueueAvailabilityFailed",
   SENDTYPINGINDICATORFAILED = "SendTypingIndicatorFailed",
   SENDTYPINGINDICATORSUCCEEDED = "SendTypingIndicatorSucceeded"
 }
