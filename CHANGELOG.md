@@ -3,6 +3,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.2.0] - 2021-05-05
+### Added
+- `livechatconnector/v2/auth/getchattoken` endpoint
+- `inbound/typingindicator/livechat/sendtypingindicator` endpoint
+- `livechatconnector/v2/getchattranscripts` endpoint
+- `livechatconnector/v2/auth/getchattranscripts` endpoint
+
 ## [0.1.1] - 2021-02-16
 ### Added
 - `livechatconnector/v2/getchattoken` endpoint
