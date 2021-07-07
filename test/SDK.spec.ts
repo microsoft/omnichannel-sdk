@@ -20,8 +20,8 @@ import ISessionCloseOptionalParams from "../src/Interfaces/ISessionCloseOptional
 import ISessionInitOptionalParams from "../src/Interfaces/ISessionInitOptionalParams";
 import ISubmitPostChatResponseOptionalParams from "../src/Interfaces/ISubmitPostChatResponseOptionalParams";
 import IValidateAuthChatRecordOptionalParams from "../src/Interfaces/IValidateAuthChatRecordOptionalParams";
-import { LiveChatVersion } from "../src/Common/Enums";
 import { LocationInfo } from "../src/Utils/LocationInfo";
+import { LoggingSanitizer } from "../src/Utils/LoggingSanitizer";
 import { LogLevel } from "../src/Model/LogLevel";
 import OCSDKLogger from "../src/Common/OCSDKLogger";
 import { OSInfo } from "../src/Utils/OSInfo";
@@ -653,8 +653,7 @@ describe("SDK unit tests", () => {
                 }
             }
 
-            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
-            sdk.processErrorObject(errorObject);
+            LoggingSanitizer.stripErrorSensitiveProperties(errorObject);
             expect(errorObject["config"]["headers"]["AuthenticatedUserToken"]).toBeUndefined();
             done();
         });
@@ -671,16 +670,14 @@ describe("SDK unit tests", () => {
                     },
                 }
             }
-            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
-            sdk.processErrorObject(errorObject);
+            LoggingSanitizer.stripErrorSensitiveProperties(errorObject);
             expect(errorObject["config"]["headers"]["AuthenticatedUserToken"]).toBeUndefined();
             done();
         });
 
         it("Test process error object when error is null", (done) => {
             const errorObject = null
-            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
-            sdk.processErrorObject(errorObject);
+            LoggingSanitizer.stripErrorSensitiveProperties(errorObject);
             expect(errorObject).toEqual(null);
             done();
         });
