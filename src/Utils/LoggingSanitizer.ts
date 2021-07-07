@@ -1,7 +1,6 @@
 import Constants from "../Common/Constants";
 
 export class LoggingSanitizer  {
-  // eslint-disable-line @typescript-eslint/no-explicit-any
   public static stripErrorSensitiveProperties(errorObject: any): void { // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
     if(errorObject && typeof errorObject === 'object' && Object.keys(errorObject)?.length > 0) {
       Object.keys(errorObject)?.forEach( (key) => {
