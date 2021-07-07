@@ -22,6 +22,7 @@ import ISubmitPostChatResponseOptionalParams from "./Interfaces/ISubmitPostChatR
 import IValidateAuthChatRecordOptionalParams from "./Interfaces/IValidateAuthChatRecordOptionalParams";
 import InitContext from "./Model/InitContext";
 import Locales from "./Common/Locales";
+import { LoggingSanitizer } from "./Utils/LoggingSanitizer";
 import { LogLevel } from "./Model/LogLevel";
 import OCSDKLogger from "./Common/OCSDKLogger";
 import { OCSDKTelemetryEvent } from "./Common/Enums";
@@ -175,6 +176,7 @@ export default class SDK implements ISDK {
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         if (this.logger) {
+          await LoggingSanitizer.stripErrorSensitiveProperties(error);
           this.logger.log(LogLevel.ERROR,
             OCSDKTelemetryEvent.GETLWISTATUSFAILED,
             { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds },
@@ -259,6 +261,7 @@ export default class SDK implements ISDK {
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         if (this.logger) {
+          await LoggingSanitizer.stripErrorSensitiveProperties(error);
           this.logger.log(LogLevel.ERROR,
             OCSDKTelemetryEvent.GETCHATTOKENFAILED,
             { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds},
@@ -328,8 +331,9 @@ export default class SDK implements ISDK {
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         if (this.logger) {
+          await LoggingSanitizer.stripErrorSensitiveProperties(error);
           this.logger.log(LogLevel.ERROR,
-            OCSDKTelemetryEvent.GETCHATTOKENFAILED,
+            OCSDKTelemetryEvent.GETRECONNECTABLECHATS,
             { ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds},
             "Get Reconnectable Chats Failed");
         }
@@ -387,6 +391,7 @@ export default class SDK implements ISDK {
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         if (this.logger) {
+          await LoggingSanitizer.stripErrorSensitiveProperties(error);
           this.logger.log(LogLevel.ERROR,
             OCSDKTelemetryEvent.GETRECONNECTAVAILABILITY,
             { ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds},
@@ -470,6 +475,7 @@ export default class SDK implements ISDK {
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         if (this.logger) {
+          await LoggingSanitizer.stripErrorSensitiveProperties(error);
           this.logger.log(LogLevel.ERROR,
             OCSDKTelemetryEvent.GETQUEUEAVAILABILITYFAILED,
             { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds},
@@ -555,6 +561,7 @@ export default class SDK implements ISDK {
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         if (this.logger) {
+          await LoggingSanitizer.stripErrorSensitiveProperties(error);
           this.logger.log(LogLevel.ERROR,
             OCSDKTelemetryEvent.SESSIONINITFAILED,
             { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds},
@@ -622,6 +629,7 @@ export default class SDK implements ISDK {
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         if (this.logger) {
+          await LoggingSanitizer.stripErrorSensitiveProperties(error);
           this.logger.log(LogLevel.ERROR,
             OCSDKTelemetryEvent.SESSIONCLOSEFAILED,
             { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds },
@@ -676,6 +684,7 @@ export default class SDK implements ISDK {
       }
     } catch (error) {
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+      await LoggingSanitizer.stripErrorSensitiveProperties(error);
       this.logger?.log(LogLevel.ERROR,
         OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDFAILED,
         { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds },
@@ -736,6 +745,7 @@ export default class SDK implements ISDK {
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         if (this.logger) {
+          await LoggingSanitizer.stripErrorSensitiveProperties(error);
           this.logger.log(LogLevel.ERROR,
             OCSDKTelemetryEvent.SUBMITPOSTCHATFAILED,
             { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds},
@@ -801,6 +811,7 @@ export default class SDK implements ISDK {
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         if (this.logger) {
+          await LoggingSanitizer.stripErrorSensitiveProperties(error);
           this.logger.log(LogLevel.ERROR,
             OCSDKTelemetryEvent.GETSURVEYINVITELINKFAILED,
             { ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds },
@@ -868,6 +879,7 @@ export default class SDK implements ISDK {
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         if (this.logger) {
+          await LoggingSanitizer.stripErrorSensitiveProperties(error);
           this.logger.log(LogLevel.ERROR,
             OCSDKTelemetryEvent.GETCHATTRANSCRIPTFAILED,
             { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds},
@@ -929,6 +941,7 @@ export default class SDK implements ISDK {
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         if (this.logger) {
+          await LoggingSanitizer.stripErrorSensitiveProperties(error);
           this.logger.log(LogLevel.ERROR,
             OCSDKTelemetryEvent.EMAILTRANSCRIPTFAILED,
             { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds},
@@ -984,6 +997,7 @@ export default class SDK implements ISDK {
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         if (this.logger) {
+          await LoggingSanitizer.stripErrorSensitiveProperties(error);
           this.logger.log(LogLevel.ERROR,
             OCSDKTelemetryEvent.FETCHDATAMASKINGFAILED,
             { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds},
@@ -1044,6 +1058,7 @@ export default class SDK implements ISDK {
     } catch (error) {
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
       if (this.logger) {
+        await LoggingSanitizer.stripErrorSensitiveProperties(error);
         this.logger.log(LogLevel.ERROR,
           OCSDKTelemetryEvent.SECONDARYCHANNELEVENTREQUESTFAILED,
           { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds},
@@ -1089,6 +1104,7 @@ export default class SDK implements ISDK {
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         if (this.logger) {
+          await LoggingSanitizer.stripErrorSensitiveProperties(error);
           this.logger.log(LogLevel.ERROR,
             OCSDKTelemetryEvent.SENDTYPINGINDICATORFAILED,
             { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds},

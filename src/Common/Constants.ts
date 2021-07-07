@@ -11,5 +11,6 @@ export default class Constants {
   public static readonly defaultChannelId = ChannelId.LCW;
   public static readonly defaultLocale = "en-us";
   public static readonly noContentStatusCode = 204;
+  public static readonly sensitiveProperties = ["AuthenticatedUserToken"];
   public static readonly transactionid = "transaction-id";
 }
