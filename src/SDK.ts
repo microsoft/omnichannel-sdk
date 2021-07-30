@@ -108,6 +108,10 @@ export default class SDK implements ISDK {
     if (data.LiveChatVersion && data.LiveChatVersion === LiveChatVersion.V2) {
       this.liveChatVersion = data.LiveChatVersion;
     }
+    data.headers = {};
+    if (response.headers && response.headers["date"]) {
+      data.headers["date"] = response.headers["date"];
+    }
     if (this.logger) {
       this.logger.log(LogLevel.INFO,
         OCSDKTelemetryEvent.GETCHATCONFIGSUCCESS,
