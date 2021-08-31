@@ -12,5 +12,5 @@ export default class Constants {
   public static readonly defaultLocale = "en-us";
   public static readonly noContentStatusCode = 204;
   public static readonly transactionid = "transaction-id";
-  public static readonly customerDisplayName = "customerDisplayName"
+  public static readonly customerDisplayName = "customerDisplayName";
 }

@@ -983,7 +983,7 @@ export default class SDK implements ISDK {
 
     const headers: StringMap = Constants.defaultHeaders;
     headers[OmnichannelHTTPHeaders.organizationId] = this.omnichannelConfiguration.orgId;
-    if(customerDisplayName){
+    if (customerDisplayName) {
       headers[Constants.customerDisplayName] = customerDisplayName;
     }
 
