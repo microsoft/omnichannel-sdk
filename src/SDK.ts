@@ -13,6 +13,7 @@ import IGetQueueAvailabilityOptionalParams from "./Interfaces/IGetQueueAvailabil
 import IGetSurveyInviteLinkOptionalParams from "./Interfaces/IGetSurveyInviteLinkOptionalParams";
 import IOmnichannelConfiguration from "./Interfaces/IOmnichannelConfiguration";
 import IReconnectableChatsParams from "./Interfaces/IReconnectableChatsParams";
+import ISendTypingIndicatorOptionalParams from "./Interfaces/ISendTypingIndicatorOptionalParams"
 import ISDK from "./Interfaces/ISDK";
 import ISDKConfiguration from "./Interfaces/ISDKConfiguration";
 import ISecondaryChannelEventOptionalParams from "./Interfaces/ISecondaryChannelEventOptionalParams";
@@ -1075,18 +1076,22 @@ export default class SDK implements ISDK {
   /** Send typing indicator
    * @param requestId RequestId of the omnichannel session.
    */
-  public async sendTypingIndicator(requestId: string, currentLiveChatVersion: number): Promise<void> {   
+  public async sendTypingIndicator(requestId: string, currentLiveChatVersion: number, sendTypingIndicatorOptionalParams: ISendTypingIndicatorOptionalParams = {}): Promise<void> {   
     // avoiding logging Info for typingindicator to reduce log traffic
     if (!currentLiveChatVersion || currentLiveChatVersion !== LiveChatVersion.V2) {
       return Promise.resolve();
     }
     const timer = Timer.TIMER();
+    const { customerDisplayName } = sendTypingIndicatorOptionalParams;
     if (!currentLiveChatVersion || currentLiveChatVersion !== LiveChatVersion.V2) { throw new Error('Typing indicator is only supported on v2') }
     const endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.SendTypingIndicatorPath}/${requestId}`;
     const axiosInstance = axios.create();
 
     const headers: StringMap = Constants.defaultHeaders;
     headers[OmnichannelHTTPHeaders.organizationId] = this.omnichannelConfiguration.orgId;
+    if (customerDisplayName) {
+      headers[Constants.customerDisplayName] = customerDisplayName;
+    }
 
     const options: AxiosRequestConfig = {
       headers,

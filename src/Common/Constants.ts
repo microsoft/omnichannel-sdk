@@ -13,4 +13,5 @@ export default class Constants {
   public static readonly noContentStatusCode = 204;
   public static readonly sensitiveProperties = ["AuthenticatedUserToken"];
   public static readonly transactionid = "transaction-id";
+  public static readonly customerDisplayName = "customerDisplayName";
 }
