@@ -3,6 +3,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.3.0] - 2021-09-23
 ### Added
 - Remove sensitive properties from `Error` object
 - Return `date` field on `getChatConfig` response
