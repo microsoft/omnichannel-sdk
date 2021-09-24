@@ -3,6 +3,33 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- Remove sensitive properties from `Error` object
+- Return `date` field on `getChatConfig` response
+- Add `customerDisplayName` as optional parameter in `sendTypingIndicator`
+
+### Security
+- Uptake [@babel/runtime@7.15.4](https://www.npmjs.com/package/@babel/runtime/v/7.15.4)
+- Uptake [@types/node@12.20.26](https://www.npmjs.com/package/@types/node/v/12.20.26)
+- Uptake [axios@0.21.4](https://www.npmjs.com/package/axios/v/0.21.4)
+- Uptake [@babel/cli@7.15.7](https://www.npmjs.com/package/@babel/cli/v/7.15.7)
+- Uptake [@babel/core@7.15.5](https://www.npmjs.com/package/@babel/core/v/7.15.5)
+- Uptake [@babel/plugin-proposal-class-properties@7.14.5](https://www.npmjs.com/package/@babel/plugin-proposal-class-properties/v/7.14.5)
+- Uptake [@babel/plugin-transform-runtime@7.15.0](https://www.npmjs.com/package/@babel/plugin-transform-runtime/v/7.15.0)
+- Uptake [@babel/preset-env@7.15.6](https://www.npmjs.com/package/@babel/preset-env/v/7.15.6)
+- Uptake [@babel/preset-typescript@7.15.0](https://www.npmjs.com/package/@babel/preset-typescript/v/7.15.0)
+- Uptake [@types/jasmine@3.9.1](https://www.npmjs.com/package/@types/jasmine/v/3.9.1)
+- Uptake [@typescript-eslint/eslint-plugin@3.10.1](https://www.npmjs.com/package/@typescript-eslint/eslint-plugin/v/3.10.1)
+- Uptake [@typescript-eslint/parser@3.10.1](https://www.npmjs.com/package/@typescript-eslint/parser/v/3.10.1)
+- Uptake [eslint@7.32.0](https://www.npmjs.com/package/eslint/v/7.32.0)
+- Uptake [jasmine@3.9.0](https://www.npmjs.com/package/jasmine/v/3.9.0)
+- Uptake [prettier@1.19.1](https://www.npmjs.com/package/prettier/v/1.19.1)
+- Uptake [ts-loader@6.2.2](https://www.npmjs.com/package/ts-loader/v/6.2.2)
+- Uptake [typescript@3.9.10](https://www.npmjs.com/package/typescript/v/3.9.10)
+- Uptake [webpack@4.46.0](https://www.npmjs.com/package/webpack/v/4.46.0)
+- Uptake [webpack-cli@3.3.12](https://www.npmjs.com/package/webpack-cli/v/3.3.12)
+- Uptake [webpack-dev-server@3.11.2](https://www.npmjs.com/package/webpack-dev-server/v/3.11.2)
+
 ## [0.2.0] - 2021-05-05
 ### Added
 - `livechatconnector/v2/auth/getchattoken` endpoint
