@@ -198,12 +198,13 @@ export default class SDK implements ISDK {
    */
   public async getChatToken(requestId: string, getChatTokenOptionalParams: IGetChatTokenOptionalParams = {}, currentRetryCount: number = 0): Promise<FetchChatTokenResponse> { // eslint-disable-line @typescript-eslint/no-inferrable-types
     const timer = Timer.TIMER();
-    const { reconnectId, authenticatedUserToken, currentLiveChatVersion } = getChatTokenOptionalParams;
+    const { reconnectId, authenticatedUserToken, currentLiveChatVersion, existingThreadId, existingVisitorId } = getChatTokenOptionalParams;
     if (this.logger) {
       this.logger.log(LogLevel.INFO,
         OCSDKTelemetryEvent.GETCHATTOKENSTARTED,
         { RequestId: requestId },
         "Get Chat Token Started");
+      this.logger.log(LogLevel.INFO, "divgup-oc-sdk", getChatTokenOptionalParams , "Optional Parameters retrieved" );
     }
     if (currentRetryCount < 0) {
       throw new Error(`Invalid currentRetryCount`);
@@ -231,7 +232,15 @@ export default class SDK implements ISDK {
     if (reconnectId) {
       endpoint += `/${reconnectId}`;
     }
-    endpoint += `?channelId=${this.omnichannelConfiguration.channelId}`;
+
+    let extraParams = ""; 
+    if(existingThreadId){
+      extraParams += `&existingThreadId=${existingThreadId}`
+    }
+    if(existingVisitorId){
+      extraParams += `&existingVisitorId=${existingVisitorId}`
+    }
+    endpoint += `?channelId=${this.omnichannelConfiguration.channelId}${extraParams}`;
 
     const options: AxiosRequestConfig = {
       headers,

@@ -11,4 +11,7 @@ export default interface IGetChatTokenOptionalParams {
    * Current livechatversion
    */
   currentLiveChatVersion?: number;
+  isCrossOrgTransfer?: boolean;
+  existingThreadId?: string;
+  existingVisitorId?: string;
 }
