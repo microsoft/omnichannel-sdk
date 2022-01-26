@@ -79,5 +79,18 @@ export enum OCSDKTelemetryEvent {
   GETSURVEYINVITELINKFAILED = "GetSurveyInviteLinkFailed",
   VALIDATEAUTHCHATRECORDSTARTED = "ValidateAuthChatRecordStarted",
   VALIDATEAUTHCHATRECORDSUCCEEDED = "ValidateAuthChatRecordSucceeded",
-  VALIDATEAUTHCHATRECORDFAILED = "ValidateAuthChatRecordFailed"
+  VALIDATEAUTHCHATRECORDFAILED = "ValidateAuthChatRecordFailed",
+  GETQUEUEAVAILABILITYSTARTED = "GetQueueAvailabilityStarted",
+  GETQUEUEAVAILABILITYSUCCEEDED = "GetQueueAvailabilitySucceeded",
+  GETQUEUEAVAILABILITYFAILED = "GetQueueAvailabilityFailed",
+  SENDTYPINGINDICATORFAILED = "SendTypingIndicatorFailed",
+  SENDTYPINGINDICATORSUCCEEDED = "SendTypingIndicatorSucceeded"
+}
+
+export enum LiveChatVersion {
+  // IC3 live chat
+  V1 = 1,
+  
+  // ACS live chat
+  V2 = 2
 }

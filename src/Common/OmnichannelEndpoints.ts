@@ -3,7 +3,9 @@ export default class OmnichannelEndpoints {
   public static readonly LiveChatSessionInitPath = "livechatconnector/sessioninit";
   public static readonly LiveChatAuthSessionInitPath = "livechatconnector/auth/sessioninit";
   public static readonly LiveChatGetChatTokenPath = "livechatconnector/getchattoken";
+  public static readonly LiveChatv2GetChatTokenPath = "livechatconnector/v2/getchattoken";
   public static readonly LiveChatAuthGetChatTokenPath = "livechatconnector/auth/getchattoken";
+  public static readonly LiveChatv2AuthGetChatTokenPath = "livechatconnector/v2/auth/getchattoken";
   public static readonly LiveChatSessionClosePath = "livechatconnector/sessionclose";
   public static readonly LiveChatAuthSessionClosePath = "livechatconnector/auth/sessionclose";
   public static readonly LiveChatSubmitPostChatPath = "survey/submitpostchat";
@@ -11,7 +13,9 @@ export default class OmnichannelEndpoints {
   public static readonly LiveChatGetSurveyInviteLinkPath = "livechatconnector/getsurveyinvite";
   public static readonly LiveChatAuthGetSurveyInviteLinkPath = "livechatconnector/auth/getsurveyinvite";
   public static readonly LiveChatGetChatTranscriptPath = "livechatconnector/getchattranscripts";
+  public static readonly LiveChatv2GetChatTranscriptPath = "livechatconnector/v2/getchattranscripts";
   public static readonly LiveChatAuthGetChatTranscriptPath = "livechatconnector/auth/getchattranscripts";
+  public static readonly LiveChatv2AuthGetChatTranscriptPath = "livechatconnector/v2/auth/getchattranscripts";
   public static readonly LiveChatTranscriptEmailRequestPath = "livechatconnector/createemailrequest";
   public static readonly LiveChatAuthTranscriptEmailRequestPath = "livechatconnector/auth/createemailrequest";
   public static readonly LiveChatFetchDataMaskingInfoPath = "livechatconnector/fetchdatamaskinginfo";
@@ -22,4 +26,6 @@ export default class OmnichannelEndpoints {
   public static readonly LiveChatGetReconnectableChatsPath = "livechatconnector/auth/reconnectablechats";
   public static readonly LiveChatReconnectAvailabilityPath = "livechatconnector/reconnect";
   public static readonly LiveChatValidateAuthChatMapRecordPath = "livechatconnector/auth/validateauthchatmaprecord";
+  public static readonly GetQueueAvailabilityPath = "livechatconnector/auth/getqueueavailability"
+  public static readonly SendTypingIndicatorPath = "inbound/typingindicator/livechat/sendtypingindicator";
 }
