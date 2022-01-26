@@ -21,8 +21,8 @@ import ISessionInitOptionalParams from "../src/Interfaces/ISessionInitOptionalPa
 import ISubmitPostChatResponseOptionalParams from "../src/Interfaces/ISubmitPostChatResponseOptionalParams";
 import IValidateAuthChatRecordOptionalParams from "../src/Interfaces/IValidateAuthChatRecordOptionalParams";
 import { LocationInfo } from "../src/Utils/LocationInfo";
-import { LoggingSanitizer } from "../src/Utils/LoggingSanitizer";
 import { LogLevel } from "../src/Model/LogLevel";
+import { LoggingSanitizer } from "../src/Utils/LoggingSanitizer";
 import OCSDKLogger from "../src/Common/OCSDKLogger";
 import { OSInfo } from "../src/Utils/OSInfo";
 import SDK from "../src/SDK";
