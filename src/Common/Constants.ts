@@ -6,7 +6,7 @@ export default class Constants {
     "Content-Type": "application/json"
   };
   public static readonly bypassCacheHeaders = {
-    "cache-control": "no-store, must-revalidate, no-cache",
+    "X-Cache-Control": "no-store, must-revalidate, no-cache",
   };
   public static readonly defaultChannelId = ChannelId.LCW;
   public static readonly defaultLocale = "en-us";
