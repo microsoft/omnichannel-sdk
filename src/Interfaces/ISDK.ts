@@ -17,6 +17,6 @@ export default interface ISDK {
   emailTranscript(requestId: string, token: string, emailRequestBody: object): Promise<void>;
   fetchDataMaskingInfo(requestId: string): Promise<IDataMaskingInfo>;
   makeSecondaryChannelEventRequest(requestId: string, secondaryChannelEventRequestBody: object): Promise<void>;
-  getQueueAvailability(requestId: string, queueAvailabilityOptionalParams: IGetQueueAvailabilityOptionalParams): Promise<object>
+  getAgentAvailability(requestId: string, queueAvailabilityOptionalParams: IGetQueueAvailabilityOptionalParams): Promise<object>
   sendTypingIndicator(requestId: string, currentLiveChatVersion: number): Promise<void>;
 }

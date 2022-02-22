@@ -413,16 +413,16 @@ export default class SDK implements ISDK {
    * @param requestId: RequestId to use for session init.
    * @param queueAvailabilityOptionalParams: Optional parameters for session init.
    */
-  public async getQueueAvailability(requestId: string, queueAvailabilityOptionalParams: IGetQueueAvailabilityOptionalParams = {}): Promise<QueueAvailability> {
+  public async getAgentAvailability(requestId: string, queueAvailabilityOptionalParams: IGetQueueAvailabilityOptionalParams = {}): Promise<QueueAvailability> {
     const timer = Timer.TIMER();
     if (this.logger) {
       this.logger.log(LogLevel.INFO,
-        OCSDKTelemetryEvent.GETQUEUEAVAILABILITYSTARTED,
+        OCSDKTelemetryEvent.GETAGENTAVAILABILITYSTARTED,
         { RequestId: requestId },
         "Get queue availability started");
     }
 
-    const endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.GetQueueAvailabilityPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=lcw`;
+    const endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.GetAgentAvailabilityPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=lcw`;
     const axiosInstance = axios.create();
     axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
 
@@ -435,6 +435,23 @@ export default class SDK implements ISDK {
     }
 
     const data: InitContext = initContext || {};
+
+    var cachObj = {
+      "orgId":this.omnichannelConfiguration.orgId,
+      "widgetId":this.omnichannelConfiguration.widgetId
+    }
+
+    if (data && data.customContextData != null) {
+      var tempArr = this.sortCustomContextData(data.customContextData);
+      Object.assign(cachObj, {"customContext": tempArr});
+    }
+
+    if (data.portalcontactid != "" && data.portalcontactid != null) {
+        Object.assign(cachObj, {"portalcontactid": data.portalcontactid});
+    }
+
+    var hash = require('crypto');
+    data.cacheKey = hash.createHash('sha256',JSON.stringify(cachObj)).digest('hex').toString();
 
     if (getContext && !window.document) {
       return Promise.reject(new Error(`getContext is only supported on web browsers`));
@@ -471,7 +488,7 @@ export default class SDK implements ISDK {
         if(data) {
           if (this.logger) {
             this.logger.log(LogLevel.INFO,
-              OCSDKTelemetryEvent.GETQUEUEAVAILABILITYSUCCEEDED,
+              OCSDKTelemetryEvent.GETAGENTAVAILABILITYSUCCEEDED,
               { RequestId: requestId, Region: response.data.Region, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds, TransactionId: response.headers["transaction-id"] },
               "Get queue availability Succeeded");
           }
@@ -482,13 +499,37 @@ export default class SDK implements ISDK {
         if (this.logger) {
           await LoggingSanitizer.stripErrorSensitiveProperties(error);
           this.logger.log(LogLevel.ERROR,
-            OCSDKTelemetryEvent.GETQUEUEAVAILABILITYFAILED,
+            OCSDKTelemetryEvent.GETAGENTAVAILABILITYFAILED,
             { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds},
             "Get queue availability failed");
         }
         reject(error);
       }
     });
+  }
+
+  private sortCustomContextData(customContextData: { [key: string]: any }) : any{
+    var tempArr = new Array();
+
+      Object.keys(customContextData).forEach(key => {  
+        if (customContextData && customContextData[key] !== null) { 
+            var obj = {"key":key, "value": customContextData[key]};
+            tempArr.push(obj);
+        }
+      });
+
+      tempArr.sort(function(a: any, b: any) {
+        var keyA = a.key.toUpperCase(); // ignore upper and lowercase
+        var keyB = b.key.toUpperCase(); // ignore upper and lowercase
+        if (keyA < keyB) {
+          return -1;
+        }
+        if (keyA > keyB) {
+          return 1;
+        } 
+        return 0;
+      });
+    return tempArr;
   }
 
   /**

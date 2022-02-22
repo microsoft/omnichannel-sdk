@@ -8,4 +8,7 @@ export default class InitContext {
   public latitude?: string;
   public preChatResponse?: object;
   public chatId?: string;
+  public cacheKey?: string;
+  public customContextData?: { [key: string]: any };
+  public portalcontactid?: string;
 }
