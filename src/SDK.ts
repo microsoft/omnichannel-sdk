@@ -419,7 +419,7 @@ export default class SDK implements ISDK {
       this.logger.log(LogLevel.INFO,
         OCSDKTelemetryEvent.GETAGENTAVAILABILITYSTARTED,
         { RequestId: requestId },
-        "Get queue availability started");
+        "Get agent availability started");
     }
 
     const endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.GetAgentAvailabilityPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=lcw`;
@@ -490,7 +490,7 @@ export default class SDK implements ISDK {
             this.logger.log(LogLevel.INFO,
               OCSDKTelemetryEvent.GETAGENTAVAILABILITYSUCCEEDED,
               { RequestId: requestId, Region: response.data.Region, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds, TransactionId: response.headers["transaction-id"] },
-              "Get queue availability Succeeded");
+              "Get agent availability Succeeded");
           }
           resolve(data);
         }
@@ -501,7 +501,7 @@ export default class SDK implements ISDK {
           this.logger.log(LogLevel.ERROR,
             OCSDKTelemetryEvent.GETAGENTAVAILABILITYFAILED,
             { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds},
-            "Get queue availability failed");
+            "Get agent availability failed");
         }
         reject(error);
       }
