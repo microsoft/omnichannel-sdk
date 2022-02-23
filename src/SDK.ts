@@ -37,6 +37,8 @@ import { StringMap } from "./Common/Mappings";
 import { Timer } from "./Utils/Timer";
 import axiosRetry from "./Utils/axiosRetry";
 import { uuidv4 } from "./Utils/uuid";
+import * as hash from "crypto";
+import { Util } from "./Utils/Util";
 
 export default class SDK implements ISDK {
   private static defaultConfiguration: ISDKConfiguration = {
@@ -436,22 +438,21 @@ export default class SDK implements ISDK {
 
     const data: InitContext = initContext || {};
 
-    var cachObj = {
-      "orgId":this.omnichannelConfiguration.orgId,
-      "widgetId":this.omnichannelConfiguration.widgetId
+    const cachObj = {
+      "orgId": this.omnichannelConfiguration.orgId,
+      "widgetId": this.omnichannelConfiguration.widgetId
     }
 
-    if (data && data.customContextData != null) {
-      var tempArr = this.sortCustomContextData(data.customContextData);
+    if (data && data.customContextData) {
+      const tempArr = Util.sortCustomContextData(data.customContextData);
       Object.assign(cachObj, {"customContext": tempArr});
     }
 
-    if (data.portalcontactid != "" && data.portalcontactid != null) {
+    if (data.portalcontactid != "" && data.portalcontactid) {
         Object.assign(cachObj, {"portalcontactid": data.portalcontactid});
     }
 
-    var hash = require('crypto');
-    data.cacheKey = hash.createHash('sha256',JSON.stringify(cachObj)).digest('hex').toString();
+    data.cacheKey = hash.createHash('sha256').update(JSON.stringify(cachObj)).digest('hex').toString();
 
     if (getContext && !window.document) {
       return Promise.reject(new Error(`getContext is only supported on web browsers`));
@@ -506,30 +507,6 @@ export default class SDK implements ISDK {
         reject(error);
       }
     });
-  }
-
-  private sortCustomContextData(customContextData: { [key: string]: any }) : any{
-    var tempArr = new Array();
-
-      Object.keys(customContextData).forEach(key => {  
-        if (customContextData && customContextData[key] !== null) { 
-            var obj = {"key":key, "value": customContextData[key]};
-            tempArr.push(obj);
-        }
-      });
-
-      tempArr.sort(function(a: any, b: any) {
-        var keyA = a.key.toUpperCase(); // ignore upper and lowercase
-        var keyB = b.key.toUpperCase(); // ignore upper and lowercase
-        if (keyA < keyB) {
-          return -1;
-        }
-        if (keyA > keyB) {
-          return 1;
-        } 
-        return 0;
-      });
-    return tempArr;
   }
 
   /**
