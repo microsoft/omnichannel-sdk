@@ -1,6 +1,5 @@
-
-export class Util {
-  public static sortCustomContextData(customContextData: { [key: string]: any }) : any{
+export class CustomContextData {
+  public static sort(customContextData: { [key: string]: any }) : any{
     const tempArr = new Array();
 
       Object.keys(customContextData).forEach(key => {  

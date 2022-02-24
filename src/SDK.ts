@@ -38,7 +38,7 @@ import { Timer } from "./Utils/Timer";
 import axiosRetry from "./Utils/axiosRetry";
 import { uuidv4 } from "./Utils/uuid";
 import * as hash from "crypto";
-import { Util } from "./Utils/Util";
+import { CustomContextData } from "./Utils/CustomContextData";
 
 export default class SDK implements ISDK {
   private static defaultConfiguration: ISDKConfiguration = {
@@ -444,11 +444,11 @@ export default class SDK implements ISDK {
     }
 
     if (data && data.customContextData) {
-      const tempArr = Util.sortCustomContextData(data.customContextData);
+      const tempArr = CustomContextData.sort(data.customContextData);
       Object.assign(cachObj, {"customContext": tempArr});
     }
 
-    if (data.portalcontactid != "" && data.portalcontactid) {
+    if (data.portalcontactid) {
         Object.assign(cachObj, {"portalcontactid": data.portalcontactid});
     }
 
