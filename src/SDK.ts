@@ -37,6 +37,8 @@ import { StringMap } from "./Common/Mappings";
 import { Timer } from "./Utils/Timer";
 import axiosRetry from "./Utils/axiosRetry";
 import { uuidv4 } from "./Utils/uuid";
+import * as hash from "crypto";
+import { CustomContextData } from "./Utils/CustomContextData";
 
 export default class SDK implements ISDK {
   private static defaultConfiguration: ISDKConfiguration = {
@@ -413,16 +415,16 @@ export default class SDK implements ISDK {
    * @param requestId: RequestId to use for session init.
    * @param queueAvailabilityOptionalParams: Optional parameters for session init.
    */
-  public async getQueueAvailability(requestId: string, queueAvailabilityOptionalParams: IGetQueueAvailabilityOptionalParams = {}): Promise<QueueAvailability> {
+  public async getAgentAvailability(requestId: string, queueAvailabilityOptionalParams: IGetQueueAvailabilityOptionalParams = {}): Promise<QueueAvailability> {
     const timer = Timer.TIMER();
     if (this.logger) {
       this.logger.log(LogLevel.INFO,
-        OCSDKTelemetryEvent.GETQUEUEAVAILABILITYSTARTED,
+        OCSDKTelemetryEvent.GETAGENTAVAILABILITYSTARTED,
         { RequestId: requestId },
-        "Get queue availability started");
+        "Get agent availability started");
     }
 
-    const endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.GetQueueAvailabilityPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=lcw`;
+    const endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.GetAgentAvailabilityPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=lcw`;
     const axiosInstance = axios.create();
     axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
 
@@ -435,6 +437,22 @@ export default class SDK implements ISDK {
     }
 
     const data: InitContext = initContext || {};
+
+    const cachObj = {
+      "orgId": this.omnichannelConfiguration.orgId,
+      "widgetId": this.omnichannelConfiguration.widgetId
+    }
+
+    if (data && data.customContextData) {
+      const tempArr = CustomContextData.sort(data.customContextData);
+      Object.assign(cachObj, {"customContext": tempArr});
+    }
+
+    if (data.portalcontactid) {
+        Object.assign(cachObj, {"portalcontactid": data.portalcontactid});
+    }
+
+    data.cacheKey = hash.createHash('sha256').update(JSON.stringify(cachObj)).digest('hex').toString();
 
     if (getContext && !window.document) {
       return Promise.reject(new Error(`getContext is only supported on web browsers`));
@@ -471,9 +489,9 @@ export default class SDK implements ISDK {
         if(data) {
           if (this.logger) {
             this.logger.log(LogLevel.INFO,
-              OCSDKTelemetryEvent.GETQUEUEAVAILABILITYSUCCEEDED,
+              OCSDKTelemetryEvent.GETAGENTAVAILABILITYSUCCEEDED,
               { RequestId: requestId, Region: response.data.Region, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds, TransactionId: response.headers["transaction-id"] },
-              "Get queue availability Succeeded");
+              "Get agent availability Succeeded");
           }
           resolve(data);
         }
@@ -482,9 +500,9 @@ export default class SDK implements ISDK {
         if (this.logger) {
           await LoggingSanitizer.stripErrorSensitiveProperties(error);
           this.logger.log(LogLevel.ERROR,
-            OCSDKTelemetryEvent.GETQUEUEAVAILABILITYFAILED,
+            OCSDKTelemetryEvent.GETAGENTAVAILABILITYFAILED,
             { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds},
-            "Get queue availability failed");
+            "Get agent availability failed");
         }
         reject(error);
       }

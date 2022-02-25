@@ -300,7 +300,7 @@ describe("SDK unit tests", () => {
         });
     });
 
-    describe("Get Queue Availabilty method", ()=> {
+    describe("Get Agent Availabilty method", ()=> {
 
         let getQueueAvailabilityOpt: any;
         let locationInfo: any;
