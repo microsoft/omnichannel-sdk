@@ -1,6 +1,8 @@
 export class CustomContextData {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public static sort(customContextData: { [key: string]: any }) : any{
-    const tempArr = new Array();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tempArr = new Array<any>();
 
       Object.keys(customContextData).forEach(key => {  
         if (customContextData && customContextData[key]) { 
@@ -9,6 +11,7 @@ export class CustomContextData {
         }
       });
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       tempArr.sort((a: any, b: any) => {
         const keyA = a.key.toUpperCase(); // ignore upper and lowercase
         const keyB = b.key.toUpperCase(); // ignore upper and lowercase

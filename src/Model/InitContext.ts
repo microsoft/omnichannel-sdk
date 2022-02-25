@@ -9,6 +9,6 @@ export default class InitContext {
   public preChatResponse?: object;
   public chatId?: string;
   public cacheKey?: string;
-  public customContextData?: { [key: string]: any };
+  public customContextData?: { [key: string]: any }; // eslint-disable-line @typescript-eslint/no-explicit-any
   public portalcontactid?: string;
 }
