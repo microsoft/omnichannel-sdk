@@ -1,3 +1,4 @@
+import Constants from "../../src/Common/Constants";
 import { LoggingSanitizer } from "../../src/Utils/LoggingSanitizer";
 
 describe("LoggingSanitized unit tests", () => {
@@ -42,6 +43,29 @@ describe("LoggingSanitized unit tests", () => {
         LoggingSanitizer.stripErrorSensitiveProperties(errorObject);
         expect(errorObject).toEqual(null);
         done();
+    });
+  });
+
+  describe("Test removal of custom context data values", () => {
+    it("Custom context data values should be removed", (done) => {
+      const customContextData = {
+        contextKeyOne: {
+          value: "value",
+          isDisplayable: true
+        },
+        contextKeyTwo: {
+          value: "value"
+        },
+        contextKeyThree: {
+          isDisplayable: false
+        }
+      };
+
+      LoggingSanitizer.stripCustomContextDataValues(customContextData);
+      expect(customContextData.contextKeyOne.value).toEqual(Constants.hiddenContentPlaceholder);
+      expect(customContextData.contextKeyTwo.value).toEqual(Constants.hiddenContentPlaceholder);
+      expect(('value' in customContextData.contextKeyThree)).toBe(false);
+      done();
     });
   });
 });
