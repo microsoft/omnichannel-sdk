@@ -6,4 +6,5 @@ export default interface IOCSDKLogData {
   TransactionId?: string;
   ExceptionDetails?: object;
   Description?: string;
+  RequestPayload?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
