@@ -529,17 +529,21 @@ export default class SDK implements ISDK {
     const { reconnectId, authenticatedUserToken, initContext, getContext } = sessionInitOptionalParams;
 
     const headers: StringMap = Constants.defaultHeaders;
-    let endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatSessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
+    let requestPath = `/${OmnichannelEndpoints.LiveChatSessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
 
     if (authenticatedUserToken) {
-      endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthSessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
+      requestPath = `/${OmnichannelEndpoints.LiveChatAuthSessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
       headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
     }
 
     if (reconnectId) {
-      endpoint += `/${reconnectId}`;
+      requestPath += `/${reconnectId}`;
     }
-    endpoint += `?channelId=${this.omnichannelConfiguration.channelId}`;
+
+    const queryParams = `channelId=${this.omnichannelConfiguration.channelId}`;
+    requestPath += `?${queryParams}`;
+
+    const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
 
     const data: InitContext = initContext || {};
 
@@ -564,11 +568,12 @@ export default class SDK implements ISDK {
       return Promise.reject(new Error(`Unsupported locale: '${data.locale}'`));
     }
 
+    const method = "POST";
     const options: AxiosRequestConfig = {
       data,
       headers,
-      method: "POST",
-      url: endpoint
+      method,
+      url
     };
 
     return new Promise(async (resolve, reject) => {
@@ -593,7 +598,9 @@ export default class SDK implements ISDK {
             Region: response.data.Region,
             ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
             TransactionId: response.headers["transaction-id"],
-            RequestPayload: requestPayload
+            RequestPayload: requestPayload,
+            RequestPath: requestPath,
+            RequestMethod: method
           };
 
           const description = "Session Init Succeeded";
