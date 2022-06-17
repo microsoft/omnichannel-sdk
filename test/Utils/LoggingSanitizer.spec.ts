@@ -68,4 +68,20 @@ describe("LoggingSanitized unit tests", () => {
       done();
     });
   });
+
+  describe("Test removal of pre-chat survey response data values", () => {
+    it("Pre-chat survey response data values should be removed", (done) => {
+      const prechatResponse = {
+        Type: "InputSubmit",
+        foo: "foo",
+        bar: "bar",
+      }
+
+      LoggingSanitizer.stripPreChatResponse(prechatResponse);
+      expect(prechatResponse.Type).toEqual(prechatResponse.Type);
+      expect(prechatResponse.foo).toEqual(Constants.hiddenContentPlaceholder);
+      expect(prechatResponse.bar).toEqual(Constants.hiddenContentPlaceholder);
+      done();
+    });
+  });
 });
