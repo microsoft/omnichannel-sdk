@@ -584,6 +584,10 @@ export default class SDK implements ISDK {
             LoggingSanitizer.stripCustomContextDataValues(requestPayload.customContextData);
           }
 
+          if (requestPayload.preChatResponse) {
+            LoggingSanitizer.stripPreChatResponse(requestPayload.preChatResponse);
+          }
+
           const customData = {
             RequestId: requestId,
             Region: response.data.Region,

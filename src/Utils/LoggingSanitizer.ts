@@ -4,7 +4,15 @@ export class LoggingSanitizer  {
   public static stripCustomContextDataValues(customContextData: any): void { // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
     Object.keys(customContextData)?.forEach((contextKey: string) => {
       if (customContextData[`${contextKey}`]?.value) {
-        customContextData[`${contextKey}`].value = '*';
+        customContextData[`${contextKey}`].value = Constants.hiddenContentPlaceholder;
+      }
+    });
+  }
+
+  public static stripPreChatResponse(preChatResponse: any): void { // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+    Object.keys(preChatResponse).forEach((responseKey) => {
+      if (preChatResponse[`${responseKey}`] && responseKey !== 'Type') {
+        preChatResponse[`${responseKey}`] = Constants.hiddenContentPlaceholder;
       }
     });
   }
