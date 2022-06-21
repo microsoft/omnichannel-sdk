@@ -577,73 +577,69 @@ export default class SDK implements ISDK {
       url
     };
 
-    return new Promise(async (resolve, reject) => {
-      try {
-        const response = await axiosInstance(options);
+    try {
+      const response = await axiosInstance(options);
 
-        if (this.logger) {
-          const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-
-          const requestPayload = {...data};
-
-          if (requestPayload.customContextData) {
-            LoggingSanitizer.stripCustomContextDataValues(requestPayload.customContextData);
-          }
-
-          if (requestPayload.preChatResponse) {
-            LoggingSanitizer.stripPreChatResponse(requestPayload.preChatResponse);
-          }
-
-          const customData = {
-            RequestId: requestId,
-            Region: response.data.Region,
-            ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
-            TransactionId: response.headers["transaction-id"],
-            RequestPayload: requestPayload,
-            RequestPath: requestPath,
-            RequestMethod: method,
-            ResponseStatusCode: response.status
-          };
-
-          const description = "Session Init Succeeded";
-
-          this.logger.log(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSUCCEEDED, customData, description);
-        }
-
-        resolve();
-      } catch (error) {
+      if (this.logger) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        if (this.logger) {
 
-          const requestPayload = {...data};
+        const requestPayload = {...data};
 
-          if (requestPayload.customContextData) {
-            LoggingSanitizer.stripCustomContextDataValues(requestPayload.customContextData);
-          }
-
-          if (requestPayload.preChatResponse) {
-            LoggingSanitizer.stripPreChatResponse(requestPayload.preChatResponse);
-          }
-
-          await LoggingSanitizer.stripErrorSensitiveProperties(error);
-
-          const customData = {
-            RequestId: requestId,
-            ExceptionDetails: error,
-            ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
-            RequestPayload: requestPayload,
-            RequestPath: requestPath,
-            RequestMethod: method,
-            ResponseStatusCode: (error as any).response.status // eslint-disable-line @typescript-eslint/no-explicit-any
-          };
-
-          const description = "Session Init Failed";
-          this.logger.log(LogLevel.ERROR, OCSDKTelemetryEvent.SESSIONINITFAILED, customData, description);
+        if (requestPayload.customContextData) {
+          LoggingSanitizer.stripCustomContextDataValues(requestPayload.customContextData);
         }
 
-        reject(error);
+        if (requestPayload.preChatResponse) {
+          LoggingSanitizer.stripPreChatResponse(requestPayload.preChatResponse);
+        }
+
+        const customData = {
+          RequestId: requestId,
+          Region: response.data.Region,
+          ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
+          TransactionId: response.headers["transaction-id"],
+          RequestPayload: requestPayload,
+          RequestPath: requestPath,
+          RequestMethod: method,
+          ResponseStatusCode: response.status
+        };
+
+        const description = "Session Init Succeeded";
+
+        this.logger.log(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSUCCEEDED, customData, description);
       }
-    });
+    } catch (error) {
+      const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+      if (this.logger) {
+
+        const requestPayload = {...data};
+
+        if (requestPayload.customContextData) {
+          LoggingSanitizer.stripCustomContextDataValues(requestPayload.customContextData);
+        }
+
+        if (requestPayload.preChatResponse) {
+          LoggingSanitizer.stripPreChatResponse(requestPayload.preChatResponse);
+        }
+
+        await LoggingSanitizer.stripErrorSensitiveProperties(error);
+
+        const customData = {
+          RequestId: requestId,
+          ExceptionDetails: error,
+          ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
+          RequestPayload: requestPayload,
+          RequestPath: requestPath,
+          RequestMethod: method,
+          ResponseStatusCode: (error as any).response.status // eslint-disable-line @typescript-eslint/no-explicit-any
+        };
+
+        const description = "Session Init Failed";
+        this.logger.log(LogLevel.ERROR, OCSDKTelemetryEvent.SESSIONINITFAILED, customData, description);
+      }
+
+      throw error;
+    }
   }
 
   /**
