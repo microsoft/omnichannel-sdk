@@ -31,6 +31,10 @@ describe("SDK unit tests", () => {
 
     const requestId = "requestId";
     const errorWithAxiosMessage = "Error with axios";
+    const AxiosError = new Error(errorWithAxiosMessage);
+    (AxiosError as any).response = {
+      status: 0
+    };
     let ochannelConfig: any;
     let dataMock: any;
     let uuidvSpy: any;
@@ -73,7 +77,7 @@ describe("SDK unit tests", () => {
         uuidvSpy = spyOn(uuidvModule, "uuidv4").and.returnValue("reqId");
         spyOn(axiosRetry, "default").and.callFake(() => {});
         axiosInstMock = jasmine.createSpy("axiosInstance").and.returnValue(dataMock);
-        axiosInstMockWithError = jasmine.createSpy("axiosInstance").and.throwError(errorWithAxiosMessage);
+        axiosInstMockWithError = jasmine.createSpy("axiosInstance").and.throwError(AxiosError);
     });
 
     describe("Test constructor", () => {
@@ -516,7 +520,7 @@ describe("SDK unit tests", () => {
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
             const result = sdk.getChatTranscripts(requestId, coolId, coolId, sessionInitOpt as IGetChatTranscriptsOptionalParams);
             result.then(() => {}, (error) => {
-                expect(error).toEqual(new Error(errorWithAxiosMessage));
+                expect(error).toEqual(AxiosError);
                 expect(ocsdkLogger.log).toHaveBeenCalled();
                 done();
             });

@@ -517,10 +517,11 @@ export default class SDK implements ISDK {
   public async sessionInit(requestId: string, sessionInitOptionalParams: ISessionInitOptionalParams = {}): Promise<void> {
     const timer = Timer.TIMER();
     if (this.logger) {
-      this.logger.log(LogLevel.INFO,
-        OCSDKTelemetryEvent.SESSIONINITSTARTED,
-        { RequestId: requestId },
-        "Session Init Started");
+      const description = "Session Init Started";
+      const customData = {
+        RequestId: requestId,
+      }
+      this.logger.log(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSTARTED, customData, description);
     }
 
     const axiosInstance = axios.create();
@@ -600,7 +601,8 @@ export default class SDK implements ISDK {
             TransactionId: response.headers["transaction-id"],
             RequestPayload: requestPayload,
             RequestPath: requestPath,
-            RequestMethod: method
+            RequestMethod: method,
+            ResponseStatusCode: response.status
           };
 
           const description = "Session Init Succeeded";
@@ -612,11 +614,31 @@ export default class SDK implements ISDK {
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         if (this.logger) {
+
+          const requestPayload = {...data};
+
+          if (requestPayload.customContextData) {
+            LoggingSanitizer.stripCustomContextDataValues(requestPayload.customContextData);
+          }
+
+          if (requestPayload.preChatResponse) {
+            LoggingSanitizer.stripPreChatResponse(requestPayload.preChatResponse);
+          }
+
           await LoggingSanitizer.stripErrorSensitiveProperties(error);
-          this.logger.log(LogLevel.ERROR,
-            OCSDKTelemetryEvent.SESSIONINITFAILED,
-            { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds},
-            "Session Init Failed");
+
+          const customData = {
+            RequestId: requestId,
+            ExceptionDetails: error,
+            ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
+            RequestPayload: requestPayload,
+            RequestPath: requestPath,
+            RequestMethod: method,
+            ResponseStatusCode: (error as any).response.status // eslint-disable-line @typescript-eslint/no-explicit-any
+          };
+
+          const description = "Session Init Failed";
+          this.logger.log(LogLevel.ERROR, OCSDKTelemetryEvent.SESSIONINITFAILED, customData, description);
         }
 
         reject(error);
