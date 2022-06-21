@@ -25,6 +25,28 @@ export class LoggingSanitizer  {
             delete errorObject[`${key}`];
           }
 
+          if (key === 'data') {
+            let data;
+            if (typeof errorObject[key] === 'string') { // eslint-disable-line security/detect-object-injection
+              try {
+                data = JSON.parse(errorObject[key]); // eslint-disable-line security/detect-object-injection
+              } catch {
+                data = undefined;
+              }
+            }
+
+            if (data) {
+              if (Object.keys(data).includes('preChatResponse')) {
+                LoggingSanitizer.stripPreChatResponse(data.preChatResponse);
+              }
+
+              if (Object.keys(data).includes('customContextData')) {
+                LoggingSanitizer.stripCustomContextDataValues(data.customContextData);
+              }
+              errorObject[key] = JSON.stringify(data); // eslint-disable-line security/detect-object-injection
+            }
+          }
+
           if (errorObject[`${key}`] !== null && typeof errorObject[`${key}`] === 'object') {
             // check sensitive properties in nested error object
             this.stripErrorSensitiveProperties(errorObject[`${key}`]);
