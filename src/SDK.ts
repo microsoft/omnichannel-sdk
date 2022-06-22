@@ -593,6 +593,8 @@ export default class SDK implements ISDK {
           LoggingSanitizer.stripPreChatResponse(requestPayload.preChatResponse);
         }
 
+        LoggingSanitizer.stripGeolocation(requestPayload);
+
         const customData = {
           RequestId: requestId,
           Region: response.data.Region,
@@ -622,7 +624,8 @@ export default class SDK implements ISDK {
           LoggingSanitizer.stripPreChatResponse(requestPayload.preChatResponse);
         }
 
-        await LoggingSanitizer.stripErrorSensitiveProperties(error);
+        LoggingSanitizer.stripGeolocation(requestPayload);
+        LoggingSanitizer.stripErrorSensitiveProperties(error);
 
         const customData = {
           RequestId: requestId,
