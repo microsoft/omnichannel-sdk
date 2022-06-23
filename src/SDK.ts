@@ -266,7 +266,10 @@ export default class SDK implements ISDK {
               RequestId: requestId,
               Region: response.data.Region,
               ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
-              TransactionId: response.headers["transaction-id"]
+              TransactionId: response.headers["transaction-id"],
+              RequestPath: requestPath,
+              RequestMethod: method,
+              ResponseStatusCode: response.status
             };
 
             const description = "Get Chat Token Succeeded";
@@ -292,7 +295,10 @@ export default class SDK implements ISDK {
           const customData = {
             RequestId: requestId,
             ExceptionDetails: error,
-            ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds
+            ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
+            RequestPath: requestPath,
+            RequestMethod: method,
+            ResponseStatusCode: (error as any).response.status // eslint-disable-line @typescript-eslint/no-explicit-any
           };
 
           const description = "Get Chat Token Failed";
