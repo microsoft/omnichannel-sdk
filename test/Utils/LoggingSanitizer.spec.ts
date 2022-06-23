@@ -15,7 +15,9 @@ describe("LoggingSanitized unit tests", () => {
               value: "value",
               isDisplayable: true
             },
-          }
+          },
+          longitude: "",
+          latitude: ""
         };
         const errorObject = {
             message: "Request failed with status code 401",
@@ -36,6 +38,8 @@ describe("LoggingSanitized unit tests", () => {
         expect(JSON.parse(errorObject["config"]["data"])["preChatResponse"]["foo"]).toEqual(Constants.hiddenContentPlaceholder);
         expect(JSON.parse(errorObject["config"]["data"])["preChatResponse"]["bar"]).toEqual(Constants.hiddenContentPlaceholder);
         expect(JSON.parse(errorObject["config"]["data"])["customContextData"]["contextKey"]["value"]).toEqual(Constants.hiddenContentPlaceholder);
+        expect(JSON.parse(errorObject["config"]["data"])["longitude"]).toEqual(Constants.hiddenContentPlaceholder);
+        expect(JSON.parse(errorObject["config"]["data"])["longitude"]).toEqual(Constants.hiddenContentPlaceholder);
         done();
     });
 
@@ -99,6 +103,20 @@ describe("LoggingSanitized unit tests", () => {
       expect(prechatResponse.Type).toEqual(prechatResponse.Type);
       expect(prechatResponse.foo).toEqual(Constants.hiddenContentPlaceholder);
       expect(prechatResponse.bar).toEqual(Constants.hiddenContentPlaceholder);
+      done();
+    });
+  });
+
+  describe("Test removal of geolocation data values", () => {
+    it("Geolocation data values should be removed", (done) => {
+      const data = {
+        longitude: "",
+        latitude: ""
+      };
+
+      LoggingSanitizer.stripGeolocation(data);
+      expect(data.longitude).toEqual(Constants.hiddenContentPlaceholder);
+      expect(data.latitude).toEqual(Constants.hiddenContentPlaceholder);
       done();
     });
   });
