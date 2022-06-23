@@ -256,15 +256,24 @@ export default class SDK implements ISDK {
         const response = await axiosInstance(options);
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         const { data } = response;
+
         // Resolves only if it contains chat token response which only happens on status 200
         if (data) {
           data.requestId = requestId;
+
           if (this.logger) {
-            this.logger.log(LogLevel.INFO,
-              OCSDKTelemetryEvent.GETCHATTOKENSUCCEEDED,
-              { RequestId: requestId, Region: response.data.Region, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds, TransactionId: response.headers["transaction-id"] },
-              "Get Chat Token Succeeded");
+            const customData = {
+              RequestId: requestId,
+              Region: response.data.Region,
+              ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
+              TransactionId: response.headers["transaction-id"]
+            };
+
+            const description = "Get Chat Token Succeeded";
+
+            this.logger.log(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATTOKENSUCCEEDED, customData, description);
           }
+
           resolve(data);
           return;
         }
@@ -274,15 +283,23 @@ export default class SDK implements ISDK {
           reject(response);
           return;
         }
+
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         if (this.logger) {
           await LoggingSanitizer.stripErrorSensitiveProperties(error);
-          this.logger.log(LogLevel.ERROR,
-            OCSDKTelemetryEvent.GETCHATTOKENFAILED,
-            { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds},
-            "Get Chat Token Failed");
+
+          const customData = {
+            RequestId: requestId,
+            ExceptionDetails: error,
+            ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds
+          };
+
+          const description = "Get Chat Token Failed";
+
+          this.logger.log(LogLevel.ERROR, OCSDKTelemetryEvent.GETCHATTOKENFAILED, customData, description);
         }
+
         reject(error);
         return;
       }
