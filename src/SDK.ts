@@ -306,8 +306,7 @@ export default class SDK implements ISDK {
           this.logger.log(LogLevel.ERROR, OCSDKTelemetryEvent.GETCHATTOKENFAILED, customData, description);
         }
 
-        reject(error);
-        return;
+        // No return/reject to recursively retry on failures up to chat token retry count limit
       }
 
       // Base case
