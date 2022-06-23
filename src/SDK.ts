@@ -202,11 +202,13 @@ export default class SDK implements ISDK {
     const timer = Timer.TIMER();
     const { reconnectId, authenticatedUserToken, currentLiveChatVersion } = getChatTokenOptionalParams;
     if (this.logger) {
-      this.logger.log(LogLevel.INFO,
-        OCSDKTelemetryEvent.GETCHATTOKENSTARTED,
-        { RequestId: requestId },
-        "Get Chat Token Started");
+      const description = "Get Chat Token Started";
+      const customData = {
+        RequestId: requestId,
+      }
+      this.logger.log(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATTOKENSTARTED, customData, description);
     }
+
     if (currentRetryCount < 0) {
       throw new Error(`Invalid currentRetryCount`);
     }
@@ -214,34 +216,41 @@ export default class SDK implements ISDK {
     if (!requestId) {
       requestId = uuidv4();
     }
+
     const headers: StringMap = Constants.defaultHeaders;
-    let endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatGetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
+    let requestPath = `/${OmnichannelEndpoints.LiveChatGetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
 
     if (this.liveChatVersion === LiveChatVersion.V2 || (currentLiveChatVersion && currentLiveChatVersion === LiveChatVersion.V2)) {
-      endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatv2GetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
+      requestPath = `/${OmnichannelEndpoints.LiveChatv2GetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
       if (authenticatedUserToken) {
-        endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatv2AuthGetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
+        requestPath = `/${OmnichannelEndpoints.LiveChatv2AuthGetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
         headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
       }
     } else {
       if (authenticatedUserToken) {
-        endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthGetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
+        requestPath = `/${OmnichannelEndpoints.LiveChatAuthGetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
         headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
       }
     }
 
     if (reconnectId) {
-      endpoint += `/${reconnectId}`;
+      requestPath += `/${reconnectId}`;
     }
-    endpoint += `?channelId=${this.omnichannelConfiguration.channelId}`;
 
+    const queryParams = `channelId=${this.omnichannelConfiguration.channelId}`;
+    requestPath += `?${queryParams}`;
+
+    const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
+    const method = "GET";
     const options: AxiosRequestConfig = {
       headers,
-      method: "GET",
-      url: endpoint
+      method,
+      url
     };
+
     const axiosInstance = axios.create();
     axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
+
     return new Promise(async (resolve, reject) => {
       try {
         const response = await axiosInstance(options);
