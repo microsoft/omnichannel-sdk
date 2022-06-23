@@ -306,6 +306,12 @@ export default class SDK implements ISDK {
           this.logger.log(LogLevel.ERROR, OCSDKTelemetryEvent.GETCHATTOKENFAILED, customData, description);
         }
 
+        // Stop retry on 429
+        if ((error as any).response.status === Constants.tooManyRequestsStatusCode) { // eslint-disable-line @typescript-eslint/no-explicit-any
+          reject(error);
+          return;
+        }
+
         // No return/reject to recursively retry on failures up to chat token retry count limit
       }
 
