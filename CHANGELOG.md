@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+### Added
+- Add `RequestPayload`, `RequestPath`, `RequestMethod` and `ResponseStatusCode` as log data
+- Strip `Geolocation` log data
+
 ### Changed
 - Rename `getQueueAvailability` to `getAgentAvailability`
 

@@ -17,6 +17,16 @@ export class LoggingSanitizer  {
     });
   }
 
+  public static stripGeolocation(data: any): void { // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+    if (Object.keys(data).includes('longitude')) {
+      data['longitude'] = Constants.hiddenContentPlaceholder;
+    }
+
+    if (Object.keys(data).includes('latitude')) {
+      data['latitude'] = Constants.hiddenContentPlaceholder;
+    }
+  }
+
   public static stripErrorSensitiveProperties(errorObject: any): void { // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
     if(errorObject && typeof errorObject === 'object' && Object.keys(errorObject)?.length > 0) {
       Object.keys(errorObject)?.forEach((key) => {
@@ -43,6 +53,8 @@ export class LoggingSanitizer  {
               if (Object.keys(data).includes('customContextData')) {
                 LoggingSanitizer.stripCustomContextDataValues(data.customContextData);
               }
+
+              LoggingSanitizer.stripGeolocation(data);
               errorObject[key] = JSON.stringify(data); // eslint-disable-line security/detect-object-injection
             }
           }
