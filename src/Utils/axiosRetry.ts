@@ -1,5 +1,6 @@
 import { AxiosInstance, AxiosResponse } from "axios";
 import IAxiosRetryOptions from "../Interfaces/IAxiosRetryOptions";
+import sleep from "./sleep";
 
 /**
  * Custom handler for HTTP calls with Axios. Handler allows to retry HTTP calls if failed.
@@ -8,6 +9,7 @@ import IAxiosRetryOptions from "../Interfaces/IAxiosRetryOptions";
  * @param axiosRetryOptions Options for axios retry.
  */
 const axiosRetry = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryOptions) => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
+  const retryInterval = 1000; // 1 second interval between retries
   const { retries } = axiosRetryOptions;
 
   let currentTry = 0;
@@ -29,7 +31,7 @@ const axiosRetry = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryOptions)
 
     if (shouldRetry) {
       currentTry++;
-      return new Promise((resolve) => resolve(axios(config)));
+      return new Promise((resolve) => sleep(retryInterval as number| 1000).then(() => resolve(axios(config))));
     }
 
     return Promise.reject(error);
