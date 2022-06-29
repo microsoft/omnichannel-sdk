@@ -6,6 +6,9 @@ All notable changes to this project will be documented in this file.
 - Add `RequestPayload`, `RequestPath`, `RequestMethod` and `ResponseStatusCode` as log data
 - Strip `Geolocation` log data
 
+### Fix
+- Stop `getchattoken` retry calls on `429`
+
 ### Changed
 - Rename `getQueueAvailability` to `getAgentAvailability`
 

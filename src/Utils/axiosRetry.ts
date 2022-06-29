@@ -1,5 +1,7 @@
-import { AxiosInstance, AxiosResponse } from "axios";
+import { AxiosInstance, AxiosError } from "axios";
+import Constants from "../Common/Constants";
 import IAxiosRetryOptions from "../Interfaces/IAxiosRetryOptions";
+import sleep from "./sleep";
 
 /**
  * Custom handler for HTTP calls with Axios. Handler allows to retry HTTP calls if failed.
@@ -8,6 +10,13 @@ import IAxiosRetryOptions from "../Interfaces/IAxiosRetryOptions";
  * @param axiosRetryOptions Options for axios retry.
  */
 const axiosRetry = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryOptions) => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
+  const retryInterval = 1000; // 1 second interval between retries
+
+  // Default values
+  if (axiosRetryOptions.retryOn429 === undefined || axiosRetryOptions.retryOn429 === null) {
+    axiosRetryOptions.retryOn429 = true;
+  }
+
   const { retries } = axiosRetryOptions;
 
   let currentTry = 0;
@@ -16,11 +25,16 @@ const axiosRetry = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryOptions)
   const onSuccess = undefined;
 
   // Method to intercepts responses outside range of 2xx
-  const onError = (error: AxiosResponse) => {
-    const {config} = error;
+  const onError = (error: AxiosError) => {
+    const {config, response} = error;
 
     // If we have no information of the request to retry
     if (!config) {
+      return Promise.reject(error);
+    }
+
+    // Stop retry on 429 if set
+    if (response && response.status === Constants.tooManyRequestsStatusCode && axiosRetryOptions.retryOn429 === false) {
       return Promise.reject(error);
     }
 
@@ -29,7 +43,7 @@ const axiosRetry = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryOptions)
 
     if (shouldRetry) {
       currentTry++;
-      return new Promise((resolve) => resolve(axios(config)));
+      return new Promise((resolve) => sleep(retryInterval as number| 1000).then(() => resolve(axios(config))));
     }
 
     return Promise.reject(error);

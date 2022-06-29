@@ -42,8 +42,9 @@ import { CustomContextData } from "./Utils/CustomContextData";
 
 export default class SDK implements ISDK {
   private static defaultConfiguration: ISDKConfiguration = {
-    getChatTokenRetryCount: 35,
+    getChatTokenRetryCount: 10,
     getChatTokenTimeBetweenRetriesOnFailure: 10000,
+    getChatTokenRetryOn429: false,
     maxRequestRetriesOnFailure: 3
   };
 
@@ -58,7 +59,7 @@ export default class SDK implements ISDK {
     // Validate SDK config
     for (const key of Object.keys(SDK.defaultConfiguration)) {
       if (!this.configuration.hasOwnProperty(key)) { // eslint-disable-line no-prototype-builtins
-        throw new Error(`Missing '${key}' in SDKConfiguration`);
+        this.configuration[`${key}`] = SDK.defaultConfiguration[`${key}`];
       }
     }
 
@@ -202,11 +203,13 @@ export default class SDK implements ISDK {
     const timer = Timer.TIMER();
     const { reconnectId, authenticatedUserToken, currentLiveChatVersion } = getChatTokenOptionalParams;
     if (this.logger) {
-      this.logger.log(LogLevel.INFO,
-        OCSDKTelemetryEvent.GETCHATTOKENSTARTED,
-        { RequestId: requestId },
-        "Get Chat Token Started");
+      const description = "Get Chat Token Started";
+      const customData = {
+        RequestId: requestId,
+      }
+      this.logger.log(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATTOKENSTARTED, customData, description);
     }
+
     if (currentRetryCount < 0) {
       throw new Error(`Invalid currentRetryCount`);
     }
@@ -214,48 +217,67 @@ export default class SDK implements ISDK {
     if (!requestId) {
       requestId = uuidv4();
     }
+
     const headers: StringMap = Constants.defaultHeaders;
-    let endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatGetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
+    let requestPath = `/${OmnichannelEndpoints.LiveChatGetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
 
     if (this.liveChatVersion === LiveChatVersion.V2 || (currentLiveChatVersion && currentLiveChatVersion === LiveChatVersion.V2)) {
-      endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatv2GetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
+      requestPath = `/${OmnichannelEndpoints.LiveChatv2GetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
       if (authenticatedUserToken) {
-        endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatv2AuthGetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
+        requestPath = `/${OmnichannelEndpoints.LiveChatv2AuthGetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
         headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
       }
     } else {
       if (authenticatedUserToken) {
-        endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthGetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
+        requestPath = `/${OmnichannelEndpoints.LiveChatAuthGetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
         headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
       }
     }
 
     if (reconnectId) {
-      endpoint += `/${reconnectId}`;
+      requestPath += `/${reconnectId}`;
     }
-    endpoint += `?channelId=${this.omnichannelConfiguration.channelId}`;
 
+    const queryParams = `channelId=${this.omnichannelConfiguration.channelId}`;
+    requestPath += `?${queryParams}`;
+
+    const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
+    const method = "GET";
     const options: AxiosRequestConfig = {
       headers,
-      method: "GET",
-      url: endpoint
+      method,
+      url
     };
+
     const axiosInstance = axios.create();
-    axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
+    axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure, retryOn429: this.configuration.getChatTokenRetryOn429 });
+
     return new Promise(async (resolve, reject) => {
       try {
         const response = await axiosInstance(options);
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         const { data } = response;
+
         // Resolves only if it contains chat token response which only happens on status 200
         if (data) {
           data.requestId = requestId;
+
           if (this.logger) {
-            this.logger.log(LogLevel.INFO,
-              OCSDKTelemetryEvent.GETCHATTOKENSUCCEEDED,
-              { RequestId: requestId, Region: response.data.Region, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds, TransactionId: response.headers["transaction-id"] },
-              "Get Chat Token Succeeded");
+            const customData = {
+              RequestId: requestId,
+              Region: response.data.Region,
+              ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
+              TransactionId: response.headers["transaction-id"],
+              RequestPath: requestPath,
+              RequestMethod: method,
+              ResponseStatusCode: response.status
+            };
+
+            const description = "Get Chat Token Succeeded";
+
+            this.logger.log(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATTOKENSUCCEEDED, customData, description);
           }
+
           resolve(data);
           return;
         }
@@ -265,17 +287,33 @@ export default class SDK implements ISDK {
           reject(response);
           return;
         }
+
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         if (this.logger) {
           await LoggingSanitizer.stripErrorSensitiveProperties(error);
-          this.logger.log(LogLevel.ERROR,
-            OCSDKTelemetryEvent.GETCHATTOKENFAILED,
-            { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds},
-            "Get Chat Token Failed");
+
+          const customData = {
+            RequestId: requestId,
+            ExceptionDetails: error,
+            ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
+            RequestPath: requestPath,
+            RequestMethod: method,
+            ResponseStatusCode: (error as any).response.status // eslint-disable-line @typescript-eslint/no-explicit-any
+          };
+
+          const description = "Get Chat Token Failed";
+
+          this.logger.log(LogLevel.ERROR, OCSDKTelemetryEvent.GETCHATTOKENFAILED, customData, description);
         }
-        reject(error);
-        return;
+
+        // Stop retry on 429
+        if ((error as any).response.status === Constants.tooManyRequestsStatusCode && !this.configuration.getChatTokenRetryOn429) { // eslint-disable-line @typescript-eslint/no-explicit-any
+          reject(error);
+          return;
+        }
+
+        // No return/reject to recursively retry on failures up to chat token retry count limit
       }
 
       // Base case
