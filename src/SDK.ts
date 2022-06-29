@@ -42,7 +42,7 @@ import { CustomContextData } from "./Utils/CustomContextData";
 
 export default class SDK implements ISDK {
   private static defaultConfiguration: ISDKConfiguration = {
-    getChatTokenRetryCount: 35,
+    getChatTokenRetryCount: 10,
     getChatTokenTimeBetweenRetriesOnFailure: 10000,
     getChatTokenRetryOn429: false,
     maxRequestRetriesOnFailure: 3
