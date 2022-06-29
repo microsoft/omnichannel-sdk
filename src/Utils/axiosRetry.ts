@@ -1,5 +1,4 @@
-import { AxiosError } from "axios";
-import { AxiosInstance, AxiosResponse } from "axios";
+import { AxiosInstance, AxiosError } from "axios";
 import Constants from "../Common/Constants";
 import IAxiosRetryOptions from "../Interfaces/IAxiosRetryOptions";
 import sleep from "./sleep";
