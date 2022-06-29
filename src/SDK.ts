@@ -44,6 +44,7 @@ export default class SDK implements ISDK {
   private static defaultConfiguration: ISDKConfiguration = {
     getChatTokenRetryCount: 35,
     getChatTokenTimeBetweenRetriesOnFailure: 10000,
+    getChatTokenRetryOn429: false,
     maxRequestRetriesOnFailure: 3
   };
 
@@ -249,7 +250,7 @@ export default class SDK implements ISDK {
     };
 
     const axiosInstance = axios.create();
-    axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
+    axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure, retryOn429: this.configuration.getChatTokenRetryOn429 });
 
     return new Promise(async (resolve, reject) => {
       try {
@@ -307,7 +308,7 @@ export default class SDK implements ISDK {
         }
 
         // Stop retry on 429
-        if ((error as any).response.status === Constants.tooManyRequestsStatusCode) { // eslint-disable-line @typescript-eslint/no-explicit-any
+        if ((error as any).response.status === Constants.tooManyRequestsStatusCode && !this.configuration.getChatTokenRetryOn429) { // eslint-disable-line @typescript-eslint/no-explicit-any
           reject(error);
           return;
         }

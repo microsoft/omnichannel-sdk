@@ -4,9 +4,13 @@ export default interface ISDKConfiguration {
    */
   getChatTokenRetryCount: number;
   /**
-   * Time in milliseconds between two successive getchattoken retry requests.
+   * Time in milliseconds between getchattoken retry axios requests.
    */
   getChatTokenTimeBetweenRetriesOnFailure: number;
+  /**
+   * Whether to retry on getchattoken 429 HTTP status code response.
+   */
+  getChatTokenRetryOn429: boolean;
   /**
    * Maximum number of request retries before failing.
    */
