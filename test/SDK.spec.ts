@@ -87,13 +87,17 @@ describe("SDK unit tests", () => {
             expect(sdk).not.toBeUndefined();
         });
 
-        it("Should throw exception about missing SDK config key", () => {
-            const sdkConfig = {
-                getChatTokenTimeBetweenRetriesOnFailure: 10000,
-                maxRequestRetriesOnFailure: 3
-            };
-            expect(() => new SDK(ochannelConfig as IOmnichannelConfiguration, sdkConfig as ISDKConfiguration))
-            .toThrowError("Missing 'getChatTokenRetryCount' in SDKConfiguration");
+        it("Should use default configuration if not set", () => {
+          const sdkConfig = {
+              getChatTokenTimeBetweenRetriesOnFailure: 8000,
+              maxRequestRetriesOnFailure: 2
+          };
+
+          const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, sdkConfig as ISDKConfiguration);
+          expect((sdk as any).configuration.getChatTokenTimeBetweenRetriesOnFailure).toEqual(sdkConfig.getChatTokenTimeBetweenRetriesOnFailure);
+          expect((sdk as any).configuration.maxRequestRetriesOnFailure).toEqual(sdkConfig.maxRequestRetriesOnFailure);
+          expect((sdk as any).configuration.getChatTokenRetryOn429).toEqual((SDK as any).defaultConfiguration.getChatTokenRetryOn429);
+          expect((sdk as any).configuration.getChatTokenRetryCount).toEqual((SDK as any).defaultConfiguration.getChatTokenRetryCount);
         });
 
         it("Should throw exception about incorrect channel id", () => {

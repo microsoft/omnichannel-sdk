@@ -1,4 +1,6 @@
 export default interface ISDKConfiguration {
+  [key: string]: number | string | boolean | undefined;
+
   /**
    * Number of times a getchattoken request is retried.
    */

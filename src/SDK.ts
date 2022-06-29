@@ -59,7 +59,7 @@ export default class SDK implements ISDK {
     // Validate SDK config
     for (const key of Object.keys(SDK.defaultConfiguration)) {
       if (!this.configuration.hasOwnProperty(key)) { // eslint-disable-line no-prototype-builtins
-        throw new Error(`Missing '${key}' in SDKConfiguration`);
+        this.configuration[`${key}`] = SDK.defaultConfiguration[`${key}`];
       }
     }
 
