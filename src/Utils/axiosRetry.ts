@@ -19,7 +19,7 @@ const axiosRetry = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryOptions)
 
   const { retries } = axiosRetryOptions;
 
-  let currentTry = 0;
+  let currentTry = 1; // Executed as soon as after 1st try
 
   // Method to intercepts responses within range of 2xx
   const onSuccess = undefined;
@@ -49,7 +49,7 @@ const axiosRetry = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryOptions)
     return Promise.reject(error);
   };
 
-  axios.interceptors.response.use(onSuccess, onError);
+  axios.interceptors.response.use(onSuccess, onError); // Intercept response before returning
 };
 
 export default axiosRetry;

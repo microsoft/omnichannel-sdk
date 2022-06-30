@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fix
 - Stop `getchattoken` retry calls on `429`
+- Fix `axiosRetry` counter
 
 ### Changed
 - Rename `getQueueAvailability` to `getAgentAvailability`
