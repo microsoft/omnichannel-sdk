@@ -2,6 +2,8 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+
+## [0.3.1] - 2022-07-06
 ### Added
 - Add `RequestPayload`, `RequestPath`, `RequestMethod` and `ResponseStatusCode` as log data
 - Strip `Geolocation` log data
