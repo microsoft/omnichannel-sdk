@@ -89,14 +89,16 @@ export default class SDK implements ISDK {
     if (this.logger) {
       this.logger.log(LogLevel.INFO,
         OCSDKTelemetryEvent.GETCHATCONFIG,
-        { RequestId: requestId},
+        { RequestId: requestId },
         "Get Chat Config Started");
     }
     if (!requestId) {
       requestId = uuidv4();
     }
 
-    const endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatConfigPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}?requestId=${requestId}&channelId=${this.omnichannelConfiguration.channelId}`;
+    const requestPath = `/${OmnichannelEndpoints.LiveChatConfigPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}?requestId=${requestId}&channelId=${this.omnichannelConfiguration.channelId}`;
+    const method = "GET";
+    const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const axiosInstance = axios.create();
     axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
 
@@ -104,7 +106,7 @@ export default class SDK implements ISDK {
     if (bypassCache) {
       headers = { ...Constants.bypassCacheHeaders, ...headers };
     }
-    const response = await axiosInstance.get(endpoint, {
+    const response = await axiosInstance.get(url, {
       headers,
     });
     const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
@@ -117,10 +119,20 @@ export default class SDK implements ISDK {
       data.headers["date"] = response.headers["date"];
     }
     if (this.logger) {
-      this.logger.log(LogLevel.INFO,
-        OCSDKTelemetryEvent.GETCHATCONFIGSUCCESS,
-        { RequestId: requestId, Region: response.data.Region, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds, TransactionId: response.headers["transaction-id"] },
-        "Get Chat config succeeded");
+
+      const customData = {
+        RequestId: requestId,
+        Region: response.data.Region,
+        ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
+        TransactionId: response.headers[Constants.transactionid],
+        RequestPath: requestPath,
+        RequestMethod: method,
+        ResponseStatusCode: response.status
+      };
+
+      const description = "Get Chat config succeeded";
+
+      this.logger.log(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATCONFIGSUCCESS, customData, description);
     }
     return data;
   }
@@ -143,7 +155,7 @@ export default class SDK implements ISDK {
     }
 
     // construct a endpoint for anonymous chats to get LWI Details
-    let endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatLiveWorkItemDetailsPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
+    let requestPath = `/${OmnichannelEndpoints.LiveChatLiveWorkItemDetailsPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
     const axiosInstance = axios.create();
     axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
 
@@ -153,20 +165,22 @@ export default class SDK implements ISDK {
 
     // updated auth endpoint for authenticated chats and add auth token in header
     if (authenticatedUserToken) {
-      endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthLiveWorkItemDetailsPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
+      requestPath = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthLiveWorkItemDetailsPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
       headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
     }
 
     // Append reconnect id on the endpoint if vailable
     if (reconnectId) {
-      endpoint += `/${reconnectId}`;
+      requestPath += `/${reconnectId}`;
     }
-    endpoint += `?channelId=${this.omnichannelConfiguration.channelId}`;
+    requestPath += `?channelId=${this.omnichannelConfiguration.channelId}`;
 
+    const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
+    const method = "GET";
     const options: AxiosRequestConfig = {
       headers,
-      method: "GET",
-      url: endpoint
+      method,
+      url
     };
 
     return new Promise(async (resolve, reject) => {
@@ -175,20 +189,37 @@ export default class SDK implements ISDK {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         const { data } = response;
         if (this.logger) {
-          this.logger.log(LogLevel.INFO,
-            OCSDKTelemetryEvent.GETLWISTATUSSUCCEEDED,
-            { RequestId: requestId, Region: response.data.Region, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds, TransactionId: response.headers["transaction-id"] },
-            "Get LWI Details succeeded");
+
+          const customData = {
+            RequestId: requestId,
+            Region: response.data.Region,
+            ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
+            TransactionId: response.headers[Constants.transactionid],
+            RequestPath: requestPath,
+            RequestMethod: method,
+            ResponseStatusCode: response.status
+          };
+
+          const description = "Get LWI Details succeeded";
+          this.logger.log(LogLevel.INFO, OCSDKTelemetryEvent.GETLWISTATUSSUCCEEDED, customData, description);
         }
         resolve(data);
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         if (this.logger) {
           await LoggingSanitizer.stripErrorSensitiveProperties(error);
-          this.logger.log(LogLevel.ERROR,
-            OCSDKTelemetryEvent.GETLWISTATUSFAILED,
-            { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds },
-            "Get LWI Details failed");
+
+          const customData = {
+            RequestId: requestId,
+            ExceptionDetails: error,
+            ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
+            RequestPath: requestPath,
+            RequestMethod: method,
+            ResponseStatusCode: (error as any).response.status // eslint-disable-line @typescript-eslint/no-explicit-any
+          };
+
+          const description = "Get LWI Details failed";
+          this.logger.log(LogLevel.ERROR, OCSDKTelemetryEvent.GETLWISTATUSFAILED, customData, description);
         }
         reject();
       }
@@ -267,14 +298,13 @@ export default class SDK implements ISDK {
               RequestId: requestId,
               Region: response.data.Region,
               ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
-              TransactionId: response.headers["transaction-id"],
+              TransactionId: response.headers[Constants.transactionid],
               RequestPath: requestPath,
               RequestMethod: method,
               ResponseStatusCode: response.status
             };
 
             const description = "Get Chat Token Succeeded";
-
             this.logger.log(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATTOKENSUCCEEDED, customData, description);
           }
 
@@ -303,7 +333,6 @@ export default class SDK implements ISDK {
           };
 
           const description = "Get Chat Token Failed";
-
           this.logger.log(LogLevel.ERROR, OCSDKTelemetryEvent.GETCHATTOKENFAILED, customData, description);
         }
 
@@ -342,14 +371,16 @@ export default class SDK implements ISDK {
         "Get Reconnectable chat Started");
     }
 
-    const endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatGetReconnectableChatsPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${this.omnichannelConfiguration.orgId}?channelId=${this.omnichannelConfiguration.channelId}`;
+    const requestPath = `/${OmnichannelEndpoints.LiveChatGetReconnectableChatsPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${this.omnichannelConfiguration.orgId}?channelId=${this.omnichannelConfiguration.channelId}`;
     const headers: StringMap = Constants.defaultHeaders;
     headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
 
+    const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
+    const method = "GET";
     const options: AxiosRequestConfig = {
       headers,
-      method: "GET",
-      url: endpoint
+      method,
+      url
     };
 
     const axiosInstance = axios.create();
@@ -362,10 +393,18 @@ export default class SDK implements ISDK {
         // Resolves only if it contains reconnectable chats response which only happens on status 200
         if (data) {
           if (this.logger) {
-            this.logger.log(LogLevel.INFO,
-              OCSDKTelemetryEvent.GETRECONNECTABLECHATS,
-              { Region: response.data.Region, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds, TransactionId: response.headers[Constants.transactionid] },
-              "Get Reconnectable Chats Succeeded and old session returned");
+
+            const customData = {
+              Region: response.data.Region,
+              ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
+              TransactionId: response.headers[Constants.transactionid],
+              RequestPath: requestPath,
+              RequestMethod: method,
+              ResponseStatusCode: response.status
+            };
+
+            const description = "Get Reconnectable Chats Succeeded and old session returned";
+            this.logger.log(LogLevel.INFO, OCSDKTelemetryEvent.GETRECONNECTABLECHATS, customData, description);
           }
           resolve(data);
           return;
@@ -377,10 +416,17 @@ export default class SDK implements ISDK {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         if (this.logger) {
           await LoggingSanitizer.stripErrorSensitiveProperties(error);
-          this.logger.log(LogLevel.ERROR,
-            OCSDKTelemetryEvent.GETRECONNECTABLECHATS,
-            { ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds},
-            "Get Reconnectable Chats Failed");
+
+          const customData = {
+            ExceptionDetails: error,
+            ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
+            RequestPath: requestPath,
+            RequestMethod: method,
+            ResponseStatusCode: (error as any).response.status // eslint-disable-line @typescript-eslint/no-explicit-any
+          };
+
+          const description = "Get Reconnectable Chats failed";
+          this.logger.log(LogLevel.ERROR, OCSDKTelemetryEvent.GETRECONNECTABLECHATS, customData, description);
         }
         reject(error);
         return;
@@ -388,10 +434,10 @@ export default class SDK implements ISDK {
     });
   }
 
-    /**
-   * Fetches the reconnectable chats from omnichannel from the given user information in JWT token(claim name: sub).
-   * @param reconnectableChatsParams Mandate parameters for get reconnectable chats.
-   */
+  /**
+ * Fetches the reconnectable chats from omnichannel from the given user information in JWT token(claim name: sub).
+ * @param reconnectableChatsParams Mandate parameters for get reconnectable chats.
+ */
   public async getReconnectAvailability(reconnectId: string): Promise<ReconnectAvailability> {
     const timer = Timer.TIMER();
     if (this.logger) {
@@ -400,12 +446,14 @@ export default class SDK implements ISDK {
         "Get Reconnect availability started");
     }
 
-    const endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatReconnectAvailabilityPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${reconnectId}`;
+    const requestPath = `/${OmnichannelEndpoints.LiveChatReconnectAvailabilityPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${reconnectId}`;
     const headers: StringMap = Constants.defaultHeaders;
+    const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
+    const method = "GET";
     const options: AxiosRequestConfig = {
       headers,
-      method: "GET",
-      url: endpoint
+      method,
+      url
     };
 
     const axiosInstance = axios.create();
@@ -416,20 +464,36 @@ export default class SDK implements ISDK {
         const { data } = response;
         if (data) {
           if (this.logger) {
-            this.logger.log(LogLevel.INFO,
-              OCSDKTelemetryEvent.GETRECONNECTAVAILABILITY,
-              { Region: response.data.Region, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds, TransactionId: response.headers[Constants.transactionid] },
-              "Get Reconnect availability Succeeded");
+
+            const customData = {
+              Region: response.data.Region,
+              ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
+              TransactionId: response.headers[Constants.transactionid],
+              RequestPath: requestPath,
+              RequestMethod: method,
+              ResponseStatusCode: response.status
+            };
+
+            const description = "Get Reconnect availability succeeded";
+            this.logger.log(LogLevel.INFO, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITY, customData, description);
           }
           resolve(data);
           return;
         }
         // No data found so returning null
         if (this.logger) {
-          this.logger.log(LogLevel.WARN,
-            OCSDKTelemetryEvent.GETRECONNECTAVAILABILITY,
-            { Region: response.data.Region, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds, TransactionId: response.headers[Constants.transactionid] },
-            "Get Reconnect availability didn't send any valid data.");
+
+          const customData = {
+            Region: response.data.Region,
+            ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
+            TransactionId: response.headers[Constants.transactionid],
+            RequestPath: requestPath,
+            RequestMethod: method,
+            ResponseStatusCode: response.status
+          };
+
+          const description = "Get Reconnect availability didn't send any valid data.";
+          this.logger.log(LogLevel.WARN, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITY, customData, description);
         }
         resolve();
         return;
@@ -437,10 +501,17 @@ export default class SDK implements ISDK {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         if (this.logger) {
           await LoggingSanitizer.stripErrorSensitiveProperties(error);
-          this.logger.log(LogLevel.ERROR,
-            OCSDKTelemetryEvent.GETRECONNECTAVAILABILITY,
-            { ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds},
-            "Get Reconnect Availability Failed");
+
+          const customData = {
+            ExceptionDetails: error,
+            ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
+            RequestPath: requestPath,
+            RequestMethod: method,
+            ResponseStatusCode: (error as any).response.status // eslint-disable-line @typescript-eslint/no-explicit-any
+          };
+
+          const description = "Get Reconnect Availability  failed";
+          this.logger.log(LogLevel.ERROR, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITY, customData, description);
         }
         reject(error);
         return;
@@ -462,11 +533,11 @@ export default class SDK implements ISDK {
         "Get agent availability started");
     }
 
-    const endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.GetAgentAvailabilityPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=lcw`;
+    const requestPath = `/${OmnichannelEndpoints.GetAgentAvailabilityPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=lcw`;
     const axiosInstance = axios.create();
     axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
 
-    const {authenticatedUserToken, initContext, getContext } = queueAvailabilityOptionalParams;
+    const { authenticatedUserToken, initContext, getContext } = queueAvailabilityOptionalParams;
 
     const headers: StringMap = Constants.defaultHeaders;
 
@@ -483,11 +554,11 @@ export default class SDK implements ISDK {
 
     if (data && data.customContextData) {
       const tempArr = CustomContextData.sort(data.customContextData);
-      Object.assign(cachObj, {"customContext": tempArr});
+      Object.assign(cachObj, { "customContext": tempArr });
     }
 
     if (data.portalcontactid) {
-        Object.assign(cachObj, {"portalcontactid": data.portalcontactid});
+      Object.assign(cachObj, { "portalcontactid": data.portalcontactid });
     }
 
     data.cacheKey = hash.createHash('sha256').update(JSON.stringify(cachObj)).digest('hex').toString();
@@ -512,24 +583,37 @@ export default class SDK implements ISDK {
       return Promise.reject(new Error(`Unsupported locale: '${data.locale}'`));
     }
 
+
+    const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
+    const method = "POST";
+
     const options: AxiosRequestConfig = {
       data,
       headers,
-      method: "POST",
-      url: endpoint
+      method,
+      url
     };
 
     return new Promise(async (resolve, reject) => {
       try {
         const response = await axiosInstance(options);
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        const {data} = response;
-        if(data) {
+        const { data } = response;
+        if (data) {
           if (this.logger) {
-            this.logger.log(LogLevel.INFO,
-              OCSDKTelemetryEvent.GETAGENTAVAILABILITYSUCCEEDED,
-              { RequestId: requestId, Region: response.data.Region, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds, TransactionId: response.headers["transaction-id"] },
-              "Get agent availability Succeeded");
+
+            const customData = {
+              RequestId: requestId,
+              Region: response.data.Region,
+              ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
+              TransactionId: response.headers[Constants.transactionid],
+              RequestPath: requestPath,
+              RequestMethod: method,
+              ResponseStatusCode: response.status
+            };
+
+            const description = "Get agent availability succeeded";
+            this.logger.log(LogLevel.INFO, OCSDKTelemetryEvent.GETAGENTAVAILABILITYSUCCEEDED, customData, description);
           }
           resolve(data);
         }
@@ -537,10 +621,18 @@ export default class SDK implements ISDK {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         if (this.logger) {
           await LoggingSanitizer.stripErrorSensitiveProperties(error);
-          this.logger.log(LogLevel.ERROR,
-            OCSDKTelemetryEvent.GETAGENTAVAILABILITYFAILED,
-            { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds},
-            "Get agent availability failed");
+
+          const customData = {
+            RequestId: requestId,
+            ExceptionDetails: error,
+            ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
+            RequestPath: requestPath,
+            RequestMethod: method,
+            ResponseStatusCode: (error as any).response.status // eslint-disable-line @typescript-eslint/no-explicit-any
+          };
+
+          const description = "Get agent availability failed";
+          this.logger.log(LogLevel.ERROR, OCSDKTelemetryEvent.GETAGENTAVAILABILITYFAILED, customData, description);
         }
         reject(error);
       }
@@ -582,8 +674,6 @@ export default class SDK implements ISDK {
     const queryParams = `channelId=${this.omnichannelConfiguration.channelId}`;
     requestPath += `?${queryParams}`;
 
-    const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
-
     const data: InitContext = initContext || {};
 
     if (getContext && !window.document) {
@@ -607,6 +697,7 @@ export default class SDK implements ISDK {
       return Promise.reject(new Error(`Unsupported locale: '${data.locale}'`));
     }
 
+    const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "POST";
     const options: AxiosRequestConfig = {
       data,
@@ -621,7 +712,7 @@ export default class SDK implements ISDK {
       if (this.logger) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
 
-        const requestPayload = {...data};
+        const requestPayload = { ...data };
 
         if (requestPayload.customContextData) {
           LoggingSanitizer.stripCustomContextDataValues(requestPayload.customContextData);
@@ -637,7 +728,7 @@ export default class SDK implements ISDK {
           RequestId: requestId,
           Region: response.data.Region,
           ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
-          TransactionId: response.headers["transaction-id"],
+          TransactionId: response.headers[Constants.transactionid],
           RequestPayload: requestPayload,
           RequestPath: requestPath,
           RequestMethod: method,
@@ -645,14 +736,13 @@ export default class SDK implements ISDK {
         };
 
         const description = "Session Init Succeeded";
-
         this.logger.log(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSUCCEEDED, customData, description);
       }
     } catch (error) {
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
       if (this.logger) {
 
-        const requestPayload = {...data};
+        const requestPayload = { ...data };
 
         if (requestPayload.customContextData) {
           LoggingSanitizer.stripCustomContextDataValues(requestPayload.customContextData);
@@ -696,34 +786,36 @@ export default class SDK implements ISDK {
         { RequestId: requestId },
         "Session Close Started");
     }
-    let endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatSessionClosePath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
+    let requestPath = `/${OmnichannelEndpoints.LiveChatSessionClosePath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
     const axiosInstance = axios.create();
     axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
 
-    const { authenticatedUserToken, isReconnectChat, isPersistentChat, chatId} = sessionCloseOptionalParams;
+    const { authenticatedUserToken, isReconnectChat, isPersistentChat, chatId } = sessionCloseOptionalParams;
 
     const headers: StringMap = Constants.defaultHeaders;
     const data: any = {}; // eslint-disable-line @typescript-eslint/no-explicit-any
     data.chatId = chatId;
 
     if (authenticatedUserToken) {
-      endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthSessionClosePath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
+      requestPath = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthSessionClosePath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
       headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
     }
 
     if (isReconnectChat) {
-      endpoint += `&isReconnectChat=true`;
+      requestPath += `&isReconnectChat=true`;
     }
 
-    if (isPersistentChat){
-      endpoint += `&isPersistentChat=true`;
+    if (isPersistentChat) {
+      requestPath += `&isPersistentChat=true`;
     }
 
+    const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
+    const method = "POST";
     const options: AxiosRequestConfig = {
       data,
       headers,
-      method: "POST",
-      url: endpoint
+      method,
+      url
     };
 
     return new Promise(async (resolve, reject) => {
@@ -731,20 +823,37 @@ export default class SDK implements ISDK {
         const response = await axiosInstance(options);
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         if (this.logger) {
-          this.logger.log(LogLevel.INFO,
-            OCSDKTelemetryEvent.SESSIONCLOSESUCCEEDED,
-            { RequestId: requestId, Region: response.data.Region, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds, TransactionId: response.headers["transaction-id"] },
-            "Session Close Succeeded");
+
+          const customData = {
+            RequestId: requestId,
+            Region: response.data.Region,
+            ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
+            TransactionId: response.headers[Constants.transactionid],
+            RequestPath: requestPath,
+            RequestMethod: method,
+            ResponseStatusCode: response.status
+          };
+
+          const description = "Session Close succeeded";
+          this.logger.log(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONCLOSESUCCEEDED, customData, description);
         }
         resolve();
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         if (this.logger) {
           await LoggingSanitizer.stripErrorSensitiveProperties(error);
-          this.logger.log(LogLevel.ERROR,
-            OCSDKTelemetryEvent.SESSIONCLOSEFAILED,
-            { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds },
-            "Session Close Failed");
+
+          const customData = {
+            RequestId: requestId,
+            ExceptionDetails: error,
+            ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
+            RequestPath: requestPath,
+            RequestMethod: method,
+            ResponseStatusCode: (error as any).response.status // eslint-disable-line @typescript-eslint/no-explicit-any
+          };
+
+          const description = "Session close failed";
+          this.logger.log(LogLevel.ERROR, OCSDKTelemetryEvent.SESSIONCLOSEFAILED, customData, description);
         }
         reject();
       }
@@ -764,47 +873,89 @@ export default class SDK implements ISDK {
         "Validate Auth Chat Record Started");
     }
     const { authenticatedUserToken, chatId } = validateAuthChatRecordOptionalParams;
-    const endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatValidateAuthChatMapRecordPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
+    const requestPath = `/${OmnichannelEndpoints.LiveChatValidateAuthChatMapRecordPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
     const axiosInstance = axios.create();
     axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
     const headers: StringMap = Constants.defaultHeaders;
     if (authenticatedUserToken) {
       headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
     }
+
+
+    const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
+    const method = "GET";
     const options: AxiosRequestConfig = {
       headers,
-      method: "GET",
-      url: endpoint
+      method,
+      url
     };
 
     try {
       const response = await axiosInstance(options);
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
       if (response.data?.authChatExist === true) {
-        this.logger?.log(LogLevel.INFO,
-          OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDSUCCEEDED,
-          { RequestId: requestId, Region: response.data.Region, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds, TransactionId: response.headers["transaction-id"] },
-          "Validate Auth Chat Record Succeeded");
+
+        if (this.logger) {
+
+          const customData = {
+            RequestId: requestId,
+            Region: response.data.Region,
+            ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
+            TransactionId: response.headers[Constants.transactionid],
+            RequestPath: requestPath,
+            RequestMethod: method,
+            ResponseStatusCode: response.status
+          };
+
+          const description = "Validate Auth Chat Record succeeded";
+          this.logger.log(LogLevel.INFO, OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDSUCCEEDED, customData, description);
+        }
         return Promise.resolve(response.data);
       } else {
-        this.logger?.log(LogLevel.INFO,
-          OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDFAILED,
-          { RequestId: requestId, Region: response.data.Region, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds, TransactionId: response.headers["transaction-id"], ErrorCode: response.status},
-          "Validate Auth Chat Record Failed. Record is not found or request is not authorized");
+
+        if (this.logger) {
+
+          const customData = {
+            RequestId: requestId,
+            Region: response.data.Region,
+            ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
+            TransactionId: response.headers[Constants.transactionid],
+            ErrorCode: response.status,
+            RequestPath: requestPath,
+            RequestMethod: method,
+            ResponseStatusCode: response.status
+          };
+
+          const description = "Validate Auth Chat Record Failed. Record is not found or request is not authorized";
+          this.logger.log(LogLevel.INFO, OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDFAILED, customData, description);
+
+        }
+
         return Promise.reject(new Error("Validate Auth Chat Record Failed. Record is not found or request is not authorized"));
       }
     } catch (error) {
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
       await LoggingSanitizer.stripErrorSensitiveProperties(error);
-      this.logger?.log(LogLevel.ERROR,
-        OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDFAILED,
-        { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds },
-        "Validate Auth Chat Record Failed");
-        if (error.toString() === "Error: Request failed with status code 404") { // backward compatibility
-          return Promise.resolve({});
-        } else {
-          return Promise.reject();
-        }
+
+      if (this.logger) {
+
+        const customData = {
+          RequestId: requestId,
+          ExceptionDetails: error,
+          ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
+          RequestPath: requestPath,
+          RequestMethod: method,
+          ResponseStatusCode: (error as any).response.status // eslint-disable-line @typescript-eslint/no-explicit-any
+        };
+
+        const description = "Validate Auth Chat Record Failed";
+        this.logger.log(LogLevel.ERROR, OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDFAILED, customData, description);
+      }
+      if (error.toString() === "Error: Request failed with status code 404") { // backward compatibility
+        return Promise.resolve({});
+      } else {
+        return Promise.reject();
+      }
     }
   }
 
@@ -822,7 +973,7 @@ export default class SDK implements ISDK {
         { RequestId: requestId },
         "Submit Post Chat Started");
     }
-    let endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatSubmitPostChatPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
+    let requestPath = `/${OmnichannelEndpoints.LiveChatSubmitPostChatPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
     const axiosInstance = axios.create();
     axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
 
@@ -831,36 +982,56 @@ export default class SDK implements ISDK {
     const headers: StringMap = Constants.defaultHeaders;
 
     if (authenticatedUserToken) {
-      endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthSubmitPostChatPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
+      requestPath = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthSubmitPostChatPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
       headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
     }
 
+    const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
+    const method = "POST";
     const options: AxiosRequestConfig = {
       data: JSON.stringify(postChatResponse),
       headers,
-      method: "POST",
-      url: endpoint
+      method,
+      url
     };
+
 
     return new Promise(async (resolve, reject) => {
       try {
         const response = await axiosInstance(options);
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         if (this.logger) {
-          this.logger.log(LogLevel.INFO,
-            OCSDKTelemetryEvent.SUBMITPOSTCHATSUCCEEDED,
-            { RequestId: requestId, Region: response.data.Region, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds, TransactionId: response.headers["transaction-id"] },
-            "Submit Post Chat Succeeded");
+
+          const customData = {
+            RequestId: requestId,
+            Region: response.data.Region,
+            ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
+            TransactionId: response.headers[Constants.transactionid],
+            RequestPath: requestPath,
+            RequestMethod: method,
+            ResponseStatusCode: response.status
+          };
+
+          const description = "Submit Post Chat Succeeded";
+          this.logger.log(LogLevel.INFO, OCSDKTelemetryEvent.SUBMITPOSTCHATSUCCEEDED, customData, description);
         }
         resolve();
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         if (this.logger) {
           await LoggingSanitizer.stripErrorSensitiveProperties(error);
-          this.logger.log(LogLevel.ERROR,
-            OCSDKTelemetryEvent.SUBMITPOSTCHATFAILED,
-            { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds},
-            "Submit Post Chat Failed");
+
+          const customData = {
+            RequestId: requestId,
+            ExceptionDetails: error,
+            ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
+            RequestPath: requestPath,
+            RequestMethod: method,
+            ResponseStatusCode: (error as any).response.status // eslint-disable-line @typescript-eslint/no-explicit-any
+          };
+
+          const description = "Submit Post Chat Failed";
+          this.logger.log(LogLevel.ERROR, OCSDKTelemetryEvent.SUBMITPOSTCHATFAILED, customData, description);
         }
         reject();
       }
@@ -881,7 +1052,7 @@ export default class SDK implements ISDK {
         { SurveyOwnerId: surveyOwnerId },
         "Get Survey Invite Link Started");
     }
-    let endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatGetSurveyInviteLinkPath}/${this.omnichannelConfiguration.orgId}/${surveyOwnerId}`;
+    let requestPath = `${OmnichannelEndpoints.LiveChatGetSurveyInviteLinkPath}/${this.omnichannelConfiguration.orgId}/${surveyOwnerId}`;
     const axiosInstance = axios.create();
     axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
 
@@ -890,8 +1061,8 @@ export default class SDK implements ISDK {
 
     const headers: StringMap = Constants.defaultHeaders;
 
-    if (authenticatedUserToken ) {
-      endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthGetSurveyInviteLinkPath}/${this.omnichannelConfiguration.orgId}/${surveyOwnerId}`;
+    if (authenticatedUserToken) {
+      requestPath = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthGetSurveyInviteLinkPath}/${this.omnichannelConfiguration.orgId}/${surveyOwnerId}`;
       headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
       headers[OmnichannelHTTPHeaders.widgetAppId] = this.omnichannelConfiguration.widgetId;
     }
@@ -900,11 +1071,13 @@ export default class SDK implements ISDK {
       headers[OmnichannelHTTPHeaders.requestId] = requestId;
     }
 
+    const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
+    const method = "POST";
     const options: AxiosRequestConfig = {
       data: JSON.stringify(surveyInviteAPIRequestBody),
       headers,
-      method: "POST",
-      url: endpoint
+      method,
+      url
     };
 
     return new Promise(async (resolve, reject) => {
@@ -913,20 +1086,37 @@ export default class SDK implements ISDK {
         const { data } = response;
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         if (this.logger) {
-          this.logger.log(LogLevel.INFO,
-            OCSDKTelemetryEvent.GETSURVEYINVITELINKSUCCEEDED,
-            { Region: response.data.Region, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds, TransactionId: response.headers["transaction-id"] },
-            "Get Survey Invite Link Succeeded");
+
+          const customData = {
+            RequestId: requestId,
+            Region: response.data.Region,
+            ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
+            TransactionId: response.headers[Constants.transactionid],
+            RequestPath: requestPath,
+            RequestMethod: method,
+            ResponseStatusCode: response.status
+          };
+
+          const description = "Get Survey Invite Link Succeeded";
+          this.logger.log(LogLevel.INFO, OCSDKTelemetryEvent.GETSURVEYINVITELINKSUCCEEDED, customData, description);
         }
         resolve(data);
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         if (this.logger) {
           await LoggingSanitizer.stripErrorSensitiveProperties(error);
-          this.logger.log(LogLevel.ERROR,
-            OCSDKTelemetryEvent.GETSURVEYINVITELINKFAILED,
-            { ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds },
-            "Get Survey Invite Link Failed");
+
+          const customData = {
+            RequestId: requestId,
+            ExceptionDetails: error,
+            ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
+            RequestPath: requestPath,
+            RequestMethod: method,
+            ResponseStatusCode: (error as any).response.status // eslint-disable-line @typescript-eslint/no-explicit-any
+          };
+
+          const description = "Get Survey Invite Link failed";
+          this.logger.log(LogLevel.ERROR, OCSDKTelemetryEvent.GETSURVEYINVITELINKFAILED, customData, description);
         }
         reject();
       }
@@ -948,7 +1138,7 @@ export default class SDK implements ISDK {
         { RequestId: requestId },
         "Get Chat Transcript Started");
     }
-    let endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatGetChatTranscriptPath}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
+    let requestPath = `/${OmnichannelEndpoints.LiveChatGetChatTranscriptPath}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
     const axiosInstance = axios.create();
     axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
 
@@ -959,20 +1149,22 @@ export default class SDK implements ISDK {
     headers[OmnichannelHTTPHeaders.widgetAppId] = this.omnichannelConfiguration.widgetId;
     headers[OmnichannelHTTPHeaders.authorization] = token;
 
-    if (this.liveChatVersion === LiveChatVersion.V2 || (currentLiveChatVersion && currentLiveChatVersion === LiveChatVersion.V2)){
-      endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatv2GetChatTranscriptPath}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
+    if (this.liveChatVersion === LiveChatVersion.V2 || (currentLiveChatVersion && currentLiveChatVersion === LiveChatVersion.V2)) {
+      requestPath = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatv2GetChatTranscriptPath}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
       if (authenticatedUserToken) {
-        endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatv2AuthGetChatTranscriptPath}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
+        requestPath = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatv2AuthGetChatTranscriptPath}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
       }
     }
     else if (authenticatedUserToken) {
-      endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthGetChatTranscriptPath}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
+      requestPath = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthGetChatTranscriptPath}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
     }
 
+    const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
+    const method = "GET";
     const options: AxiosRequestConfig = {
       headers,
-      method: "GET",
-      url: endpoint
+      method,
+      url
     };
 
     return new Promise(async (resolve, reject) => {
@@ -981,20 +1173,37 @@ export default class SDK implements ISDK {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         const { data } = response;
         if (this.logger) {
-          this.logger.log(LogLevel.INFO,
-            OCSDKTelemetryEvent.GETCHATTRANSCRIPTSUCCEEDED,
-            { RequestId: requestId, Region: response.data.Region, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds, TransactionId: response.headers["transaction-id"] },
-            "Get Chat Transcript Succeeded");
+
+          const customData = {
+            RequestId: requestId,
+            Region: response.data.Region,
+            ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
+            TransactionId: response.headers[Constants.transactionid],
+            RequestPath: requestPath,
+            RequestMethod: method,
+            ResponseStatusCode: response.status
+          };
+
+          const description = "Get Chat Transcript succeeded";
+          this.logger.log(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATTRANSCRIPTSUCCEEDED, customData, description);
         }
         resolve(data);
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         if (this.logger) {
           await LoggingSanitizer.stripErrorSensitiveProperties(error);
-          this.logger.log(LogLevel.ERROR,
-            OCSDKTelemetryEvent.GETCHATTRANSCRIPTFAILED,
-            { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds},
-            "Get Chat Transcript Failed");
+
+          const customData = {
+            RequestId: requestId,
+            ExceptionDetails: error,
+            ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
+            RequestPath: requestPath,
+            RequestMethod: method,
+            ResponseStatusCode: (error as any).response.status // eslint-disable-line @typescript-eslint/no-explicit-any
+          };
+
+          const description = "Get Chat Transcript failed";
+          this.logger.log(LogLevel.ERROR, OCSDKTelemetryEvent.GETCHATTRANSCRIPTFAILED, customData, description);
         }
         reject(error);
       }
@@ -1016,7 +1225,7 @@ export default class SDK implements ISDK {
         { RequestId: requestId },
         "Email Transcript Started");
     }
-    let endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatTranscriptEmailRequestPath}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
+    let requestPath = `${OmnichannelEndpoints.LiveChatTranscriptEmailRequestPath}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
     const axiosInstance = axios.create();
     axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
 
@@ -1028,14 +1237,15 @@ export default class SDK implements ISDK {
     headers[OmnichannelHTTPHeaders.authorization] = token;
 
     if (authenticatedUserToken) {
-      endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthTranscriptEmailRequestPath}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
+      requestPath = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthTranscriptEmailRequestPath}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
     }
 
+    const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
+    const method = "GET";
     const options: AxiosRequestConfig = {
-      data: JSON.stringify(emailRequestBody),
       headers,
-      method: "POST",
-      url: endpoint
+      method,
+      url
     };
 
     return new Promise(async (resolve, reject) => {
@@ -1043,20 +1253,37 @@ export default class SDK implements ISDK {
         const response = await axiosInstance(options);
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         if (this.logger) {
-          this.logger.log(LogLevel.INFO,
-            OCSDKTelemetryEvent.EMAILTRANSCRIPTSUCCEEDED,
-            { RequestId: requestId, Region: response.data.Region, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds, TransactionId: response.headers["transaction-id"] },
-            "Email Transcript Succeeded");
+
+          const customData = {
+            RequestId: requestId,
+            Region: response.data.Region,
+            ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
+            TransactionId: response.headers[Constants.transactionid],
+            RequestPath: requestPath,
+            RequestMethod: method,
+            ResponseStatusCode: response.status
+          };
+
+          const description = "Email Transcript succeeded";
+          this.logger.log(LogLevel.INFO, OCSDKTelemetryEvent.EMAILTRANSCRIPTSUCCEEDED, customData, description);
         }
         resolve();
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         if (this.logger) {
           await LoggingSanitizer.stripErrorSensitiveProperties(error);
-          this.logger.log(LogLevel.ERROR,
-            OCSDKTelemetryEvent.EMAILTRANSCRIPTFAILED,
-            { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds},
-            "Email Transcript Failed");
+
+          const customData = {
+            RequestId: requestId,
+            ExceptionDetails: error,
+            ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
+            RequestPath: requestPath,
+            RequestMethod: method,
+            ResponseStatusCode: (error as any).response.status // eslint-disable-line @typescript-eslint/no-explicit-any
+          };
+
+          const description = "Email Transcript Failed";
+          this.logger.log(LogLevel.ERROR, OCSDKTelemetryEvent.EMAILTRANSCRIPTFAILED, customData, description);
         }
         reject();
       }
@@ -1079,7 +1306,7 @@ export default class SDK implements ISDK {
       requestId = uuidv4();
     }
 
-    const endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatFetchDataMaskingInfoPath}/${this.omnichannelConfiguration.orgId}`;
+    const requestPath = `/${OmnichannelEndpoints.LiveChatFetchDataMaskingInfoPath}/${this.omnichannelConfiguration.orgId}`;
     const axiosInstance = axios.create();
     axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
 
@@ -1087,10 +1314,12 @@ export default class SDK implements ISDK {
     headers[OmnichannelHTTPHeaders.organizationId] = this.omnichannelConfiguration.orgId;
     headers[OmnichannelHTTPHeaders.requestId] = requestId;
 
+    const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
+    const method = "GET";
     const options: AxiosRequestConfig = {
       headers,
-      method: "GET",
-      url: endpoint
+      method,
+      url
     };
 
     return new Promise(async (resolve, reject) => {
@@ -1099,20 +1328,37 @@ export default class SDK implements ISDK {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         const { data } = response;
         if (this.logger) {
-          this.logger.log(LogLevel.INFO,
-            OCSDKTelemetryEvent.FETCHDATAMASKINGSUCCEEDED,
-            { RequestId: requestId, Region: response.data.Region, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds, TransactionId: response.headers["transaction-id"] },
-            "Fetch Data Masking Succeeded");
+
+          const customData = {
+            RequestId: requestId,
+            Region: response.data.Region,
+            ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
+            TransactionId: response.headers[Constants.transactionid],
+            RequestPath: requestPath,
+            RequestMethod: method,
+            ResponseStatusCode: response.status
+          };
+
+          const description = "Fetch Data Masking succeeded";
+          this.logger.log(LogLevel.INFO, OCSDKTelemetryEvent.FETCHDATAMASKINGSUCCEEDED, customData, description);
         }
         resolve(data);
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         if (this.logger) {
           await LoggingSanitizer.stripErrorSensitiveProperties(error);
-          this.logger.log(LogLevel.ERROR,
-            OCSDKTelemetryEvent.FETCHDATAMASKINGFAILED,
-            { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds},
-            "Fetch Data Masking Failed");
+
+          const customData = {
+            RequestId: requestId,
+            ExceptionDetails: error,
+            ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
+            RequestPath: requestPath,
+            RequestMethod: method,
+            ResponseStatusCode: (error as any).response.status // eslint-disable-line @typescript-eslint/no-explicit-any
+          };
+
+          const description = "Fetch Data Masking Failed";
+          this.logger.log(LogLevel.ERROR, OCSDKTelemetryEvent.FETCHDATAMASKINGFAILED, customData, description);
         }
         reject();
       }
@@ -1133,7 +1379,7 @@ export default class SDK implements ISDK {
         { RequestId: requestId },
         "Secondary Channel Event Request Started");
     }
-    let endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatSecondaryChannelEventPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
+    let requestPath = `/${OmnichannelEndpoints.LiveChatSecondaryChannelEventPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
     const axiosInstance = axios.create();
     axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
 
@@ -1144,16 +1390,18 @@ export default class SDK implements ISDK {
 
     if (authenticatedUserToken) {
       headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
-      endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthSecondaryChannelEventPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
+      requestPath = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthSecondaryChannelEventPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
     }
 
-    endpoint += "?channelId=" + Constants.defaultChannelId;
+    requestPath += "?channelId=" + Constants.defaultChannelId;
 
+    const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
+    const method = "POST";
     const options: AxiosRequestConfig = {
       data: JSON.stringify(secondaryChannelEventRequestBody),
       headers,
-      method: "POST",
-      url: endpoint
+      method,
+      url
     };
 
     try {
@@ -1161,19 +1409,36 @@ export default class SDK implements ISDK {
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
       const { data } = response;
       if (this.logger) {
-        this.logger.log(LogLevel.INFO,
-          OCSDKTelemetryEvent.SECONDARYCHANNELEVENTREQUESTSUCCEEDED,
-          { RequestId: requestId, Region: data.Region, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds, TransactionId: response.headers["transaction-id"] },
-          "Secondary Channel Event Request Succeeded");
+
+        const customData = {
+          RequestId: requestId,
+          Region: response.data.Region,
+          ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
+          TransactionId: response.headers[Constants.transactionid],
+          RequestPath: requestPath,
+          RequestMethod: method,
+          ResponseStatusCode: response.status
+        };
+
+        const description = "Secondary Channel Event Request Succeeded";
+        this.logger.log(LogLevel.INFO, OCSDKTelemetryEvent.SECONDARYCHANNELEVENTREQUESTSUCCEEDED, customData, description);
       }
     } catch (error) {
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
       if (this.logger) {
         await LoggingSanitizer.stripErrorSensitiveProperties(error);
-        this.logger.log(LogLevel.ERROR,
-          OCSDKTelemetryEvent.SECONDARYCHANNELEVENTREQUESTFAILED,
-          { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds},
-          "Secondary Channel Event Request Failed");
+
+        const customData = {
+          RequestId: requestId,
+          ExceptionDetails: error,
+          ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
+          RequestPath: requestPath,
+          RequestMethod: method,
+          ResponseStatusCode: (error as any).response.status // eslint-disable-line @typescript-eslint/no-explicit-any
+        };
+
+        const description = "Secondary Channel Event Request Failed";
+        this.logger.log(LogLevel.ERROR, OCSDKTelemetryEvent.SECONDARYCHANNELEVENTREQUESTFAILED, customData, description);
       }
       throw error;
     }
@@ -1190,7 +1455,7 @@ export default class SDK implements ISDK {
     const timer = Timer.TIMER();
     const { customerDisplayName } = sendTypingIndicatorOptionalParams;
     if (!currentLiveChatVersion || currentLiveChatVersion !== LiveChatVersion.V2) { throw new Error('Typing indicator is only supported on v2') }
-    const endpoint = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.SendTypingIndicatorPath}/${requestId}`;
+    const requestPath = `/${OmnichannelEndpoints.SendTypingIndicatorPath}/${requestId}`;
     const axiosInstance = axios.create();
 
     const headers: StringMap = Constants.defaultHeaders;
@@ -1199,31 +1464,51 @@ export default class SDK implements ISDK {
       headers[Constants.customerDisplayName] = customerDisplayName;
     }
 
+    const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
+    const method = "POST";
     const options: AxiosRequestConfig = {
       headers,
-      method: "POST",
-      url: endpoint
+      method,
+      url
     };
+
     return new Promise(async (resolve, reject) => {
       try {
         const response = await axiosInstance(options);
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        const { data } = response;
         if (this.logger) {
-          this.logger.log(LogLevel.INFO,
-            OCSDKTelemetryEvent.SENDTYPINGINDICATORSUCCEEDED,
-            { RequestId: requestId, Region: data.Region, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds, TransactionId: response.headers["transaction-id"] },
-            "Send Typing Indicator Succeeded");
+
+          const customData = {
+            RequestId: requestId,
+            Region: response.data.Region,
+            ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
+            TransactionId: response.headers[Constants.transactionid],
+            RequestPath: requestPath,
+            RequestMethod: method,
+            ResponseStatusCode: response.status
+          };
+
+          const description = "Send Typing Indicator Succeeded";
+          this.logger.log(LogLevel.INFO, OCSDKTelemetryEvent.SENDTYPINGINDICATORSUCCEEDED, customData, description);
         }
         resolve();
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         if (this.logger) {
           await LoggingSanitizer.stripErrorSensitiveProperties(error);
-          this.logger.log(LogLevel.ERROR,
-            OCSDKTelemetryEvent.SENDTYPINGINDICATORFAILED,
-            { RequestId: requestId, ExceptionDetails: error, ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds},
-            "Send Typing Indicator Failed");
+
+
+          const customData = {
+            RequestId: requestId,
+            ExceptionDetails: error,
+            ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
+            RequestPath: requestPath,
+            RequestMethod: method,
+            ResponseStatusCode: (error as any).response.status // eslint-disable-line @typescript-eslint/no-explicit-any
+          };
+
+          const description = "Send Typing Indicator Failed";
+          this.logger.log(LogLevel.ERROR, OCSDKTelemetryEvent.SENDTYPINGINDICATORFAILED, customData, description);
         }
         reject(error);
       }
