@@ -939,7 +939,6 @@ export default class SDK implements ISDK {
     try {
       const response = await axiosInstance(options);
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-      const { data } = response;
       this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SECONDARYCHANNELEVENTREQUESTSUCCEEDED, "Secondary Channel Event Request Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
 
     } catch (error) {
@@ -1009,7 +1008,7 @@ export default class SDK implements ISDK {
    * @param error Error
    * @param data Data
    */
-  private logWithLogger(logLevel: LogLevel, telemetryEventType: OCSDKTelemetryEvent, description: string, requestId?: string, response?: AxiosResponse<any>, elapsedTimeInMilliseconds?: number, requestPath?: string, method?: string, error?: unknown, requestPayload?: any): void {
+  private logWithLogger(logLevel: LogLevel, telemetryEventType: OCSDKTelemetryEvent, description: string, requestId?: string, response?: AxiosResponse<any>, elapsedTimeInMilliseconds?: number, requestPath?: string, method?: string, error?: unknown, requestPayload?: any): void { // eslint-disable-line @typescript-eslint/no-explicit-any
     if (!this.logger) {
       return;
     }
