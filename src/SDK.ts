@@ -298,6 +298,9 @@ export default class SDK implements ISDK {
     };
 
     const axiosInstance = axios.create();
+
+    const requestId = this.omnichannelConfiguration.orgId;
+
     return new Promise(async (resolve, reject) => {
       try {
         const response = await axiosInstance(options);
@@ -306,7 +309,7 @@ export default class SDK implements ISDK {
 
         // Resolves only if it contains reconnectable chats response which only happens on status 200
         if (data) {
-          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETRECONNECTABLECHATS, "Get Reconnectable Chats Succeeded and old session returned", undefined, response, elapsedTimeInMilliseconds, requestPath, method);
+          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETRECONNECTABLECHATS, "Get Reconnectable Chats Succeeded and old session returned", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
 
           resolve(data);
           return;
@@ -316,7 +319,7 @@ export default class SDK implements ISDK {
         return;
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETRECONNECTABLECHATS, "Get Reconnectable Chats failed", undefined, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETRECONNECTABLECHATS, "Get Reconnectable Chats failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
 
         reject(error);
         return;
@@ -522,14 +525,11 @@ export default class SDK implements ISDK {
     try {
       const response = await axiosInstance(options);
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-
-      this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSUCCEEDED, "Session Init Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, { ...data });
+      this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSUCCEEDED, "Session Init Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, data);
 
     } catch (error) {
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-
-      const requestPayload = { ...data };
-      this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SESSIONINITFAILED, "Session Init failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, { ...data });
+      this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SESSIONINITFAILED, "Session Init failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, data);
 
       throw error;
     }
@@ -555,7 +555,7 @@ export default class SDK implements ISDK {
     data.chatId = chatId;
 
     if (authenticatedUserToken) {
-      requestPath = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthSessionClosePath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
+      requestPath = `/${OmnichannelEndpoints.LiveChatAuthSessionClosePath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
       headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
     }
 
@@ -661,7 +661,7 @@ export default class SDK implements ISDK {
     const headers: StringMap = Constants.defaultHeaders;
 
     if (authenticatedUserToken) {
-      requestPath = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthSubmitPostChatPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
+      requestPath = `/${OmnichannelEndpoints.LiveChatAuthSubmitPostChatPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
       headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
     }
 
@@ -705,7 +705,7 @@ export default class SDK implements ISDK {
         { SurveyOwnerId: surveyOwnerId },
         "Get Survey Invite Link Started");
     }
-    let requestPath = `${OmnichannelEndpoints.LiveChatGetSurveyInviteLinkPath}/${this.omnichannelConfiguration.orgId}/${surveyOwnerId}`;
+    let requestPath = `/${OmnichannelEndpoints.LiveChatGetSurveyInviteLinkPath}/${this.omnichannelConfiguration.orgId}/${surveyOwnerId}`;
     const axiosInstance = axios.create();
     axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
 
@@ -714,7 +714,7 @@ export default class SDK implements ISDK {
     const headers: StringMap = Constants.defaultHeaders;
 
     if (authenticatedUserToken) {
-      requestPath = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthGetSurveyInviteLinkPath}/${this.omnichannelConfiguration.orgId}/${surveyOwnerId}`;
+      requestPath = `/${OmnichannelEndpoints.LiveChatAuthGetSurveyInviteLinkPath}/${this.omnichannelConfiguration.orgId}/${surveyOwnerId}`;
       headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
       headers[OmnichannelHTTPHeaders.widgetAppId] = this.omnichannelConfiguration.widgetId;
     }
@@ -772,13 +772,13 @@ export default class SDK implements ISDK {
     headers[OmnichannelHTTPHeaders.authorization] = token;
 
     if (this.liveChatVersion === LiveChatVersion.V2 || (currentLiveChatVersion && currentLiveChatVersion === LiveChatVersion.V2)) {
-      requestPath = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatv2GetChatTranscriptPath}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
+      requestPath = `/${OmnichannelEndpoints.LiveChatv2GetChatTranscriptPath}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
       if (authenticatedUserToken) {
-        requestPath = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatv2AuthGetChatTranscriptPath}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
+        requestPath = `/${OmnichannelEndpoints.LiveChatv2AuthGetChatTranscriptPath}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
       }
     }
     else if (authenticatedUserToken) {
-      requestPath = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthGetChatTranscriptPath}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
+      requestPath = `/${OmnichannelEndpoints.LiveChatAuthGetChatTranscriptPath}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
     }
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
@@ -817,7 +817,7 @@ export default class SDK implements ISDK {
     const timer = Timer.TIMER();
     this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.EMAILTRANSCRIPTSTARTED, "Email Transcript Started", requestId);
 
-    let requestPath = `${OmnichannelEndpoints.LiveChatTranscriptEmailRequestPath}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
+    let requestPath = `/${OmnichannelEndpoints.LiveChatTranscriptEmailRequestPath}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
     const axiosInstance = axios.create();
     axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
 
@@ -829,12 +829,13 @@ export default class SDK implements ISDK {
     headers[OmnichannelHTTPHeaders.authorization] = token;
 
     if (authenticatedUserToken) {
-      requestPath = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthTranscriptEmailRequestPath}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
+      requestPath = `/${OmnichannelEndpoints.LiveChatAuthTranscriptEmailRequestPath}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
     }
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
-    const method = "GET";
+    const method = "POST";
     const options: AxiosRequestConfig = {
+      data: JSON.stringify(emailRequestBody),
       headers,
       method,
       url
@@ -921,7 +922,7 @@ export default class SDK implements ISDK {
 
     if (authenticatedUserToken) {
       headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
-      requestPath = `${this.omnichannelConfiguration.orgUrl}/${OmnichannelEndpoints.LiveChatAuthSecondaryChannelEventPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
+      requestPath = `/${OmnichannelEndpoints.LiveChatAuthSecondaryChannelEventPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
     }
 
     requestPath += "?channelId=" + Constants.defaultChannelId;
@@ -1008,7 +1009,7 @@ export default class SDK implements ISDK {
    * @param error Error
    * @param data Data
    */
-  private logWithLogger(logLevel: LogLevel, telemetryEventType: OCSDKTelemetryEvent, description: string, requestId?: string, response?: AxiosResponse<any>, elapsedTimeInMilliseconds?: number, requestPath?: string, method?: string, error?: unknown, data?: InitContext): void {
+  private logWithLogger(logLevel: LogLevel, telemetryEventType: OCSDKTelemetryEvent, description: string, requestId?: string, response?: AxiosResponse<any>, elapsedTimeInMilliseconds?: number, requestPath?: string, method?: string, error?: unknown, requestPayload?: any): void {
     if (!this.logger) {
       return;
     }
@@ -1016,18 +1017,18 @@ export default class SDK implements ISDK {
       LoggingSanitizer.stripErrorSensitiveProperties(error);
     }
 
-    let requestPayload = undefined;
-    if (data) {
-      requestPayload = { ...data };
-      if (requestPayload.customContextData) {
-        LoggingSanitizer.stripCustomContextDataValues(requestPayload.customContextData);
+    let sanitizedRequestPayload = undefined;
+    if (requestPayload) {
+      sanitizedRequestPayload = { ...requestPayload };
+      if (sanitizedRequestPayload.customContextData) {
+        LoggingSanitizer.stripCustomContextDataValues(sanitizedRequestPayload.customContextData);
       }
-      if (requestPayload.preChatResponse) {
-        LoggingSanitizer.stripPreChatResponse(requestPayload.preChatResponse);
+      if (sanitizedRequestPayload.preChatResponse) {
+        LoggingSanitizer.stripPreChatResponse(sanitizedRequestPayload.preChatResponse);
       }
-      LoggingSanitizer.stripGeolocation(requestPayload);
+      LoggingSanitizer.stripGeolocation(sanitizedRequestPayload);
     }
-    
+
     const customData = {
       RequestId: requestId,
       Region: response?.data.Region,
@@ -1037,7 +1038,7 @@ export default class SDK implements ISDK {
       RequestMethod: method,
       ResponseStatusCode: response ? response.status : error ? (error as any).response.status : undefined, // eslint-disable-line @typescript-eslint/no-explicit-any
       ExceptionDetails: error,
-      RequestPayload: requestPayload
+      RequestPayload: sanitizedRequestPayload
     };
     this.logger.log(logLevel, telemetryEventType, customData, description);
   }
