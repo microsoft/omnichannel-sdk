@@ -255,7 +255,7 @@ export default class SDK implements ISDK {
 
 
         // Stop retry on 429
-        if ((error as any).response.status === Constants.tooManyRequestsStatusCode && !this.configuration.getChatTokenRetryOn429) { // eslint-disable-line @typescript-eslint/no-explicit-any
+        if ((error as any).response?.status === Constants.tooManyRequestsStatusCode && !this.configuration.getChatTokenRetryOn429) { // eslint-disable-line @typescript-eslint/no-explicit-any
           reject(error);
           return;
         }
@@ -1035,7 +1035,7 @@ export default class SDK implements ISDK {
       TransactionId: response?.headers[Constants.transactionid],
       RequestPath: requestPath,
       RequestMethod: method,
-      ResponseStatusCode: response ? response.status : error ? (error as any).response.status : undefined, // eslint-disable-line @typescript-eslint/no-explicit-any
+      ResponseStatusCode: response ? response.status : error ? (error as any).response?.status : undefined, // eslint-disable-line @typescript-eslint/no-explicit-any
       ExceptionDetails: error,
       RequestPayload: sanitizedRequestPayload
     };
