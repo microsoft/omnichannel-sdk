@@ -280,7 +280,7 @@ export default class SDK implements ISDK {
    * Fetches the reconnectable chats from omnichannel from the given user information in JWT token(claim name: sub).
    * @param reconnectableChatsParams Mandate parameters for get reconnectable chats.
    */
-  public async getReconnectableChats(reconnectableChatsParams: IReconnectableChatsParams): Promise<ReconnectMappingRecord> {
+  public async getReconnectableChats(reconnectableChatsParams: IReconnectableChatsParams): Promise<ReconnectMappingRecord | void> {
     const timer = Timer.TIMER();
     const { authenticatedUserToken } = reconnectableChatsParams;
     this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETRECONNECTABLECHATS, "Get Reconnectable chat Started");
@@ -311,7 +311,7 @@ export default class SDK implements ISDK {
         if (data) {
           this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETRECONNECTABLECHATS, "Get Reconnectable Chats Succeeded and old session returned", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
 
-          resolve(data);
+          resolve(data as ReconnectMappingRecord);
           return;
         }
         // No data found in the old sessions so returning null
@@ -331,7 +331,7 @@ export default class SDK implements ISDK {
  * Fetches the reconnectable chats from omnichannel from the given user information in JWT token(claim name: sub).
  * @param reconnectableChatsParams Mandate parameters for get reconnectable chats.
  */
-  public async getReconnectAvailability(reconnectId: string): Promise<ReconnectAvailability> {
+  public async getReconnectAvailability(reconnectId: string): Promise<ReconnectAvailability | void> {
     const timer = Timer.TIMER();
     this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITY, "Get Reconnectable availability Started");
 
@@ -634,7 +634,7 @@ export default class SDK implements ISDK {
 
       this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDFAILED, "Validate Auth Chat Record failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
 
-      if (error.toString() === "Error: Request failed with status code 404") { // backward compatibility
+      if ((error as any).toString() === "Error: Request failed with status code 404") { // backward compatibility
         return Promise.resolve({});
       } else {
         return Promise.reject();
@@ -996,13 +996,13 @@ export default class SDK implements ISDK {
 
   /**
    * Helper function for logging.
-   * 
+   *
    * @param logLevel Log level for logging.
    * @param telemetryEventType Telemetry event type in which event will be logged.
    * @param description Description of the event.
    * @param requestId Request ID
    * @param response Response
-   * @param elapsedTimeInMilliseconds Elapsed time in ms 
+   * @param elapsedTimeInMilliseconds Elapsed time in ms
    * @param requestPath Request path
    * @param method Method
    * @param error Error
