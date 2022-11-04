@@ -3,6 +3,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.3.2] - 2022-11-03
+### Changed
+- Update methods to log `RequestPath`, `RequestMethod` and `ResponseStatusCode`
+
+### Fix
+- Update `getChatToken`'s `error.response` to be optional
+
+### Security
+
 ## [0.3.1] - 2022-07-06
 ### Added
 - Add `RequestPayload`, `RequestPath`, `RequestMethod` and `ResponseStatusCode` as log data
