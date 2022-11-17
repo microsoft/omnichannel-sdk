@@ -17,4 +17,5 @@ export default class Constants {
   public static readonly transactionid = "transaction-id";
   public static readonly customerDisplayName = "customerDisplayName";
   public static readonly hiddenContentPlaceholder = "*content hidden*";
+  public static readonly validateAuthChatRecordTimeout = 5000;
 }
