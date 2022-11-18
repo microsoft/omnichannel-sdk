@@ -1,7 +1,7 @@
-import { TimeoutMap } from "../Common/TimeoutMap";
+import { RequestTimeoutConfig } from "../Common/RequestTimeoutConfig";
 
 export default interface ISDKConfiguration {
-  [key: string]: number | string | boolean | TimeoutMap | undefined;
+  [key: string]: number | string | boolean | RequestTimeoutConfig | undefined;
 
   /**
    * Number of times a getchattoken request is retried.
@@ -22,9 +22,9 @@ export default interface ISDKConfiguration {
   /**
    * Default timeout for all requests
    */
-  defaultTimeout: number | undefined;
+  defaultRequestTimeout: number | undefined;
   /**
-   * Individual Endpoint timeouts
+   * Individual Request timeouts
    */
-  endpointTimeouts: TimeoutMap;
+  requestTimeoutConfig: RequestTimeoutConfig;
 }

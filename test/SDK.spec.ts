@@ -98,26 +98,26 @@ describe("SDK unit tests", () => {
           expect((sdk as any).configuration.maxRequestRetriesOnFailure).toEqual(sdkConfig.maxRequestRetriesOnFailure);
           expect((sdk as any).configuration.getChatTokenRetryOn429).toEqual((SDK as any).defaultConfiguration.getChatTokenRetryOn429);
           expect((sdk as any).configuration.getChatTokenRetryCount).toEqual((SDK as any).defaultConfiguration.getChatTokenRetryCount);
-          expect((sdk as any).configuration.defaultTimeout).toEqual((SDK as any).defaultConfiguration.defaultTimeout);
-          expect((sdk as any).configuration.endpointTimeouts).toEqual((SDK as any).defaultConfiguration.endpointTimeouts);
+          expect((sdk as any).configuration.defaultRequestTimeout).toEqual((SDK as any).defaultConfiguration.defaultRequestTimeout);
+          expect((sdk as any).configuration.requestTimeoutConfig).toEqual((SDK as any).defaultConfiguration.requestTimeoutConfig);
 
-          for (const key in Object.keys((SDK as any).defaultConfiguration.endpointTimeouts)) {
-            expect((sdk as any).configuration.endpointTimeouts[`${key}`]).toEqual((SDK as any).defaultConfiguration.endpointTimeouts[`${key}`]);
+          for (const key in Object.keys((SDK as any).defaultConfiguration.requestTimeoutConfig)) {
+            expect((sdk as any).configuration.requestTimeoutConfig[`${key}`]).toEqual((SDK as any).defaultConfiguration.requestTimeoutConfig[`${key}`]);
           }
         });
 
         it("Should use individual default endpoint timeout configurations if not set", () => {
             const sdkConfig = {
-                endpointTimeouts: {
+                requestTimeoutConfig: {
                     getChatConfig: 60000
                 }
             };
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, sdkConfig as ISDKConfiguration);
-            for (const key in Object.keys((SDK as any).defaultConfiguration.endpointTimeouts)) {
+            for (const key in Object.keys((SDK as any).defaultConfiguration.requestTimeoutConfig)) {
                 if (key === "getChatConfig") {
-                    expect((sdk as any).configuration.endpointTimeouts[`${key}`]).toBeGreaterThan((SDK as any).defaultConfiguration.endpointTimeouts[`${key}`]);
+                    expect((sdk as any).configuration.requestTimeoutConfig[`${key}`]).toBeGreaterThan((SDK as any).defaultConfiguration.requestTimeoutConfig[`${key}`]);
                 } else {
-                    expect((sdk as any).configuration.endpointTimeouts[`${key}`]).toEqual((SDK as any).defaultConfiguration.endpointTimeouts[`${key}`]);
+                    expect((sdk as any).configuration.requestTimeoutConfig[`${key}`]).toEqual((SDK as any).defaultConfiguration.requestTimeoutConfig[`${key}`]);
                 }
             }
           });

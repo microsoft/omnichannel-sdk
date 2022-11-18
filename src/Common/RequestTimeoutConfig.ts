@@ -1,4 +1,4 @@
-export type TimeoutMap = {
+export type RequestTimeoutConfig = {
     [key: string]: number;
 
     getChatConfig: number;

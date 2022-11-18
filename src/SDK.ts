@@ -39,10 +39,10 @@ import axiosRetry from "./Utils/axiosRetry";
 import { uuidv4 } from "./Utils/uuid";
 import * as hash from "crypto";
 import { CustomContextData } from "./Utils/CustomContextData";
-import { TimeoutMap } from "./Common/TimeoutMap";
+import { RequestTimeoutConfig } from "./Common/RequestTimeoutConfig";
 
 export default class SDK implements ISDK {
-  private static defaultEndpointTimeouts: TimeoutMap = {
+  private static defaultRequestTimeoutConfig: RequestTimeoutConfig = {
     getChatConfig: 30000,
     getLWIDetails: 5000,
     getChatToken: 10000,
@@ -66,8 +66,8 @@ export default class SDK implements ISDK {
     getChatTokenTimeBetweenRetriesOnFailure: 10000,
     getChatTokenRetryOn429: false,
     maxRequestRetriesOnFailure: 3,
-    defaultTimeout: undefined,
-    endpointTimeouts: SDK.defaultEndpointTimeouts
+    defaultRequestTimeout: undefined,
+    requestTimeoutConfig: SDK.defaultRequestTimeoutConfig
   };
 
   liveChatVersion: number;
@@ -86,9 +86,9 @@ export default class SDK implements ISDK {
     }
 
     // Validate individual endpointTimeout config
-    for (const key of Object.keys(SDK.defaultConfiguration["endpointTimeouts"])) {
-      if (!this.configuration["endpointTimeouts"].hasOwnProperty(key)) { // eslint-disable-line no-prototype-builtins
-        this.configuration["endpointTimeouts"][`${key}`] = SDK.defaultConfiguration["endpointTimeouts"][`${key}`];
+    for (const key of Object.keys(SDK.defaultConfiguration["requestTimeoutConfig"])) {
+      if (!this.configuration["requestTimeoutConfig"].hasOwnProperty(key)) { // eslint-disable-line no-prototype-builtins
+        this.configuration["requestTimeoutConfig"][`${key}`] = SDK.defaultConfiguration["requestTimeoutConfig"][`${key}`];
       }
     }
 
@@ -132,7 +132,7 @@ export default class SDK implements ISDK {
     }
     const response = await axiosInstance.get(url, {
       headers,
-      timeout: this.configuration.defaultTimeout ?? this.configuration.endpointTimeouts.getChatConfig
+      timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.getChatConfig
     });
     const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
     const { data } = response;
@@ -189,7 +189,7 @@ export default class SDK implements ISDK {
       headers,
       method,
       url,
-      timeout: this.configuration.defaultTimeout ?? this.configuration.endpointTimeouts.getLWIDetails
+      timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.getLWIDetails
     };
 
     return new Promise(async (resolve, reject) => {
@@ -253,7 +253,7 @@ export default class SDK implements ISDK {
       headers,
       method,
       url,
-      timeout: this.configuration.defaultTimeout ?? this.configuration.endpointTimeouts.getChatToken
+      timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.getChatToken
     };
 
     const axiosInstance = axios.create();
@@ -327,7 +327,7 @@ export default class SDK implements ISDK {
       headers,
       method,
       url,
-      timeout: this.configuration.defaultTimeout ?? this.configuration.endpointTimeouts.getReconnectableChats
+      timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.getReconnectableChats
     };
 
     const axiosInstance = axios.create();
@@ -376,7 +376,7 @@ export default class SDK implements ISDK {
       headers,
       method,
       url,
-      timeout: this.configuration.defaultTimeout ?? this.configuration.endpointTimeouts.getReconnectAvailability
+      timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.getReconnectAvailability
     };
 
     const axiosInstance = axios.create();
@@ -473,7 +473,7 @@ export default class SDK implements ISDK {
       headers,
       method,
       url,
-      timeout: this.configuration.defaultTimeout ?? this.configuration.endpointTimeouts.getAgentAvailability
+      timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.getAgentAvailability
     };
 
     return new Promise(async (resolve, reject) => {
@@ -555,7 +555,7 @@ export default class SDK implements ISDK {
       headers,
       method,
       url,
-      timeout: this.configuration.defaultTimeout ?? this.configuration.endpointTimeouts.sessionInit
+      timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.sessionInit
     };
 
     try {
@@ -610,7 +610,7 @@ export default class SDK implements ISDK {
       headers,
       method,
       url,
-      timeout: this.configuration.defaultTimeout ?? this.configuration.endpointTimeouts.sessionClose
+      timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.sessionClose
     };
 
     return new Promise(async (resolve, reject) => {
@@ -652,7 +652,7 @@ export default class SDK implements ISDK {
       headers,
       method,
       url,
-      timeout: this.configuration.defaultTimeout ?? this.configuration.endpointTimeouts.validateAuthChatRecordTimeout
+      timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.validateAuthChatRecordTimeout
     };
 
     try {
@@ -710,7 +710,7 @@ export default class SDK implements ISDK {
       headers,
       method,
       url,
-      timeout: this.configuration.defaultTimeout ?? this.configuration.endpointTimeouts.submitPostChatResponse
+      timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.submitPostChatResponse
     };
 
 
@@ -769,7 +769,7 @@ export default class SDK implements ISDK {
       headers,
       method,
       url,
-      timeout: this.configuration.defaultTimeout ?? this.configuration.endpointTimeouts.getSurveyInviteLink
+      timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.getSurveyInviteLink
     };
 
     return new Promise(async (resolve, reject) => {
@@ -827,7 +827,7 @@ export default class SDK implements ISDK {
       headers,
       method,
       url,
-      timeout: this.configuration.defaultTimeout ?? this.configuration.endpointTimeouts.getChatTranscripts
+      timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.getChatTranscripts
     };
 
     return new Promise(async (resolve, reject) => {
@@ -880,7 +880,7 @@ export default class SDK implements ISDK {
       headers,
       method,
       url,
-      timeout: this.configuration.defaultTimeout ?? this.configuration.endpointTimeouts.emailTranscript
+      timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.emailTranscript
     };
 
     return new Promise(async (resolve, reject) => {
@@ -924,7 +924,7 @@ export default class SDK implements ISDK {
       headers,
       method,
       url,
-      timeout: this.configuration.defaultTimeout ?? this.configuration.endpointTimeouts.fetchDataMaskingInfo
+      timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.fetchDataMaskingInfo
     };
 
     return new Promise(async (resolve, reject) => {
@@ -977,7 +977,7 @@ export default class SDK implements ISDK {
       headers,
       method,
       url,
-      timeout: this.configuration.defaultTimeout ?? this.configuration.endpointTimeouts.makeSecondaryChannelEventRequest
+      timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.makeSecondaryChannelEventRequest
     };
 
     try {
@@ -1019,7 +1019,7 @@ export default class SDK implements ISDK {
       headers,
       method,
       url,
-      timeout: this.configuration.defaultTimeout ?? this.configuration.endpointTimeouts.sendTypingIndicator
+      timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.sendTypingIndicator
     };
 
     return new Promise(async (resolve, reject) => {
