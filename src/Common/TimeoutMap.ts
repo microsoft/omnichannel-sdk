@@ -16,4 +16,5 @@ export type TimeoutMap = {
     makeSecondaryChannelEventRequest: number;
     getAgentAvailability: number;
     sendTypingIndicator: number;
+    validateAuthChatRecordTimeout: number;
 }

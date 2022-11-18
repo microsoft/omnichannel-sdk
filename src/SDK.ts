@@ -42,7 +42,7 @@ import { CustomContextData } from "./Utils/CustomContextData";
 import { TimeoutMap } from "./Common/TimeoutMap";
 
 export default class SDK implements ISDK {
-  private static defaultEndpointTimeouts:TimeoutMap = {
+  private static defaultEndpointTimeouts: TimeoutMap = {
     getChatConfig: 30000,
     getLWIDetails: 5000,
     getChatToken: 10000,
@@ -57,7 +57,8 @@ export default class SDK implements ISDK {
     fetchDataMaskingInfo: 1000,
     makeSecondaryChannelEventRequest: 5000,
     getAgentAvailability: 5000,
-    sendTypingIndicator: 5000
+    sendTypingIndicator: 5000,
+    validateAuthChatRecordTimeout: 5000
   };
 
   private static defaultConfiguration: ISDKConfiguration = {
@@ -651,7 +652,7 @@ export default class SDK implements ISDK {
       headers,
       method,
       url,
-      timeout: Constants.validateAuthChatRecordTimeout
+      timeout: this.configuration.defaultTimeout ?? this.configuration.endpointTimeouts.validateAuthChatRecordTimeout
     };
 
     try {
