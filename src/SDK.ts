@@ -39,13 +39,35 @@ import axiosRetry from "./Utils/axiosRetry";
 import { uuidv4 } from "./Utils/uuid";
 import * as hash from "crypto";
 import { CustomContextData } from "./Utils/CustomContextData";
+import { RequestTimeoutConfig } from "./Common/RequestTimeoutConfig";
 
 export default class SDK implements ISDK {
+  private static defaultRequestTimeoutConfig: RequestTimeoutConfig = {
+    getChatConfig: 30000,
+    getLWIDetails: 5000,
+    getChatToken: 10000,
+    sessionInit: 5000,
+    sessionClose: 10000,
+    getReconnectableChats: 5000,
+    getReconnectAvailability: 5000,
+    submitPostChatResponse: 10000,
+    getSurveyInviteLink: 10000,
+    getChatTranscripts: 30000,
+    emailTranscript: 5000,
+    fetchDataMaskingInfo: 1000,
+    makeSecondaryChannelEventRequest: 5000,
+    getAgentAvailability: 5000,
+    sendTypingIndicator: 5000,
+    validateAuthChatRecordTimeout: 5000
+  };
+
   private static defaultConfiguration: ISDKConfiguration = {
     getChatTokenRetryCount: 10,
     getChatTokenTimeBetweenRetriesOnFailure: 10000,
     getChatTokenRetryOn429: false,
-    maxRequestRetriesOnFailure: 3
+    maxRequestRetriesOnFailure: 3,
+    defaultRequestTimeout: undefined,
+    requestTimeoutConfig: SDK.defaultRequestTimeoutConfig
   };
 
   liveChatVersion: number;
@@ -60,6 +82,13 @@ export default class SDK implements ISDK {
     for (const key of Object.keys(SDK.defaultConfiguration)) {
       if (!this.configuration.hasOwnProperty(key)) { // eslint-disable-line no-prototype-builtins
         this.configuration[`${key}`] = SDK.defaultConfiguration[`${key}`];
+      }
+    }
+
+    // Validate individual endpointTimeout config
+    for (const key of Object.keys(SDK.defaultConfiguration["requestTimeoutConfig"])) {
+      if (!this.configuration["requestTimeoutConfig"].hasOwnProperty(key)) { // eslint-disable-line no-prototype-builtins
+        this.configuration["requestTimeoutConfig"][`${key}`] = SDK.defaultConfiguration["requestTimeoutConfig"][`${key}`];
       }
     }
 
@@ -103,6 +132,7 @@ export default class SDK implements ISDK {
     }
     const response = await axiosInstance.get(url, {
       headers,
+      timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.getChatConfig
     });
     const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
     const { data } = response;
@@ -158,7 +188,8 @@ export default class SDK implements ISDK {
     const options: AxiosRequestConfig = {
       headers,
       method,
-      url
+      url,
+      timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.getLWIDetails
     };
 
     return new Promise(async (resolve, reject) => {
@@ -221,7 +252,8 @@ export default class SDK implements ISDK {
     const options: AxiosRequestConfig = {
       headers,
       method,
-      url
+      url,
+      timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.getChatToken
     };
 
     const axiosInstance = axios.create();
@@ -294,7 +326,8 @@ export default class SDK implements ISDK {
     const options: AxiosRequestConfig = {
       headers,
       method,
-      url
+      url,
+      timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.getReconnectableChats
     };
 
     const axiosInstance = axios.create();
@@ -342,7 +375,8 @@ export default class SDK implements ISDK {
     const options: AxiosRequestConfig = {
       headers,
       method,
-      url
+      url,
+      timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.getReconnectAvailability
     };
 
     const axiosInstance = axios.create();
@@ -438,7 +472,8 @@ export default class SDK implements ISDK {
       data,
       headers,
       method,
-      url
+      url,
+      timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.getAgentAvailability
     };
 
     return new Promise(async (resolve, reject) => {
@@ -519,7 +554,8 @@ export default class SDK implements ISDK {
       data,
       headers,
       method,
-      url
+      url,
+      timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.sessionInit
     };
 
     try {
@@ -573,7 +609,8 @@ export default class SDK implements ISDK {
       data,
       headers,
       method,
-      url
+      url,
+      timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.sessionClose
     };
 
     return new Promise(async (resolve, reject) => {
@@ -614,7 +651,8 @@ export default class SDK implements ISDK {
     const options: AxiosRequestConfig = {
       headers,
       method,
-      url
+      url,
+      timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.validateAuthChatRecordTimeout
     };
 
     try {
@@ -671,7 +709,8 @@ export default class SDK implements ISDK {
       data: JSON.stringify(postChatResponse),
       headers,
       method,
-      url
+      url,
+      timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.submitPostChatResponse
     };
 
 
@@ -729,7 +768,8 @@ export default class SDK implements ISDK {
       data: JSON.stringify(surveyInviteAPIRequestBody),
       headers,
       method,
-      url
+      url,
+      timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.getSurveyInviteLink
     };
 
     return new Promise(async (resolve, reject) => {
@@ -786,7 +826,8 @@ export default class SDK implements ISDK {
     const options: AxiosRequestConfig = {
       headers,
       method,
-      url
+      url,
+      timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.getChatTranscripts
     };
 
     return new Promise(async (resolve, reject) => {
@@ -838,7 +879,8 @@ export default class SDK implements ISDK {
       data: JSON.stringify(emailRequestBody),
       headers,
       method,
-      url
+      url,
+      timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.emailTranscript
     };
 
     return new Promise(async (resolve, reject) => {
@@ -881,7 +923,8 @@ export default class SDK implements ISDK {
     const options: AxiosRequestConfig = {
       headers,
       method,
-      url
+      url,
+      timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.fetchDataMaskingInfo
     };
 
     return new Promise(async (resolve, reject) => {
@@ -933,7 +976,8 @@ export default class SDK implements ISDK {
       data: JSON.stringify(secondaryChannelEventRequestBody),
       headers,
       method,
-      url
+      url,
+      timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.makeSecondaryChannelEventRequest
     };
 
     try {
@@ -974,7 +1018,8 @@ export default class SDK implements ISDK {
     const options: AxiosRequestConfig = {
       headers,
       method,
-      url
+      url,
+      timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.sendTypingIndicator
     };
 
     return new Promise(async (resolve, reject) => {

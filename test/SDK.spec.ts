@@ -98,7 +98,29 @@ describe("SDK unit tests", () => {
           expect((sdk as any).configuration.maxRequestRetriesOnFailure).toEqual(sdkConfig.maxRequestRetriesOnFailure);
           expect((sdk as any).configuration.getChatTokenRetryOn429).toEqual((SDK as any).defaultConfiguration.getChatTokenRetryOn429);
           expect((sdk as any).configuration.getChatTokenRetryCount).toEqual((SDK as any).defaultConfiguration.getChatTokenRetryCount);
+          expect((sdk as any).configuration.defaultRequestTimeout).toEqual((SDK as any).defaultConfiguration.defaultRequestTimeout);
+          expect((sdk as any).configuration.requestTimeoutConfig).toEqual((SDK as any).defaultConfiguration.requestTimeoutConfig);
+
+          for (const key in Object.keys((SDK as any).defaultConfiguration.requestTimeoutConfig)) {
+            expect((sdk as any).configuration.requestTimeoutConfig[`${key}`]).toEqual((SDK as any).defaultConfiguration.requestTimeoutConfig[`${key}`]);
+          }
         });
+
+        it("Should use individual default endpoint timeout configurations if not set", () => {
+            const sdkConfig = {
+                requestTimeoutConfig: {
+                    getChatConfig: 60000
+                }
+            };
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, sdkConfig as ISDKConfiguration);
+            for (const key in Object.keys((SDK as any).defaultConfiguration.requestTimeoutConfig)) {
+                if (key === "getChatConfig") {
+                    expect((sdk as any).configuration.requestTimeoutConfig[`${key}`]).toBeGreaterThan((SDK as any).defaultConfiguration.requestTimeoutConfig[`${key}`]);
+                } else {
+                    expect((sdk as any).configuration.requestTimeoutConfig[`${key}`]).toEqual((SDK as any).defaultConfiguration.requestTimeoutConfig[`${key}`]);
+                }
+            }
+          });
 
         it("Should throw exception about incorrect channel id", () => {
             ochannelConfig.channelId = "channel";
@@ -115,60 +137,63 @@ describe("SDK unit tests", () => {
         });
     });
 
-    it("Test getChatConfig method with pluggable telemetry", () => {
-        spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; }});
-        spyOn(ocsdkLogger, "log").and.callFake(() => { });
-        const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
-        const config = sdk.getChatConfig("");
-        expect(uuidvSpy).toHaveBeenCalled();
-        expect(axios.create).toHaveBeenCalled();
-        expect(axiosRetry.default).toHaveBeenCalled();
-        expect(ocsdkLogger.log).toHaveBeenCalled();
-    });
+    describe("Test getChatConfig method", () => {
 
-    it("Test getChatConfig method without pluggable telemetry", () => {
-        spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; }});
-        spyOn(ocsdkLogger, "log").and.callFake(() => { });
-        const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
-        const config = sdk.getChatConfig("");
-        expect(uuidvSpy).toHaveBeenCalled();
-        expect(axios.create).toHaveBeenCalled();
-        expect(axiosRetry.default).toHaveBeenCalled();
-        expect(ocsdkLogger.log).not.toHaveBeenCalled();
-    });
-
-    it("Test getChatConfig method to set LiveChatVersion", () => {
-        let configmock = {data: { requestId: "someId", LiveChatVersion: 2 }};
-        spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return configmock;}});
-        const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
-        axiosInstMock = jasmine.createSpy("axiosInstance").and.returnValue(configmock);
-        const config = sdk.getChatConfig("");
-        expect(axios.create).toHaveBeenCalled();
-        config.then(function(result: any){
-            expect(result.LiveChatVersion).toEqual(sdk.liveChatVersion);
+        it("Test getChatConfig method with pluggable telemetry", () => {
+            spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; }});
+            spyOn(ocsdkLogger, "log").and.callFake(() => { });
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
+            const config = sdk.getChatConfig("");
+            expect(uuidvSpy).toHaveBeenCalled();
+            expect(axios.create).toHaveBeenCalled();
+            expect(axiosRetry.default).toHaveBeenCalled();
+            expect(ocsdkLogger.log).toHaveBeenCalled();
         });
-    });
 
-    it("Test getLWIDetails method with pluggable telemetry", () => {
+        it("Test getChatConfig method without pluggable telemetry", () => {
+            spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; }});
+            spyOn(ocsdkLogger, "log").and.callFake(() => { });
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+            const config = sdk.getChatConfig("");
+            expect(uuidvSpy).toHaveBeenCalled();
+            expect(axios.create).toHaveBeenCalled();
+            expect(axiosRetry.default).toHaveBeenCalled();
+            expect(ocsdkLogger.log).not.toHaveBeenCalled();
+        });
+
+        it("Test getChatConfig method to set LiveChatVersion", () => {
+            let configmock = {data: { requestId: "someId", LiveChatVersion: 2 }};
+            spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return configmock;}});
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+            axiosInstMock = jasmine.createSpy("axiosInstance").and.returnValue(configmock);
+            const config = sdk.getChatConfig("");
+            expect(axios.create).toHaveBeenCalled();
+            config.then(function(result: any){
+                expect(result.LiveChatVersion).toEqual(sdk.liveChatVersion);
+            });
+        });
+
+        it("Test getLWIDetails method with pluggable telemetry", () => {
+            spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; } });
+            spyOn(ocsdkLogger, "log").and.callFake(() => { });
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
+            const config = sdk.getLWIDetails("");
+            expect(uuidvSpy).toHaveBeenCalled();
+            expect(axios.create).toHaveBeenCalled();
+            expect(axiosRetry.default).toHaveBeenCalled();
+            expect(ocsdkLogger.log).toHaveBeenCalled();
+        });
+
+        it("Test getLWIDetails method without pluggable telemetry", () => {
         spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; } });
         spyOn(ocsdkLogger, "log").and.callFake(() => { });
-        const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
+        const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
         const config = sdk.getLWIDetails("");
         expect(uuidvSpy).toHaveBeenCalled();
         expect(axios.create).toHaveBeenCalled();
         expect(axiosRetry.default).toHaveBeenCalled();
-        expect(ocsdkLogger.log).toHaveBeenCalled();
-    });
-
-    it("Test getLWIDetails method without pluggable telemetry", () => {
-      spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; } });
-      spyOn(ocsdkLogger, "log").and.callFake(() => { });
-      const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
-      const config = sdk.getLWIDetails("");
-      expect(uuidvSpy).toHaveBeenCalled();
-      expect(axios.create).toHaveBeenCalled();
-      expect(axiosRetry.default).toHaveBeenCalled();
-      expect(ocsdkLogger.log).not.toHaveBeenCalled();
+        expect(ocsdkLogger.log).not.toHaveBeenCalled();
+        });
     });
 
     describe("Test getChatToken method", () => {
@@ -336,7 +361,7 @@ describe("SDK unit tests", () => {
             spyOn<any>(axios, "create").and.returnValue(axiosInstMock);
             spyOn(ocsdkLogger, "log").and.callFake(() => { });
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
-            const result = sdk.sessionInit(requestId, getQueueAvailabilityOpt as IGetQueueAvailabilityOptionalParams);
+            const result = sdk.getAgentAvailability(requestId, getQueueAvailabilityOpt as IGetQueueAvailabilityOptionalParams);
             expect(axios.create).toHaveBeenCalled();
             result.then(() => {}, (error) => {
                 expect(OSInfo.getOsType).toHaveBeenCalled();
@@ -352,7 +377,7 @@ describe("SDK unit tests", () => {
         it("Should return promise resolve", (done) => {
             spyOn<any>(axios, "create").and.returnValue(axiosInstMock);
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
-            const result = sdk.sessionInit(requestId, getQueueAvailabilityOpt as ISessionInitOptionalParams);
+            const result = sdk.getAgentAvailability(requestId, getQueueAvailabilityOpt as ISessionInitOptionalParams);
             result.then(() => {
                 expect(axiosInstMock).toHaveBeenCalled();
                 done();
@@ -363,7 +388,7 @@ describe("SDK unit tests", () => {
             spyOn<any>(axios, "create").and.returnValue(axiosInstMockWithError);
             spyOn(ocsdkLogger, "log").and.callFake(() => { });
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
-            const result = sdk.sessionInit(requestId, getQueueAvailabilityOpt as ISessionInitOptionalParams);
+            const result = sdk.getAgentAvailability(requestId, getQueueAvailabilityOpt as ISessionInitOptionalParams);
             result.then(() => {}, () => {
                 expect(ocsdkLogger.log).toHaveBeenCalled();
                 done();
@@ -643,6 +668,148 @@ describe("SDK unit tests", () => {
                 expect(ocsdkLogger.log).toHaveBeenCalled();
                 done();
             });
+        });
+    });
+
+    describe("Test timeout for all requests", () => {
+        let defaultOpt: any;
+        let sdk: any;
+        let requestBody: any;
+
+        beforeEach(() => {
+            process.env.testTimeout = "60000";   //set the environment variable
+            defaultOpt = {
+                authenticatedUserToken: "token",
+                initContext: {},
+                getContext: true,
+                chatId: "chatId"
+            };
+            sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+            requestBody = { body: "dummy" }
+        });
+
+        it("getChatConfig timeout test", async () => {
+            spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; }});
+            try {
+                await sdk.getChatConfig("");
+            } catch (error) {
+                expect(error.code).toEqual("ECONNABORTED ");
+                expect(error.message).toContain("timeout");
+            }
+        });
+
+        it("getChatToken timeout test", async () => {
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMock);
+            try {
+                await sdk.getChatToken(requestId, {}, 0);
+            } catch (error) {
+                expect(error.code).toEqual("ECONNABORTED ");
+                expect(error.message).toContain("timeout");
+            }
+        });
+
+        it("getReconnectableChats timeout test", async () => {
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMock);
+            try {
+                await sdk.getReconnectableChats({ authenticatedUserToken : "Token"} as IReconnectableChatsParams);
+            } catch (error) {
+                expect(error.code).toEqual("ECONNABORTED ");
+                expect(error.message).toContain("timeout");
+            }
+        });
+
+        it("getReconnectAvailability timeout test", async () => {
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMock);
+            try {
+                await sdk.getReconnectAvailability("reconnectId");
+            } catch (error) {
+                expect(error.code).toEqual("ECONNABORTED ");
+                expect(error.message).toContain("timeout");
+            }
+        });
+
+        it("sessionInit timeout test", async () => {
+            spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; }});
+            try {
+                sdk.sessionInit(requestId, defaultOpt as ISessionInitOptionalParams);
+            } catch (error) {
+                expect(error.code).toEqual("ECONNABORTED ");
+                expect(error.message).toContain("timeout");
+            }
+        });
+
+        it("getAgentAvailability timeout test", async () => {
+            spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; }});
+            try {
+                sdk.getAgentAvailability(requestId, defaultOpt as ISessionInitOptionalParams);
+            } catch (error) {
+                expect(error.code).toEqual("ECONNABORTED ");
+                expect(error.message).toContain("timeout");
+            }
+        });
+
+        it("sessionClose timeout test", async () => {
+            spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; }});
+            try {
+                sdk.sessionClose(requestId, defaultOpt as ISessionCloseOptionalParams);
+            } catch (error) {
+                expect(error.code).toEqual("ECONNABORTED ");
+                expect(error.message).toContain("timeout");
+            }
+        });
+
+        it("submitPostChatResponse timeout test", async () => {
+            spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; }});
+            try {
+                sdk.submitPostChatResponse(requestId, defaultOpt as ISubmitPostChatResponseOptionalParams);
+            } catch (error) {
+                expect(error.code).toEqual("ECONNABORTED ");
+                expect(error.message).toContain("timeout");
+            }
+        });
+
+        it("getSurveyInviteLink timeout test", async () => {
+            spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; }});
+            try {
+                sdk.getSurveyInviteLink(requestId, defaultOpt as IGetSurveyInviteLinkOptionalParams);
+            } catch (error) {
+                expect(error.code).toEqual("ECONNABORTED ");
+                expect(error.message).toContain("timeout");
+            }
+        });
+
+        it("getChatTranscripts timeout test", async () => {
+            spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; }});
+            try {
+                sdk.getChatTranscripts(requestId, "coolId", "coolId", defaultOpt as IGetChatTranscriptsOptionalParams);
+            } catch (error) {
+                expect(error.code).toEqual("ECONNABORTED ");
+                expect(error.message).toContain("timeout");
+            }
+        });
+
+        it("makeSecondaryChannelEventRequest timeout test", async () => {
+            spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; }});
+            try {
+                sdk.makeSecondaryChannelEventRequest(requestId, requestBody, defaultOpt as ISecondaryChannelEventOptionalParams);
+            } catch (error) {
+                expect(error.code).toEqual("ECONNABORTED ");
+                expect(error.message).toContain("timeout");
+            }
+        });
+
+        it("validateAuthChatRecord timeout test", async () => {
+            spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; }});
+            try {
+                sdk.validateAuthChatRecord(requestId, defaultOpt as IValidateAuthChatRecordOptionalParams);
+            } catch (error) {
+                expect(error.code).toEqual("ECONNABORTED ");
+                expect(error.message).toContain("timeout");
+            }
+        });
+
+        afterEach(() => {
+            process.env.testTimeout = undefined   //remove environment variable 
         });
     });
 });

@@ -1,5 +1,7 @@
+import { RequestTimeoutConfig } from "../Common/RequestTimeoutConfig";
+
 export default interface ISDKConfiguration {
-  [key: string]: number | string | boolean | undefined;
+  [key: string]: number | string | boolean | RequestTimeoutConfig | undefined;
 
   /**
    * Number of times a getchattoken request is retried.
@@ -17,4 +19,12 @@ export default interface ISDKConfiguration {
    * Maximum number of request retries before failing.
    */
   maxRequestRetriesOnFailure: number;
+  /**
+   * Default timeout for all requests
+   */
+  defaultRequestTimeout: number | undefined;
+  /**
+   * Individual Request timeouts
+   */
+  requestTimeoutConfig: RequestTimeoutConfig;
 }
