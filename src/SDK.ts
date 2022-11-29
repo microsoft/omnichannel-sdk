@@ -1,5 +1,5 @@
 import { ChannelId, LiveChatVersion } from "./Common/Enums";
-import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
+import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
 import { BrowserInfo } from "./Utils/BrowserInfo";
 import Constants from "./Common/Constants";
 import { DeviceInfo } from "./Utils/DeviceInfo";
@@ -40,6 +40,7 @@ import { uuidv4 } from "./Utils/uuid";
 import * as hash from "crypto";
 import { CustomContextData } from "./Utils/CustomContextData";
 import { RequestTimeoutConfig } from "./Common/RequestTimeoutConfig";
+import { AxiosErrorThrower } from "./Utils/AxiosErrorThrower";
 
 export default class SDK implements ISDK {
   private static defaultRequestTimeoutConfig: RequestTimeoutConfig = {
@@ -202,7 +203,7 @@ export default class SDK implements ISDK {
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETLWISTATUSFAILED, "Get LWI Details failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
-        reject();
+        reject(AxiosErrorThrower.getSDKError(error));
       }
     });
   }
@@ -354,7 +355,7 @@ export default class SDK implements ISDK {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETRECONNECTABLECHATS, "Get Reconnectable Chats failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
 
-        reject(error);
+        reject(AxiosErrorThrower.getSDKError(error));
         return;
       }
     });
@@ -400,7 +401,7 @@ export default class SDK implements ISDK {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITY, "Get Reconnect Availability failed", undefined, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
 
-        reject(error);
+        reject(AxiosErrorThrower.getSDKError(error));
         return;
       }
     });
@@ -490,7 +491,7 @@ export default class SDK implements ISDK {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETAGENTAVAILABILITYFAILED, "Get agent availability failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
 
-        reject(error);
+        reject(AxiosErrorThrower.getSDKError(error));
       }
     });
   }
@@ -567,7 +568,7 @@ export default class SDK implements ISDK {
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
       this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SESSIONINITFAILED, "Session Init failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, data);
 
-      throw error;
+      throw AxiosErrorThrower.getSDKError(error);
     }
   }
 
@@ -842,7 +843,7 @@ export default class SDK implements ISDK {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETCHATTRANSCRIPTFAILED, "Get Chat Transcript failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
 
-        reject(error);
+        reject(AxiosErrorThrower.getSDKError(error));
       }
     });
   }
@@ -989,7 +990,7 @@ export default class SDK implements ISDK {
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
       this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SECONDARYCHANNELEVENTREQUESTFAILED, "Secondary Channel Event Request Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
 
-      throw error;
+      throw AxiosErrorThrower.getSDKError(error);
     }
   }
 
@@ -1034,7 +1035,7 @@ export default class SDK implements ISDK {
 
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SENDTYPINGINDICATORFAILED, "Send Typing Indicator Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
 
-        reject(error);
+        reject(AxiosErrorThrower.getSDKError(error));
       }
     });
   }

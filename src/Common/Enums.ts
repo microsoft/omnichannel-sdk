@@ -94,3 +94,7 @@ export enum LiveChatVersion {
   // ACS live chat
   V2 = 2
 }
+
+export enum SDKErrorCodes {
+  HTTPTIMEOUTERRORCODE = 408
+}
