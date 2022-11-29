@@ -18,3 +18,8 @@ export default class Constants {
   public static readonly customerDisplayName = "customerDisplayName";
   public static readonly hiddenContentPlaceholder = "*content hidden*";
 }
+
+export class SDKError {
+  public static readonly HTTPTimeoutErrorName = "HTTPTimeoutError";
+  public static readonly HTTPTimeoutErrorMessage = "Server took too long to respond";
+}

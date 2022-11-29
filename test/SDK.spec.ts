@@ -26,6 +26,8 @@ import OCSDKLogger from "../src/Common/OCSDKLogger";
 import { OSInfo } from "../src/Utils/OSInfo";
 import SDK from "../src/SDK";
 import axios from "axios";
+import { SDKErrorCodes } from "../src/Common/Enums";
+import { SDKError } from "../src/Common/Constants";
 
 describe("SDK unit tests", () => {
 
@@ -693,8 +695,8 @@ describe("SDK unit tests", () => {
             try {
                 await sdk.getChatConfig("");
             } catch (error) {
-                expect(error.code).toEqual("ECONNABORTED ");
-                expect(error.message).toContain("timeout");
+                expect(error.code).toEqual(SDKErrorCodes.HTTPTIMEOUTERRORCODE);
+                expect(error.message).toEqual(SDKError.HTTPTimeoutErrorMessage);
             }
         });
 
@@ -703,8 +705,8 @@ describe("SDK unit tests", () => {
             try {
                 await sdk.getChatToken(requestId, {}, 0);
             } catch (error) {
-                expect(error.code).toEqual("ECONNABORTED ");
-                expect(error.message).toContain("timeout");
+                expect(error.code).toEqual(SDKErrorCodes.HTTPTIMEOUTERRORCODE);
+                expect(error.message).toEqual(SDKError.HTTPTimeoutErrorMessage);
             }
         });
 
@@ -713,8 +715,8 @@ describe("SDK unit tests", () => {
             try {
                 await sdk.getReconnectableChats({ authenticatedUserToken : "Token"} as IReconnectableChatsParams);
             } catch (error) {
-                expect(error.code).toEqual("ECONNABORTED ");
-                expect(error.message).toContain("timeout");
+                expect(error.code).toEqual(SDKErrorCodes.HTTPTIMEOUTERRORCODE);
+                expect(error.message).toEqual(SDKError.HTTPTimeoutErrorMessage);
             }
         });
 
@@ -723,8 +725,8 @@ describe("SDK unit tests", () => {
             try {
                 await sdk.getReconnectAvailability("reconnectId");
             } catch (error) {
-                expect(error.code).toEqual("ECONNABORTED ");
-                expect(error.message).toContain("timeout");
+                expect(error.code).toEqual(SDKErrorCodes.HTTPTIMEOUTERRORCODE);
+                expect(error.message).toEqual(SDKError.HTTPTimeoutErrorMessage);
             }
         });
 
@@ -733,8 +735,8 @@ describe("SDK unit tests", () => {
             try {
                 sdk.sessionInit(requestId, defaultOpt as ISessionInitOptionalParams);
             } catch (error) {
-                expect(error.code).toEqual("ECONNABORTED ");
-                expect(error.message).toContain("timeout");
+                expect(error.code).toEqual(SDKErrorCodes.HTTPTIMEOUTERRORCODE);
+                expect(error.message).toEqual(SDKError.HTTPTimeoutErrorMessage);
             }
         });
 
@@ -743,8 +745,8 @@ describe("SDK unit tests", () => {
             try {
                 sdk.getAgentAvailability(requestId, defaultOpt as ISessionInitOptionalParams);
             } catch (error) {
-                expect(error.code).toEqual("ECONNABORTED ");
-                expect(error.message).toContain("timeout");
+                expect(error.code).toEqual(SDKErrorCodes.HTTPTIMEOUTERRORCODE);
+                expect(error.message).toEqual(SDKError.HTTPTimeoutErrorMessage);
             }
         });
 
@@ -753,8 +755,8 @@ describe("SDK unit tests", () => {
             try {
                 sdk.sessionClose(requestId, defaultOpt as ISessionCloseOptionalParams);
             } catch (error) {
-                expect(error.code).toEqual("ECONNABORTED ");
-                expect(error.message).toContain("timeout");
+                expect(error.code).toEqual(SDKErrorCodes.HTTPTIMEOUTERRORCODE);
+                expect(error.message).toEqual(SDKError.HTTPTimeoutErrorMessage);
             }
         });
 
@@ -763,8 +765,8 @@ describe("SDK unit tests", () => {
             try {
                 sdk.submitPostChatResponse(requestId, defaultOpt as ISubmitPostChatResponseOptionalParams);
             } catch (error) {
-                expect(error.code).toEqual("ECONNABORTED ");
-                expect(error.message).toContain("timeout");
+                expect(error.code).toEqual(SDKErrorCodes.HTTPTIMEOUTERRORCODE);
+                expect(error.message).toEqual(SDKError.HTTPTimeoutErrorMessage);
             }
         });
 
@@ -773,8 +775,8 @@ describe("SDK unit tests", () => {
             try {
                 sdk.getSurveyInviteLink(requestId, defaultOpt as IGetSurveyInviteLinkOptionalParams);
             } catch (error) {
-                expect(error.code).toEqual("ECONNABORTED ");
-                expect(error.message).toContain("timeout");
+                expect(error.code).toEqual(SDKErrorCodes.HTTPTIMEOUTERRORCODE);
+                expect(error.message).toEqual(SDKError.HTTPTimeoutErrorMessage);
             }
         });
 
@@ -783,8 +785,8 @@ describe("SDK unit tests", () => {
             try {
                 sdk.getChatTranscripts(requestId, "coolId", "coolId", defaultOpt as IGetChatTranscriptsOptionalParams);
             } catch (error) {
-                expect(error.code).toEqual("ECONNABORTED ");
-                expect(error.message).toContain("timeout");
+                expect(error.code).toEqual(SDKErrorCodes.HTTPTIMEOUTERRORCODE);
+                expect(error.message).toEqual(SDKError.HTTPTimeoutErrorMessage);
             }
         });
 
@@ -793,8 +795,8 @@ describe("SDK unit tests", () => {
             try {
                 sdk.makeSecondaryChannelEventRequest(requestId, requestBody, defaultOpt as ISecondaryChannelEventOptionalParams);
             } catch (error) {
-                expect(error.code).toEqual("ECONNABORTED ");
-                expect(error.message).toContain("timeout");
+                expect(error.code).toEqual(SDKErrorCodes.HTTPTIMEOUTERRORCODE);
+                expect(error.message).toEqual(SDKError.HTTPTimeoutErrorMessage);
             }
         });
 
@@ -803,8 +805,8 @@ describe("SDK unit tests", () => {
             try {
                 sdk.validateAuthChatRecord(requestId, defaultOpt as IValidateAuthChatRecordOptionalParams);
             } catch (error) {
-                expect(error.code).toEqual("ECONNABORTED ");
-                expect(error.message).toContain("timeout");
+                expect(error.code).toEqual(SDKErrorCodes.HTTPTIMEOUTERRORCODE);
+                expect(error.message).toEqual(SDKError.HTTPTimeoutErrorMessage);
             }
         });
 
