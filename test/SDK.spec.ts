@@ -26,6 +26,7 @@ import OCSDKLogger from "../src/Common/OCSDKLogger";
 import { OSInfo } from "../src/Utils/OSInfo";
 import SDK from "../src/SDK";
 import axios from "axios";
+import { SDKError } from "../src/Common/Enums";
 
 describe("SDK unit tests", () => {
 
@@ -675,9 +676,11 @@ describe("SDK unit tests", () => {
         let defaultOpt: any;
         let sdk: any;
         let requestBody: any;
-
+        let originalTimeout:number;
+        
         beforeEach(() => {
-            process.env.testTimeout = "60000";   //set the environment variable
+            originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
+            jasmine.DEFAULT_TIMEOUT_INTERVAL = 60000;   //set the environment variable
             defaultOpt = {
                 authenticatedUserToken: "token",
                 initContext: {},
@@ -703,8 +706,7 @@ describe("SDK unit tests", () => {
             try {
                 await sdk.getChatToken(requestId, {}, 0);
             } catch (error) {
-                expect(error.code).toEqual("ECONNABORTED ");
-                expect(error.message).toContain("timeout");
+                expect(error.message).toEqual(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
             }
         });
 
@@ -713,8 +715,7 @@ describe("SDK unit tests", () => {
             try {
                 await sdk.getReconnectableChats({ authenticatedUserToken : "Token"} as IReconnectableChatsParams);
             } catch (error) {
-                expect(error.code).toEqual("ECONNABORTED ");
-                expect(error.message).toContain("timeout");
+                expect(error.message).toEqual(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
             }
         });
 
@@ -723,8 +724,7 @@ describe("SDK unit tests", () => {
             try {
                 await sdk.getReconnectAvailability("reconnectId");
             } catch (error) {
-                expect(error.code).toEqual("ECONNABORTED ");
-                expect(error.message).toContain("timeout");
+                expect(error.message).toEqual(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
             }
         });
 
@@ -733,8 +733,7 @@ describe("SDK unit tests", () => {
             try {
                 sdk.sessionInit(requestId, defaultOpt as ISessionInitOptionalParams);
             } catch (error) {
-                expect(error.code).toEqual("ECONNABORTED ");
-                expect(error.message).toContain("timeout");
+                expect(error.message).toEqual(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
             }
         });
 
@@ -743,8 +742,7 @@ describe("SDK unit tests", () => {
             try {
                 sdk.getAgentAvailability(requestId, defaultOpt as ISessionInitOptionalParams);
             } catch (error) {
-                expect(error.code).toEqual("ECONNABORTED ");
-                expect(error.message).toContain("timeout");
+                expect(error.message).toEqual(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
             }
         });
 
@@ -783,8 +781,7 @@ describe("SDK unit tests", () => {
             try {
                 sdk.getChatTranscripts(requestId, "coolId", "coolId", defaultOpt as IGetChatTranscriptsOptionalParams);
             } catch (error) {
-                expect(error.code).toEqual("ECONNABORTED ");
-                expect(error.message).toContain("timeout");
+                expect(error.message).toEqual(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
             }
         });
 
@@ -793,8 +790,7 @@ describe("SDK unit tests", () => {
             try {
                 sdk.makeSecondaryChannelEventRequest(requestId, requestBody, defaultOpt as ISecondaryChannelEventOptionalParams);
             } catch (error) {
-                expect(error.code).toEqual("ECONNABORTED ");
-                expect(error.message).toContain("timeout");
+                expect(error.message).toEqual(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
             }
         });
 
@@ -803,13 +799,12 @@ describe("SDK unit tests", () => {
             try {
                 sdk.validateAuthChatRecord(requestId, defaultOpt as IValidateAuthChatRecordOptionalParams);
             } catch (error) {
-                expect(error.code).toEqual("ECONNABORTED ");
-                expect(error.message).toContain("timeout");
+                expect(error.message).toEqual(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
             }
         });
 
         afterEach(() => {
-            process.env.testTimeout = undefined   //remove environment variable 
+            jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout;   //remove environment variable 
         });
     });
 });

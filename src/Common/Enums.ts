@@ -94,3 +94,8 @@ export enum LiveChatVersion {
   // ACS live chat
   V2 = 2
 }
+
+export enum SDKError {
+  ClientHTTPTimeoutErrorName = "ClientHTTPTimeoutError",
+  ClientHTTPTimeoutErrorMessage = "Server took too long to respond"
+}
