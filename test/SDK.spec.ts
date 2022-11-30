@@ -761,8 +761,7 @@ describe("SDK unit tests", () => {
             try {
                 sdk.submitPostChatResponse(requestId, defaultOpt as ISubmitPostChatResponseOptionalParams);
             } catch (error) {
-                expect(error.code).toEqual("ECONNABORTED ");
-                expect(error.message).toContain("timeout");
+                expect(error.message).toEqual(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
             }
         });
 
@@ -771,8 +770,7 @@ describe("SDK unit tests", () => {
             try {
                 sdk.getSurveyInviteLink(requestId, defaultOpt as IGetSurveyInviteLinkOptionalParams);
             } catch (error) {
-                expect(error.code).toEqual("ECONNABORTED ");
-                expect(error.message).toContain("timeout");
+                expect(error.message).toEqual(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
             }
         });
 

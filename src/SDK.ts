@@ -203,7 +203,7 @@ export default class SDK implements ISDK {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETLWISTATUSFAILED, "Get LWI Details failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
         if (error.code === "ECONNABORTED") {
-          reject(new Error(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage));
+          throw new Error(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
         }
         reject();
       }
@@ -302,7 +302,7 @@ export default class SDK implements ISDK {
       // Base case
       if (currentRetryCount + 1 >= this.configuration.getChatTokenRetryCount) {
         if (getChatTokenError && getChatTokenError.code == "ECONNABORTED") {
-          reject(new Error(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage));
+          throw new Error(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
         } else {
           reject(new Error(`The retry for getchattoken has exceeded its max value of ${this.configuration.getChatTokenRetryCount}`));
         }
@@ -748,7 +748,9 @@ export default class SDK implements ISDK {
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SUBMITPOSTCHATFAILED, "Submit Post Chat Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
-
+        if (error.code === "ECONNABORTED") {
+          throw new Error(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
+        }
         reject();
       }
     });
@@ -807,7 +809,9 @@ export default class SDK implements ISDK {
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETSURVEYINVITELINKFAILED, "Get Survey Invite Link failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
-
+        if (error.code === "ECONNABORTED") {
+          throw new Error(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
+        }
         reject();
       }
     });
@@ -920,7 +924,9 @@ export default class SDK implements ISDK {
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.EMAILTRANSCRIPTFAILED, "Email Transcript Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
-
+        if (error.code === "ECONNABORTED") {
+          throw new Error(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
+        }
         reject();
       }
     });
@@ -965,7 +971,9 @@ export default class SDK implements ISDK {
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.FETCHDATAMASKINGFAILED, "Fetch Data Masking Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
-
+        if (error.code === "ECONNABORTED") {
+          throw new Error(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
+        }
         reject();
       }
     });
