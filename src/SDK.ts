@@ -1,5 +1,5 @@
 import { ChannelId, LiveChatVersion, SDKError } from "./Common/Enums";
-import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
+import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import { BrowserInfo } from "./Utils/BrowserInfo";
 import Constants from "./Common/Constants";
 import { DeviceInfo } from "./Utils/DeviceInfo";
