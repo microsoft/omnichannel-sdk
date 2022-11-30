@@ -362,9 +362,10 @@ export default class SDK implements ISDK {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETRECONNECTABLECHATS, "Get Reconnectable Chats failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
         if (error.code === "ECONNABORTED") {
-          error = new Error(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
+          throw new Error(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
+        } else {
+          reject(error);
         }
-        reject(error);
         return;
       }
     });
@@ -410,9 +411,10 @@ export default class SDK implements ISDK {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITY, "Get Reconnect Availability failed", undefined, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
         if (error.code === "ECONNABORTED") {
-          error = new Error(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
+          throw new Error(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
+        } else {
+          reject(error);
         }
-        reject(error);
         return;
       }
     });
@@ -502,9 +504,10 @@ export default class SDK implements ISDK {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETAGENTAVAILABILITYFAILED, "Get agent availability failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
         if (error.code === "ECONNABORTED") {
-          error = new Error(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
+          throw new Error(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
+        } else {
+          reject(error);
         }
-        reject(error);
       }
     });
   }
@@ -581,9 +584,10 @@ export default class SDK implements ISDK {
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
       this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SESSIONINITFAILED, "Session Init failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, data);
       if (error.code === "ECONNABORTED") {
-        error = new Error(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
+        throw new Error(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
+      } else {
+        throw error;
       }
-      throw error;
     }
   }
 
@@ -862,9 +866,10 @@ export default class SDK implements ISDK {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETCHATTRANSCRIPTFAILED, "Get Chat Transcript failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
         if (error.code === "ECONNABORTED") {
-          error = new Error(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
+          throw new Error(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
+        } else {
+          reject(error);
         }
-        reject(error);
       }
     });
   }
@@ -1011,9 +1016,10 @@ export default class SDK implements ISDK {
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
       this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SECONDARYCHANNELEVENTREQUESTFAILED, "Secondary Channel Event Request Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
       if (error.code === "ECONNABORTED") {
-        error = new Error(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
+        throw new Error(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
+      } else {
+        throw error;
       }
-      throw error;
     }
   }
 
@@ -1059,10 +1065,10 @@ export default class SDK implements ISDK {
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SENDTYPINGINDICATORFAILED, "Send Typing Indicator Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
 
         if (error.code === "ECONNABORTED") {
-          error = new Error(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
+          throw new Error(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
+        } else {
+          reject(error);
         }
-
-        reject(error);
       }
     });
   }
