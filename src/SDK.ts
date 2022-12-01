@@ -1,4 +1,4 @@
-import { ChannelId, LiveChatVersion, SDKError } from "./Common/Enums";
+import { ChannelId, LiveChatVersion } from "./Common/Enums";
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import { BrowserInfo } from "./Utils/BrowserInfo";
 import Constants from "./Common/Constants";
@@ -40,6 +40,7 @@ import { uuidv4 } from "./Utils/uuid";
 import * as hash from "crypto";
 import { CustomContextData } from "./Utils/CustomContextData";
 import { RequestTimeoutConfig } from "./Common/RequestTimeoutConfig";
+import throwClientHTTPTimeoutError from "./Utils/throwClientHTTPError";
 
 export default class SDK implements ISDK {
   private static defaultRequestTimeoutConfig: RequestTimeoutConfig = {
@@ -202,8 +203,8 @@ export default class SDK implements ISDK {
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETLWISTATUSFAILED, "Get LWI Details failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
-        if (error.code === "ECONNABORTED") {
-          throw new Error(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
+        if (error.code === Constants.axiosTimeoutErrorCode) {
+          throwClientHTTPTimeoutError();
         }
         reject();
       }
@@ -301,8 +302,8 @@ export default class SDK implements ISDK {
 
       // Base case
       if (currentRetryCount + 1 >= this.configuration.getChatTokenRetryCount) {
-        if (getChatTokenError && getChatTokenError.code == "ECONNABORTED") {
-          throw new Error(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
+        if (getChatTokenError && getChatTokenError.code == Constants.axiosTimeoutErrorCode) {
+          throwClientHTTPTimeoutError();
         } else {
           reject(new Error(`The retry for getchattoken has exceeded its max value of ${this.configuration.getChatTokenRetryCount}`));
         }
@@ -361,11 +362,10 @@ export default class SDK implements ISDK {
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETRECONNECTABLECHATS, "Get Reconnectable Chats failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
-        if (error.code === "ECONNABORTED") {
-          throw new Error(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
-        } else {
-          reject(error);
+        if (error.code === Constants.axiosTimeoutErrorCode) {
+          throwClientHTTPTimeoutError();
         }
+        reject(error);
         return;
       }
     });
@@ -410,11 +410,10 @@ export default class SDK implements ISDK {
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITY, "Get Reconnect Availability failed", undefined, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
-        if (error.code === "ECONNABORTED") {
-          throw new Error(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
-        } else {
-          reject(error);
+        if (error.code === Constants.axiosTimeoutErrorCode) {
+          throwClientHTTPTimeoutError();
         }
+        reject(error);
         return;
       }
     });
@@ -503,11 +502,10 @@ export default class SDK implements ISDK {
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETAGENTAVAILABILITYFAILED, "Get agent availability failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
-        if (error.code === "ECONNABORTED") {
-          throw new Error(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
-        } else {
-          reject(error);
+        if (error.code === Constants.axiosTimeoutErrorCode) {
+          throwClientHTTPTimeoutError();
         }
+        reject(error);
       }
     });
   }
@@ -583,11 +581,10 @@ export default class SDK implements ISDK {
     } catch (error) {
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
       this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SESSIONINITFAILED, "Session Init failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, data);
-      if (error.code === "ECONNABORTED") {
-        throw new Error(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
-      } else {
-        throw error;
+      if (error.code === Constants.axiosTimeoutErrorCode) {
+        throwClientHTTPTimeoutError();
       }
+      throw error;
     }
   }
 
@@ -643,7 +640,9 @@ export default class SDK implements ISDK {
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SESSIONCLOSEFAILED, "Session close failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
-
+        if (error.code === Constants.axiosTimeoutErrorCode) {
+          throwClientHTTPTimeoutError();
+        }
         reject();
       }
     });
@@ -692,8 +691,8 @@ export default class SDK implements ISDK {
 
       this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDFAILED, "Validate Auth Chat Record failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
 
-      if (error.code === "ECONNABORTED") {
-        return Promise.reject(new Error(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage));
+      if (error.code === Constants.axiosTimeoutErrorCode) {
+        throwClientHTTPTimeoutError();
       }
 
       if (error.toString() === "Error: Request failed with status code 404") { // backward compatibility
@@ -748,8 +747,8 @@ export default class SDK implements ISDK {
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SUBMITPOSTCHATFAILED, "Submit Post Chat Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
-        if (error.code === "ECONNABORTED") {
-          throw new Error(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
+        if (error.code === Constants.axiosTimeoutErrorCode) {
+          throwClientHTTPTimeoutError();
         }
         reject();
       }
@@ -809,8 +808,8 @@ export default class SDK implements ISDK {
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETSURVEYINVITELINKFAILED, "Get Survey Invite Link failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
-        if (error.code === "ECONNABORTED") {
-          throw new Error(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
+        if (error.code === Constants.axiosTimeoutErrorCode) {
+          throwClientHTTPTimeoutError();
         }
         reject();
       }
@@ -869,11 +868,10 @@ export default class SDK implements ISDK {
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETCHATTRANSCRIPTFAILED, "Get Chat Transcript failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
-        if (error.code === "ECONNABORTED") {
-          throw new Error(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
-        } else {
-          reject(error);
+        if (error.code === Constants.axiosTimeoutErrorCode) {
+          throwClientHTTPTimeoutError();
         }
+        reject(error);
       }
     });
   }
@@ -924,8 +922,8 @@ export default class SDK implements ISDK {
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.EMAILTRANSCRIPTFAILED, "Email Transcript Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
-        if (error.code === "ECONNABORTED") {
-          throw new Error(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
+        if (error.code === Constants.axiosTimeoutErrorCode) {
+          throwClientHTTPTimeoutError();
         }
         reject();
       }
@@ -971,8 +969,8 @@ export default class SDK implements ISDK {
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.FETCHDATAMASKINGFAILED, "Fetch Data Masking Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
-        if (error.code === "ECONNABORTED") {
-          throw new Error(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
+        if (error.code === Constants.axiosTimeoutErrorCode) {
+          throwClientHTTPTimeoutError();
         }
         reject();
       }
@@ -1023,11 +1021,10 @@ export default class SDK implements ISDK {
     } catch (error) {
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
       this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SECONDARYCHANNELEVENTREQUESTFAILED, "Secondary Channel Event Request Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
-      if (error.code === "ECONNABORTED") {
-        throw new Error(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
-      } else {
-        throw error;
+      if (error.code === Constants.axiosTimeoutErrorCode) {
+        throwClientHTTPTimeoutError();
       }
+      throw error;
     }
   }
 
@@ -1072,11 +1069,10 @@ export default class SDK implements ISDK {
 
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SENDTYPINGINDICATORFAILED, "Send Typing Indicator Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
 
-        if (error.code === "ECONNABORTED") {
-          throw new Error(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
-        } else {
-          reject(error);
+        if (error.code === Constants.axiosTimeoutErrorCode) {
+          throwClientHTTPTimeoutError();
         }
+        reject(error);
       }
     });
   }
