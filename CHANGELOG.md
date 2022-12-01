@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+### Fix
+- Added `requestTimeoutConfig` and `defaultRequestTimeout` to set timeouts on endpoints.
+- Throw `ClientHTTPTimeoutError` exception in case of timeouts.
 
 ## [0.3.2] - 2022-11-03
 ### Changed
