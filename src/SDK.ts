@@ -137,9 +137,15 @@ export default class SDK implements ISDK {
     });
     const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
     const { data } = response;
+
+    if (data.LiveChatVersion && data.LiveChatVersion === LiveChatVersion.V3) {
+      this.liveChatVersion = data.LiveChatVersion;
+    }
+
     if (data.LiveChatVersion && data.LiveChatVersion === LiveChatVersion.V2) {
       this.liveChatVersion = data.LiveChatVersion;
     }
+
     data.headers = {};
     if (response.headers && response.headers["date"]) {
       data.headers["date"] = response.headers["date"];
@@ -231,7 +237,9 @@ export default class SDK implements ISDK {
     const headers: StringMap = Constants.defaultHeaders;
     let requestPath = `/${OmnichannelEndpoints.LiveChatGetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
 
-    if (this.liveChatVersion === LiveChatVersion.V2 || (currentLiveChatVersion && currentLiveChatVersion === LiveChatVersion.V2)) {
+    if (this.liveChatVersion === LiveChatVersion.V3 || (currentLiveChatVersion && currentLiveChatVersion === LiveChatVersion.V3)) {
+      requestPath = `/${OmnichannelEndpoints.LiveChatv3GetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
+    } else if (this.liveChatVersion === LiveChatVersion.V2 || (currentLiveChatVersion && currentLiveChatVersion === LiveChatVersion.V2)) {
       requestPath = `/${OmnichannelEndpoints.LiveChatv2GetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
       if (authenticatedUserToken) {
         requestPath = `/${OmnichannelEndpoints.LiveChatv2AuthGetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
@@ -1079,13 +1087,13 @@ export default class SDK implements ISDK {
 
   /**
    * Helper function for logging.
-   * 
+   *
    * @param logLevel Log level for logging.
    * @param telemetryEventType Telemetry event type in which event will be logged.
    * @param description Description of the event.
    * @param requestId Request ID
    * @param response Response
-   * @param elapsedTimeInMilliseconds Elapsed time in ms 
+   * @param elapsedTimeInMilliseconds Elapsed time in ms
    * @param requestPath Request path
    * @param method Method
    * @param error Error
