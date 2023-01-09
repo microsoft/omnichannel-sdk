@@ -1,10 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.3.3] - 2023-01-09
 ### Fix
 - Added `requestTimeoutConfig` and `defaultRequestTimeout` to set timeouts on endpoints.
 - Throw `ClientHTTPTimeoutError` exception in case of timeouts.
+- Update `InitContext` to include `isProactiveChat`.
 
 ## [0.3.2] - 2022-11-03
 ### Changed
