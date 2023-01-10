@@ -2,6 +2,7 @@ import { ChannelId, LiveChatVersion } from "./Common/Enums";
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import { BrowserInfo } from "./Utils/BrowserInfo";
 import Constants from "./Common/Constants";
+import { createGetChatTokenEndpoint } from "./Utils/endpointsCreators";
 import { DeviceInfo } from "./Utils/DeviceInfo";
 import FetchChatTokenResponse from "./Model/FetchChatTokenResponse";
 import IDataMaskingInfo from "./Interfaces/IDataMaskingInfo";
@@ -231,22 +232,14 @@ export default class SDK implements ISDK {
     }
 
     const headers: StringMap = Constants.defaultHeaders;
-    let requestPath = `/${OmnichannelEndpoints.LiveChatGetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
 
-    if (this.liveChatVersion === LiveChatVersion.V3 || (currentLiveChatVersion && currentLiveChatVersion === LiveChatVersion.V3)) {
-      requestPath = `/${OmnichannelEndpoints.LiveChatv3GetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
-    } else if (this.liveChatVersion === LiveChatVersion.V2 || (currentLiveChatVersion && currentLiveChatVersion === LiveChatVersion.V2)) {
-      requestPath = `/${OmnichannelEndpoints.LiveChatv2GetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
-      if (authenticatedUserToken) {
-        requestPath = `/${OmnichannelEndpoints.LiveChatv2AuthGetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
-        headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
-      }
-    } else {
-      if (authenticatedUserToken) {
-        requestPath = `/${OmnichannelEndpoints.LiveChatAuthGetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
-        headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
-      }
+    const endpoint = createGetChatTokenEndpoint(currentLiveChatVersion as LiveChatVersion || this.liveChatVersion, authenticatedUserToken? true: false);
+
+    if (authenticatedUserToken) {
+      headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
     }
+
+    let requestPath = `/${endpoint}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
 
     if (reconnectId) {
       requestPath += `/${reconnectId}`;
