@@ -108,7 +108,7 @@ export default class SDK implements ISDK {
       }
     }
 
-    this.liveChatVersion = LiveChatVersion.V1;
+    this.liveChatVersion = LiveChatVersion.V2;
   }
 
   /**
