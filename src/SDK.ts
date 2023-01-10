@@ -138,11 +138,7 @@ export default class SDK implements ISDK {
     const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
     const { data } = response;
 
-    if (data.LiveChatVersion && data.LiveChatVersion === LiveChatVersion.V3) {
-      this.liveChatVersion = data.LiveChatVersion;
-    }
-
-    if (data.LiveChatVersion && data.LiveChatVersion === LiveChatVersion.V2) {
+    if (data.LiveChatVersion) {
       this.liveChatVersion = data.LiveChatVersion;
     }
 
