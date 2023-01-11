@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+### Added
+- `livechatconnector/v3/getchattoken` endpoint
+
 ## [0.3.3] - 2023-01-09
 ### Fix
 - Added `requestTimeoutConfig` and `defaultRequestTimeout` to set timeouts on endpoints.
