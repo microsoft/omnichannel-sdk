@@ -59,9 +59,9 @@ describe("endpointsCreators unit tests", () => {
     expect(endpoint).toEqual(expectedEndpoint);
   });
 
-  it("createGetChatTokenEndpoint() on v3 with auth should return v3 endpoint", async () => {
+  it("createGetChatTokenEndpoint() on v3 with auth should return v3 auth endpoint", async () => {
     const auth = true;
-    const expectedEndpoint = OmnichannelEndpoints.LiveChatv3GetChatTokenPath;
+    const expectedEndpoint = OmnichannelEndpoints.LiveChatv3AuthGetChatTokenPath;
     const version = 3;
     const endpoint = createGetChatTokenEndpoint(version, auth);
     expect(endpoint).toEqual(expectedEndpoint);
