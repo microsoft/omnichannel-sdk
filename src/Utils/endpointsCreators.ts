@@ -11,7 +11,7 @@ const createGetChatTokenEndpoint = (liveChatVersion: LiveChatVersion, auth: bool
   const authEndpointsMapping: {[key in LiveChatVersion]: string} = {
     [LiveChatVersion.V1]: OmnichannelEndpoints.LiveChatAuthGetChatTokenPath,
     [LiveChatVersion.V2]: OmnichannelEndpoints.LiveChatv2AuthGetChatTokenPath,
-    [LiveChatVersion.V3]: OmnichannelEndpoints.LiveChatv3GetChatTokenPath,
+    [LiveChatVersion.V3]: OmnichannelEndpoints.LiveChatv3AuthGetChatTokenPath,
   };
 
   if (Object.values(LiveChatVersion).includes(liveChatVersion)) {
