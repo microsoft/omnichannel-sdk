@@ -26,6 +26,7 @@ const axiosRetry = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryOptions)
 
   // Method to intercepts responses outside range of 2xx
   const onError = (error: AxiosError) => {
+
     const { config, response } = error;
 
     // If we have no information of the request to retry
@@ -33,10 +34,32 @@ const axiosRetry = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryOptions)
       return Promise.reject(error);
     }
 
-    if (shouldStopExecution(response, axiosRetryOptions)) {
-      return Promise.reject(error);
-    }
+    console.log("ELOPEZANAYA about to test");
 
+    if (response && response.status) {
+
+      switch (response.status) {
+
+        case Constants.tooManyRequestsStatusCode:
+          if (axiosRetryOptions.retryOn429 === false) {
+            console.log("ELOPEZANAYA Reject 429! :  " + JSON.stringify(error));
+
+            return Promise.reject(error);
+          }
+          break;
+
+        case 400:
+
+          if (parseInt(response.headers.errorcode) === 705) {
+            console.log("ELOPEZANAYA Reject 705! => " + JSON.stringify(error));
+
+            return Promise.reject(error);
+          }
+          break;
+      }
+    }
+  
+    console.log("AHHH MEDIO METTROOOO");
     // Retry request if below threshold
     const shouldRetry = currentTry < retries;
 
@@ -50,19 +73,4 @@ const axiosRetry = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryOptions)
 
   axios.interceptors.response.use(onSuccess, onError); // Intercept response before returning
 };
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
-export const shouldStopExecution = (response: any, axiosRetryOptions: IAxiosRetryOptions) => {
-  // Stop retry on 429 if set
-  if (response && (response.status === Constants.tooManyRequestsStatusCode && axiosRetryOptions.retryOn429 === false)) {
-    return true;
-  }
-
-  if (response && response.status === 400 && parseInt(response.headers.errorcode) === 705) {
-    return true;
-  }
-
-  return false;
-}
-
 export default axiosRetry;
