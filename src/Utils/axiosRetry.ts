@@ -26,11 +26,9 @@ const axiosRetry = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryOptions)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const shouldStopExecution = (response: AxiosResponse<any> | undefined) => {
-
     if (response && response.status) {
 
       switch (response.status) {
-
         case Constants.tooManyRequestsStatusCode:
           if (axiosRetryOptions.retryOn429 === false) {
             return true;
@@ -44,7 +42,6 @@ const axiosRetry = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryOptions)
         default: return false;
       }
     }
-
     return false;
   };
 
@@ -52,7 +49,6 @@ const axiosRetry = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryOptions)
   const onError = (error: AxiosError) => {
 
     const { config, response } = error;
-
     // If we have no information of the request to retry
     if (!config) {
       return Promise.reject(error);
