@@ -1,4 +1,4 @@
-import { AxiosInstance, AxiosError } from "axios";
+import { AxiosInstance, AxiosError, AxiosResponse } from "axios";
 import Constants from "../Common/Constants";
 import IAxiosRetryOptions from "../Interfaces/IAxiosRetryOptions";
 import sleep from "./sleep";
@@ -24,6 +24,30 @@ const axiosRetry = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryOptions)
   // Method to intercepts responses within range of 2xx
   const onSuccess = undefined;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const shouldStopExecution = (response: AxiosResponse<any> | undefined) => {
+
+    if (response && response.status) {
+
+      switch (response.status) {
+
+        case Constants.tooManyRequestsStatusCode:
+          if (axiosRetryOptions.retryOn429 === false) {
+            return true;
+          }
+          break;
+        case 400:
+          if (parseInt(response.headers.errorcode) === Constants.outOfOfficeErrorCode) {
+            return true;
+          }
+          break;
+        default: return false;
+      }
+    }
+
+    return false;
+  };
+
   // Method to intercepts responses outside range of 2xx
   const onError = (error: AxiosError) => {
 
@@ -34,32 +58,9 @@ const axiosRetry = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryOptions)
       return Promise.reject(error);
     }
 
-    console.log("ELOPEZANAYA about to test");
-
-    if (response && response.status) {
-
-      switch (response.status) {
-
-        case Constants.tooManyRequestsStatusCode:
-          if (axiosRetryOptions.retryOn429 === false) {
-            console.log("ELOPEZANAYA Reject 429! :  " + JSON.stringify(error));
-
-            return Promise.reject(error);
-          }
-          break;
-
-        case 400:
-
-          if (parseInt(response.headers.errorcode) === 705) {
-            console.log("ELOPEZANAYA Reject 705! => " + JSON.stringify(error));
-
-            return Promise.reject(error);
-          }
-          break;
-      }
+    if (shouldStopExecution(response)) {
+      return Promise.reject(error);
     }
-  
-    console.log("AHHH MEDIO METTROOOO");
     // Retry request if below threshold
     const shouldRetry = currentTry < retries;
 
