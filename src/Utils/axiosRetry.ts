@@ -26,15 +26,14 @@ const axiosRetry = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryOptions)
 
   // Method to intercepts responses outside range of 2xx
   const onError = (error: AxiosError) => {
-    const {config, response} = error;
+    const { config, response } = error;
 
     // If we have no information of the request to retry
     if (!config) {
       return Promise.reject(error);
     }
 
-    // Stop retry on 429 if set
-    if (response && response.status === Constants.tooManyRequestsStatusCode && axiosRetryOptions.retryOn429 === false) {
+    if (shouldStopExecution(response, axiosRetryOptions)) {
       return Promise.reject(error);
     }
 
@@ -43,7 +42,7 @@ const axiosRetry = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryOptions)
 
     if (shouldRetry) {
       currentTry++;
-      return new Promise((resolve) => sleep(retryInterval as number| 1000).then(() => resolve(axios(config))));
+      return new Promise((resolve) => sleep(retryInterval as number | 1000).then(() => resolve(axios(config))));
     }
 
     return Promise.reject(error);
@@ -51,5 +50,19 @@ const axiosRetry = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryOptions)
 
   axios.interceptors.response.use(onSuccess, onError); // Intercept response before returning
 };
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+export const shouldStopExecution = (response: any, axiosRetryOptions: IAxiosRetryOptions) => {
+  // Stop retry on 429 if set
+  if (response && (response.status === Constants.tooManyRequestsStatusCode && axiosRetryOptions.retryOn429 === false)) {
+    return true;
+  }
+
+  if (response && response.status === 400 && parseInt(response.headers.errorcode) === 705) {
+    return true;
+  }
+
+  return false;
+}
 
 export default axiosRetry;
