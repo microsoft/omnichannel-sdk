@@ -24,26 +24,16 @@ const axiosRetry = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryOptions)
   // Method to intercepts responses within range of 2xx
   const onSuccess = undefined;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const shouldStopExecution = (response: AxiosResponse<any> | undefined) => {
-    if (response && response.status) {
 
-      switch (response.status) {
-        case Constants.tooManyRequestsStatusCode:
-          if (axiosRetryOptions.retryOn429 === false) {
-            return true;
-          }
-          break;
-        case 400:
-          if (parseInt(response.headers.errorcode) === Constants.outOfOfficeErrorCode) {
-            return true;
-          }
-          break;
-        default: return false;
+// define default behaviour for 429 retries in case the handler was not included by the caller.
+  if (!axiosRetryOptions.shouldRetry) {
+    axiosRetryOptions.shouldRetry = (response) => {
+      if (response && response.status && response.status === Constants.tooManyRequestsStatusCode && axiosRetryOptions.retryOn429 === false) {
+        return false;
       }
+      return true;
     }
-    return false;
-  };
+  }
 
   // Method to intercepts responses outside range of 2xx
   const onError = (error: AxiosError) => {
@@ -54,7 +44,8 @@ const axiosRetry = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryOptions)
       return Promise.reject(error);
     }
 
-    if (shouldStopExecution(response)) {
+    //evalutes if execution should stop according to the conditions defined in the handler
+    if (axiosRetryOptions.shouldRetry && !axiosRetryOptions.shouldRetry(response)) {
       return Promise.reject(error);
     }
     // Retry request if below threshold
