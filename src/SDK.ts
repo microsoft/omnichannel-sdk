@@ -234,7 +234,7 @@ export default class SDK implements ISDK {
 
     const headers: StringMap = Constants.defaultHeaders;
 
-    const endpoint = createGetChatTokenEndpoint(currentLiveChatVersion as LiveChatVersion || this.liveChatVersion, authenticatedUserToken? true: false);
+    const endpoint = createGetChatTokenEndpoint(currentLiveChatVersion as LiveChatVersion || this.liveChatVersion, authenticatedUserToken ? true : false);
 
     if (authenticatedUserToken) {
       headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
@@ -516,65 +516,30 @@ export default class SDK implements ISDK {
   public async sessionInit(requestId: string, sessionInitOptionalParams: ISessionInitOptionalParams = {}): Promise<void> {
     const timer = Timer.TIMER();
     this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSTARTED, "Session Init Started", requestId);
-
-    console.log("E  ZANAYA : sessionInnit : 1");
-
     const axiosInstance = axios.create();
-
-    console.log("ELOPEZANAYA : sessionInnit : 2");
-
-    axiosRetry(axiosInstance, { 
-      retries: this.configuration.maxRequestRetriesOnFailure,  
-      shouldRetry : initSessionRetryHandler
+    axiosRetry(axiosInstance, {
+      retries: this.configuration.maxRequestRetriesOnFailure,
+      shouldRetry: initSessionRetryHandler
     });
-
-    console.log("ELOPEZANAYA : sessionInnit : 3");
-
     const { reconnectId, authenticatedUserToken, initContext, getContext } = sessionInitOptionalParams;
-
-    console.log("ELOPEZANAYA : sessionInnit : 4");
-
-
     const headers: StringMap = Constants.defaultHeaders;
     let requestPath = `/${OmnichannelEndpoints.LiveChatSessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
-
-    console.log("ELOPEZANAYA : sessionInnit : 5");
-
-
     if (authenticatedUserToken) {
       requestPath = `/${OmnichannelEndpoints.LiveChatAuthSessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
       headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
     }
 
-    console.log("ELOPEZANAYA : sessionInnit : 6");
-
-
     if (reconnectId) {
       requestPath += `/${reconnectId}`;
     }
 
-    console.log("ELOPEZANAYA : sessionInnit : 7");
-
-
     const queryParams = `channelId=${this.omnichannelConfiguration.channelId}`;
     requestPath += `?${queryParams}`;
-
-    console.log("ELOPEZANAYA : sessionInnit : 8");
-
-
     const data: InitContext = initContext || {};
-
-    console.log("ELOPEZANAYA : sessionInnit : 9");
-
 
     if (getContext && !window.document) {
       return Promise.reject(new Error(`getContext is only supported on web browsers`));
     }
-
-
-    console.log("ELOPEZANAYA : sessionInnit : 10");
-
-
     if (getContext) {
       data.browser = BrowserInfo.getBrowserName();
       data.device = DeviceInfo.getDeviceType();
@@ -582,26 +547,15 @@ export default class SDK implements ISDK {
       data.os = OSInfo.getOsType();
     }
 
-    console.log("ELOPEZANAYA : sessionInnit : 11");
-
-
     // Set default locale if locale is empty
     if (!data.locale) {
       data.locale = Constants.defaultLocale;
     }
 
-    console.log("ELOPEZANAYA : sessionInnit : 12");
-
-
     // Validate locale
     if (data.locale && !Locales.supportedLocales.includes(data.locale)) {
-      console.log("ELOPEZANAYA : sessionInnit : reject due to no locale");
-
       return Promise.reject(new Error(`Unsupported locale: '${data.locale}'`));
     }
-
-    console.log("ELOPEZANAYA : sessionInnit : 13");
-
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "POST";
@@ -613,38 +567,26 @@ export default class SDK implements ISDK {
       timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.sessionInit
     };
 
-    console.log("ELOPEZANAYA : sessionInnit : 14");
-
-
     try {
 
-      console.log("ELOPEZANAYA : sessionInnit : before calling axios");
       const response = await axiosInstance(options);
-      console.log("ELOPEZANAYA : sessionInnit : after calling axios");
 
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
       this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSUCCEEDED, "Session Init Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, data);
-      console.log("ELOPEZANAYA : sessionInnit : 15");
 
     } catch (error) {
 
-      console.log("ELOPEZANAYA : sessionInnit : 16 =>  error => " + JSON.stringify(error));
 
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
 
-      console.log("ELOPEZANAYA : sessionInnit : 17");
 
       this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SESSIONINITFAILED, "Session Init failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, data);
-      
-      console.log("ELOPEZANAYA : sessionInnit : 18");
 
 
       if (error.code === Constants.axiosTimeoutErrorCode) {
-        console.log("ELOPEZANAYA throwing error : TIMEOUT  ");
 
         throwClientHTTPTimeoutError();
       }
-      console.log("ELOPEZANAYA throwing error : e => " + JSON.stringify(error));
       throw error;
     }
   }
