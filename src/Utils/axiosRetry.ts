@@ -44,8 +44,12 @@ const axiosRetry = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryOptions)
       return Promise.reject(error);
     }
 
+    console.log("ELOPEZANAYA => lets check if we need to stop " + JSON.stringify(response));
+
     //evalutes if execution should stop according to the conditions defined in the handler
     if (axiosRetryOptions.shouldRetry && !axiosRetryOptions.shouldRetry(response)) {
+      console.log("ELOPEZANAYA => rejecting with error => " + JSON.stringify(error));
+      console.log("ELOPEZANAYA => rejecting with response => " + JSON.stringify(response));
       return Promise.reject(error);
     }
     // Retry request if below threshold
