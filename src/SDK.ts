@@ -42,7 +42,7 @@ import * as hash from "crypto";
 import { CustomContextData } from "./Utils/CustomContextData";
 import { RequestTimeoutConfig } from "./Common/RequestTimeoutConfig";
 import throwClientHTTPTimeoutError from "./Utils/throwClientHTTPError";
-import initSessionRetryHandler from "./Utils/InitSessionRetryHandler";
+import sessionInitRetryHandler from "./Utils/InitSessionRetryHandler";
 
 export default class SDK implements ISDK {
   private static defaultRequestTimeoutConfig: RequestTimeoutConfig = {
@@ -520,7 +520,7 @@ export default class SDK implements ISDK {
 
     axiosRetry(axiosInstance, {
       retries: this.configuration.maxRequestRetriesOnFailure,
-      shouldRetry: initSessionRetryHandler
+      shouldRetry: sessionInitRetryHandler
     });
 
     const { reconnectId, authenticatedUserToken, initContext, getContext } = sessionInitOptionalParams;

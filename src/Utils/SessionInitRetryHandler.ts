@@ -4,7 +4,7 @@ import Constants from "../Common/Constants";
 import IAxiosRetryOptions from "../Interfaces/IAxiosRetryOptions";
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-const initSessionRetryHandler = (response: AxiosResponse<any> | undefined, axiosRetryOptions: IAxiosRetryOptions) => {
+const sessionInitRetryHandler = (response: AxiosResponse<any> | undefined, axiosRetryOptions: IAxiosRetryOptions) => {
     if (response && response.status) {
         switch (response.status) {
             case Constants.tooManyRequestsStatusCode:
@@ -22,4 +22,4 @@ const initSessionRetryHandler = (response: AxiosResponse<any> | undefined, axios
     }
     return true;
 }
-export default initSessionRetryHandler;
+export default sessionInitRetryHandler;
