@@ -12,7 +12,7 @@ const sessionInitRetryHandler = (response: AxiosResponse<any> | undefined, axios
                     return false;
                 }
                 break;
-            case 400:
+            case Constants.badRequest:
                 if (parseInt(response.headers.errorcode) === Constants.outOfOfficeErrorCode) {
                     return false;
                 }
