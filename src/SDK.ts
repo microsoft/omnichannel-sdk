@@ -517,10 +517,12 @@ export default class SDK implements ISDK {
     const timer = Timer.TIMER();
     this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSTARTED, "Session Init Started", requestId);
     const axiosInstance = axios.create();
+
     axiosRetry(axiosInstance, {
       retries: this.configuration.maxRequestRetriesOnFailure,
       shouldRetry: initSessionRetryHandler
     });
+
     const { reconnectId, authenticatedUserToken, initContext, getContext } = sessionInitOptionalParams;
     const headers: StringMap = Constants.defaultHeaders;
     let requestPath = `/${OmnichannelEndpoints.LiveChatSessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
@@ -568,23 +570,13 @@ export default class SDK implements ISDK {
     };
 
     try {
-
       const response = await axiosInstance(options);
-
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
       this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSUCCEEDED, "Session Init Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, data);
-
     } catch (error) {
-
-
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-
-
       this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SESSIONINITFAILED, "Session Init failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, data);
-
-
       if (error.code === Constants.axiosTimeoutErrorCode) {
-
         throwClientHTTPTimeoutError();
       }
       throw error;
@@ -1125,7 +1117,6 @@ export default class SDK implements ISDK {
       ExceptionDetails: error,
       RequestPayload: sanitizedRequestPayload
     };
-
     this.logger.log(logLevel, telemetryEventType, customData, description);
   }
 }
