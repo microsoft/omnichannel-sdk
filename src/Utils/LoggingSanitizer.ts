@@ -33,7 +33,7 @@ export class LoggingSanitizer {
     }
   }
 
-  public static stripErrorSensitiveProperties(errorObject: any): void { // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types   
+  public static stripErrorSensitiveProperties(errorObject: any): void { // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types     
     if (errorObject && typeof errorObject === 'object' && Object.keys(errorObject)?.length > 0) {
       Object.keys(errorObject)?.forEach((key) => {
         if (Constants.sensitiveProperties.indexOf(key) !== -1) {
@@ -42,20 +42,24 @@ export class LoggingSanitizer {
         }
         if (key === 'data') {
           let data;
+
           if (typeof errorObject[key] === 'string') { // eslint-disable-line security/detect-object-injection
             try {
               data = JSON.parse(errorObject[key]); // eslint-disable-line security/detect-object-injection
             } catch {
               data = undefined;
             }
+          
           }
           if (data) {
             if (Object.keys(data).includes('preChatResponse')) {
               LoggingSanitizer.stripPreChatResponse(data.preChatResponse);
             }
+
             if (Object.keys(data).includes('customContextData')) {
               LoggingSanitizer.stripCustomContextDataValues(data.customContextData);
             }
+
             LoggingSanitizer.stripGeolocation(data);
             errorObject[key] = JSON.stringify(data); // eslint-disable-line security/detect-object-injection
           }
