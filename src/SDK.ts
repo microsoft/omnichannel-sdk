@@ -42,7 +42,7 @@ import * as hash from "crypto";
 import { CustomContextData } from "./Utils/CustomContextData";
 import { RequestTimeoutConfig } from "./Common/RequestTimeoutConfig";
 import throwClientHTTPTimeoutError from "./Utils/throwClientHTTPError";
-import sessionInitRetryHandler from "./Utils/InitSessionRetryHandler";
+import sessionInitRetryHandler from "./Utils/SessionInitRetryHandler";
 
 export default class SDK implements ISDK {
   private static defaultRequestTimeoutConfig: RequestTimeoutConfig = {
