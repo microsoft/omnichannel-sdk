@@ -841,6 +841,12 @@ export default class SDK implements ISDK {
         requestPath = `/${OmnichannelEndpoints.LiveChatv2AuthGetChatTranscriptPath}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
       }
     }
+    else if (this.liveChatVersion === LiveChatVersion.V3 || (currentLiveChatVersion && currentLiveChatVersion === LiveChatVersion.V3)) {
+      requestPath = `/${OmnichannelEndpoints.LiveChatv3GetChatTranscriptPath}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
+      if (authenticatedUserToken) {
+        requestPath = `/${OmnichannelEndpoints.LiveChatv3AuthGetChatTranscriptPath}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
+      }
+    }
     else if (authenticatedUserToken) {
       requestPath = `/${OmnichannelEndpoints.LiveChatAuthGetChatTranscriptPath}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
     }

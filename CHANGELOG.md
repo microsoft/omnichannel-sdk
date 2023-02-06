@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 ### Added
 - `livechatconnector/v3/getchattoken` endpoint
 - `livechatconnector/v3/auth/getchattoken` endpoint
+- `livechatconnector/v3/getchattranscripts` endpoint
+- `livechatconnector/v3/auth/getchattranscripts` endpoint
 
 ## [0.3.3] - 2023-01-09
 ### Fix
