@@ -42,6 +42,7 @@ import * as hash from "crypto";
 import { CustomContextData } from "./Utils/CustomContextData";
 import { RequestTimeoutConfig } from "./Common/RequestTimeoutConfig";
 import throwClientHTTPTimeoutError from "./Utils/throwClientHTTPError";
+import sessionInitRetryHandler from "./Utils/SessionInitRetryHandler";
 
 export default class SDK implements ISDK {
   private static defaultRequestTimeoutConfig: RequestTimeoutConfig = {
@@ -233,7 +234,7 @@ export default class SDK implements ISDK {
 
     const headers: StringMap = Constants.defaultHeaders;
 
-    const endpoint = createGetChatTokenEndpoint(currentLiveChatVersion as LiveChatVersion || this.liveChatVersion, authenticatedUserToken? true: false);
+    const endpoint = createGetChatTokenEndpoint(currentLiveChatVersion as LiveChatVersion || this.liveChatVersion, authenticatedUserToken ? true : false);
 
     if (authenticatedUserToken) {
       headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
@@ -515,16 +516,16 @@ export default class SDK implements ISDK {
   public async sessionInit(requestId: string, sessionInitOptionalParams: ISessionInitOptionalParams = {}): Promise<void> {
     const timer = Timer.TIMER();
     this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSTARTED, "Session Init Started", requestId);
-
-
     const axiosInstance = axios.create();
-    axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
+
+    axiosRetry(axiosInstance, {
+      retries: this.configuration.maxRequestRetriesOnFailure,
+      shouldRetry: sessionInitRetryHandler
+    });
 
     const { reconnectId, authenticatedUserToken, initContext, getContext } = sessionInitOptionalParams;
-
     const headers: StringMap = Constants.defaultHeaders;
     let requestPath = `/${OmnichannelEndpoints.LiveChatSessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
-
     if (authenticatedUserToken) {
       requestPath = `/${OmnichannelEndpoints.LiveChatAuthSessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
       headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
@@ -536,13 +537,11 @@ export default class SDK implements ISDK {
 
     const queryParams = `channelId=${this.omnichannelConfiguration.channelId}`;
     requestPath += `?${queryParams}`;
-
     const data: InitContext = initContext || {};
 
     if (getContext && !window.document) {
       return Promise.reject(new Error(`getContext is only supported on web browsers`));
     }
-
     if (getContext) {
       data.browser = BrowserInfo.getBrowserName();
       data.device = DeviceInfo.getDeviceType();
@@ -574,7 +573,6 @@ export default class SDK implements ISDK {
       const response = await axiosInstance(options);
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
       this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSUCCEEDED, "Session Init Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, data);
-
     } catch (error) {
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
       this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SESSIONINITFAILED, "Session Init failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, data);
@@ -1088,7 +1086,7 @@ export default class SDK implements ISDK {
    * @param error Error
    * @param data Data
    */
-  private logWithLogger(logLevel: LogLevel, telemetryEventType: OCSDKTelemetryEvent, description: string, requestId?: string, response?: AxiosResponse<any>, elapsedTimeInMilliseconds?: number, requestPath?: string, method?: string, error?: unknown, requestPayload?: any): void { // eslint-disable-line @typescript-eslint/no-explicit-any
+  private logWithLogger(logLevel: LogLevel, telemetryEventType: OCSDKTelemetryEvent, description: string, requestId?: string, response?: AxiosResponse<any>, elapsedTimeInMilliseconds?: number, requestPath?: string, method?: string, error?: unknown, requestPayload?: any): void { // eslint-disable-line @typescript-eslint/no-explicit-any    
     if (!this.logger) {
       return;
     }

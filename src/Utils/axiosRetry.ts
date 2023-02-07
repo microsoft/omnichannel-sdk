@@ -24,32 +24,39 @@ const axiosRetry = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryOptions)
   // Method to intercepts responses within range of 2xx
   const onSuccess = undefined;
 
+  // define default behaviour for 429 retries in case the handler was not included by the caller.
+  if (!axiosRetryOptions.shouldRetry) {
+    axiosRetryOptions.shouldRetry = (response) => {
+      if (response && response.status && response.status === Constants.tooManyRequestsStatusCode && axiosRetryOptions.retryOn429 === false) {
+        return false;
+      }
+      return true;
+    }
+  }
+
   // Method to intercepts responses outside range of 2xx
   const onError = (error: AxiosError) => {
-    const {config, response} = error;
 
+    const { config, response } = error;
     // If we have no information of the request to retry
     if (!config) {
       return Promise.reject(error);
     }
 
-    // Stop retry on 429 if set
-    if (response && response.status === Constants.tooManyRequestsStatusCode && axiosRetryOptions.retryOn429 === false) {
+    // Evaluates if execution should stop according to the conditions defined in the handler
+    if (axiosRetryOptions.shouldRetry && !axiosRetryOptions.shouldRetry(response)) {
       return Promise.reject(error);
     }
-
     // Retry request if below threshold
     const shouldRetry = currentTry < retries;
 
     if (shouldRetry) {
       currentTry++;
-      return new Promise((resolve) => sleep(retryInterval as number| 1000).then(() => resolve(axios(config))));
+      return new Promise((resolve) => sleep(retryInterval as number | 1000).then(() => resolve(axios(config))));
     }
-
     return Promise.reject(error);
   };
 
   axios.interceptors.response.use(onSuccess, onError); // Intercept response before returning
 };
-
 export default axiosRetry;
