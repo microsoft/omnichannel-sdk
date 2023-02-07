@@ -21,6 +21,27 @@ const createGetChatTokenEndpoint = (liveChatVersion: LiveChatVersion, auth: bool
   return auth? authEndpointsMapping[LiveChatVersion.V2]: endpointsMapping[LiveChatVersion.V2];
 }
 
+const createGetChatTranscriptsEndpoint = (liveChatVersion: LiveChatVersion, auth: boolean): string => {
+  const endpointsMapping: {[key in LiveChatVersion]: string} = {
+    [LiveChatVersion.V1]: OmnichannelEndpoints.LiveChatGetChatTranscriptPath,
+    [LiveChatVersion.V2]: OmnichannelEndpoints.LiveChatv2GetChatTranscriptPath,
+    [LiveChatVersion.V3]: OmnichannelEndpoints.LiveChatv3GetChatTranscriptPath,
+  };
+
+  const authEndpointsMapping: {[key in LiveChatVersion]: string} = {
+    [LiveChatVersion.V1]: OmnichannelEndpoints.LiveChatAuthGetChatTranscriptPath,
+    [LiveChatVersion.V2]: OmnichannelEndpoints.LiveChatv2AuthGetChatTranscriptPath,
+    [LiveChatVersion.V3]: OmnichannelEndpoints.LiveChatv3AuthGetChatTranscriptPath,
+  };
+
+  if (Object.values(LiveChatVersion).includes(liveChatVersion)) {
+    return auth? authEndpointsMapping[(liveChatVersion as LiveChatVersion)]: endpointsMapping[(liveChatVersion as LiveChatVersion)];
+  }
+
+  return auth? authEndpointsMapping[LiveChatVersion.V2]: endpointsMapping[LiveChatVersion.V2];
+}
+
 export {
-  createGetChatTokenEndpoint
+  createGetChatTokenEndpoint,
+  createGetChatTranscriptsEndpoint
 }
