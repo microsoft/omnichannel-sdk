@@ -16,8 +16,10 @@ export default class OmnichannelEndpoints {
   public static readonly LiveChatAuthGetSurveyInviteLinkPath = "livechatconnector/auth/getsurveyinvite";
   public static readonly LiveChatGetChatTranscriptPath = "livechatconnector/getchattranscripts";
   public static readonly LiveChatv2GetChatTranscriptPath = "livechatconnector/v2/getchattranscripts";
+  public static readonly LiveChatv3GetChatTranscriptPath = "livechatconnector/v3/getchattranscripts";
   public static readonly LiveChatAuthGetChatTranscriptPath = "livechatconnector/auth/getchattranscripts";
   public static readonly LiveChatv2AuthGetChatTranscriptPath = "livechatconnector/v2/auth/getchattranscripts";
+  public static readonly LiveChatv3AuthGetChatTranscriptPath = "livechatconnector/v3/auth/getchattranscripts";
   public static readonly LiveChatTranscriptEmailRequestPath = "livechatconnector/createemailrequest";
   public static readonly LiveChatAuthTranscriptEmailRequestPath = "livechatconnector/auth/createemailrequest";
   public static readonly LiveChatFetchDataMaskingInfoPath = "livechatconnector/fetchdatamaskinginfo";
