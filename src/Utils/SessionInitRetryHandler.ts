@@ -5,14 +5,14 @@ import IAxiosRetryOptions from "../Interfaces/IAxiosRetryOptions";
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 const sessionInitRetryHandler = (response: AxiosResponse<any> | undefined, axiosRetryOptions: IAxiosRetryOptions) => {
-    if (response && response.status) {
+    if (response?.status) {
         switch (response.status) {
             case Constants.tooManyRequestsStatusCode:
                 if (axiosRetryOptions && axiosRetryOptions.retryOn429 === false) {
                     return false;
                 }
                 break;
-            case Constants.badRequest:
+            case Constants.badRequestStatusCode:
                 if (parseInt(response.headers.errorcode) === Constants.outOfOfficeErrorCode) {
                     return false;
                 }

@@ -13,7 +13,7 @@ export default class Constants {
   public static readonly defaultLocale = "en-us";
   public static readonly noContentStatusCode = 204;
   public static readonly tooManyRequestsStatusCode = 429;
-  public static readonly badRequest = 429;
+  public static readonly badRequestStatusCode = 400;
   public static readonly outOfOfficeErrorCode = 705;
   public static readonly sensitiveProperties = ["AuthenticatedUserToken"];
   public static readonly transactionid = "transaction-id";
