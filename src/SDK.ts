@@ -2,7 +2,7 @@ import { ChannelId, LiveChatVersion } from "./Common/Enums";
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import { BrowserInfo } from "./Utils/BrowserInfo";
 import Constants from "./Common/Constants";
-import { createGetChatTokenEndpoint } from "./Utils/endpointsCreators";
+import { createGetChatTokenEndpoint, createGetChatTranscriptsEndpoint } from "./Utils/endpointsCreators";
 import { DeviceInfo } from "./Utils/DeviceInfo";
 import FetchChatTokenResponse from "./Model/FetchChatTokenResponse";
 import IDataMaskingInfo from "./Interfaces/IDataMaskingInfo";
@@ -824,7 +824,6 @@ export default class SDK implements ISDK {
     const timer = Timer.TIMER();
     this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATTRANSCRIPTSTARTED, "Get Chat Transcript Started", requestId);
 
-    let requestPath = `/${OmnichannelEndpoints.LiveChatGetChatTranscriptPath}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
     const axiosInstance = axios.create();
     axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
 
@@ -835,14 +834,11 @@ export default class SDK implements ISDK {
     headers[OmnichannelHTTPHeaders.widgetAppId] = this.omnichannelConfiguration.widgetId;
     headers[OmnichannelHTTPHeaders.authorization] = token;
 
-    if (this.liveChatVersion === LiveChatVersion.V2 || (currentLiveChatVersion && currentLiveChatVersion === LiveChatVersion.V2)) {
-      requestPath = `/${OmnichannelEndpoints.LiveChatv2GetChatTranscriptPath}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
-      if (authenticatedUserToken) {
-        requestPath = `/${OmnichannelEndpoints.LiveChatv2AuthGetChatTranscriptPath}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
-      }
-    }
-    else if (authenticatedUserToken) {
-      requestPath = `/${OmnichannelEndpoints.LiveChatAuthGetChatTranscriptPath}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
+    const endpoint = createGetChatTranscriptsEndpoint(currentLiveChatVersion as LiveChatVersion || this.liveChatVersion, authenticatedUserToken? true: false);
+    const requestPath = `/${endpoint}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
+
+    if (authenticatedUserToken) {
+      headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
     }
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
