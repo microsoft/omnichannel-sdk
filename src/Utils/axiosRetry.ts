@@ -43,7 +43,7 @@ const axiosRetry = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryOptions)
       return Promise.reject(error);
     }
 
-    //evalutes if execution should stop according to the conditions defined in the handler
+    // evalutes if execution should stop according to the conditions defined in the handler
     if (axiosRetryOptions.shouldRetry && !axiosRetryOptions.shouldRetry(response)) {
       return Promise.reject(error);
     }
