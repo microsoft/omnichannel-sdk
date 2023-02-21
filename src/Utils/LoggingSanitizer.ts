@@ -1,29 +1,35 @@
 import Constants from "../Common/Constants";
 
-export class LoggingSanitizer  {
+export class LoggingSanitizer {
   public static stripCustomContextDataValues(customContextData: any): void { // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
-    Object.keys(customContextData)?.forEach((contextKey: string) => {
-      if (customContextData[`${contextKey}`]?.value) {
-        customContextData[`${contextKey}`].value = Constants.hiddenContentPlaceholder;
-      }
-    });
+    if (customContextData) {
+      Object.keys(customContextData)?.forEach((contextKey: string) => {
+        if (customContextData[`${contextKey}`]?.value) {
+          customContextData[`${contextKey}`].value = Constants.hiddenContentPlaceholder;
+        }
+      });
+    }
   }
 
   public static stripPreChatResponse(preChatResponse: any): void { // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
-    Object.keys(preChatResponse).forEach((responseKey) => {
-      if (preChatResponse[`${responseKey}`] && responseKey !== 'Type') {
-        preChatResponse[`${responseKey}`] = Constants.hiddenContentPlaceholder;
-      }
-    });
+    if (preChatResponse) {
+      Object.keys(preChatResponse).forEach((responseKey) => {
+        if (preChatResponse[`${responseKey}`] && responseKey !== 'Type') {
+          preChatResponse[`${responseKey}`] = Constants.hiddenContentPlaceholder;
+        }
+      });
+    }
   }
 
   public static stripGeolocation(data: any): void { // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
-    if (Object.keys(data).includes('longitude')) {
-      data['longitude'] = Constants.hiddenContentPlaceholder;
-    }
+    if (data) {
+      if (Object.keys(data).includes('longitude')) {
+        data['longitude'] = Constants.hiddenContentPlaceholder;
+      }
 
-    if (Object.keys(data).includes('latitude')) {
-      data['latitude'] = Constants.hiddenContentPlaceholder;
+      if (Object.keys(data).includes('latitude')) {
+        data['latitude'] = Constants.hiddenContentPlaceholder;
+      }
     }
   }
 

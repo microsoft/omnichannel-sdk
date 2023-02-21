@@ -2,6 +2,7 @@ import { ChannelId, LiveChatVersion } from "./Common/Enums";
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import { BrowserInfo } from "./Utils/BrowserInfo";
 import Constants from "./Common/Constants";
+import { createGetChatTokenEndpoint } from "./Utils/endpointsCreators";
 import { DeviceInfo } from "./Utils/DeviceInfo";
 import FetchChatTokenResponse from "./Model/FetchChatTokenResponse";
 import IDataMaskingInfo from "./Interfaces/IDataMaskingInfo";
@@ -41,6 +42,7 @@ import * as hash from "crypto";
 import { CustomContextData } from "./Utils/CustomContextData";
 import { RequestTimeoutConfig } from "./Common/RequestTimeoutConfig";
 import throwClientHTTPTimeoutError from "./Utils/throwClientHTTPError";
+import sessionInitRetryHandler from "./Utils/SessionInitRetryHandler";
 
 export default class SDK implements ISDK {
   private static defaultRequestTimeoutConfig: RequestTimeoutConfig = {
@@ -138,9 +140,11 @@ export default class SDK implements ISDK {
     });
     const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
     const { data } = response;
-    if (data.LiveChatVersion && data.LiveChatVersion === LiveChatVersion.V2) {
+
+    if (data.LiveChatVersion) {
       this.liveChatVersion = data.LiveChatVersion;
     }
+
     data.headers = {};
     if (response.headers && response.headers["date"]) {
       data.headers["date"] = response.headers["date"];
@@ -237,22 +241,15 @@ export default class SDK implements ISDK {
     }
 
     const headers: StringMap = Constants.defaultHeaders;
-    let requestPath = `/${OmnichannelEndpoints.LiveChatGetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
 
-    if (this.liveChatVersion === LiveChatVersion.V2 || (currentLiveChatVersion && currentLiveChatVersion === LiveChatVersion.V2)) {
-      requestPath = `/${OmnichannelEndpoints.LiveChatv2GetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
-      if (authenticatedUserToken) {
-        requestPath = `/${OmnichannelEndpoints.LiveChatv2AuthGetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
-        headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
-        headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
-      }
-    } else {
-      if (authenticatedUserToken) {
-        requestPath = `/${OmnichannelEndpoints.LiveChatAuthGetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
-        headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
-        headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
-      }
+    const endpoint = createGetChatTokenEndpoint(currentLiveChatVersion as LiveChatVersion || this.liveChatVersion, authenticatedUserToken ? true : false);
+
+    if (authenticatedUserToken) {
+      headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+      headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
     }
+
+    let requestPath = `/${endpoint}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
 
     if (reconnectId) {
       requestPath += `/${reconnectId}`;
@@ -542,16 +539,17 @@ export default class SDK implements ISDK {
   public async sessionInit(requestId: string, sessionInitOptionalParams: ISessionInitOptionalParams = {}): Promise<void> {
     const timer = Timer.TIMER();
     this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSTARTED, "Session Init Started", requestId);
-
-
     const axiosInstance = axios.create();
-    axiosRetry(axiosInstance, { fetchAuthCodeNonce: this.fetchAuthCodeNonce.bind(this),  retries: this.configuration.maxRequestRetriesOnFailure });
+
+    axiosRetry(axiosInstance, {
+      retries: this.configuration.maxRequestRetriesOnFailure,
+      shouldRetry: sessionInitRetryHandler,
+      fetchAuthCodeNonce: this.fetchAuthCodeNonce.bind(this)
+    });
 
     const { reconnectId, authenticatedUserToken, initContext, getContext } = sessionInitOptionalParams;
-
     const headers: StringMap = Constants.defaultHeaders;
     let requestPath = `/${OmnichannelEndpoints.LiveChatSessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
-
     if (authenticatedUserToken) {
       requestPath = `/${OmnichannelEndpoints.LiveChatAuthSessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
       headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
@@ -564,13 +562,11 @@ export default class SDK implements ISDK {
 
     const queryParams = `channelId=${this.omnichannelConfiguration.channelId}`;
     requestPath += `?${queryParams}`;
-
     const data: InitContext = initContext || {};
 
     if (getContext && !window.document) {
       return Promise.reject(new Error(`getContext is only supported on web browsers`));
     }
-
     if (getContext) {
       data.browser = BrowserInfo.getBrowserName();
       data.device = DeviceInfo.getDeviceType();
@@ -607,7 +603,6 @@ export default class SDK implements ISDK {
       }
 
       this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSUCCEEDED, "Session Init Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, data);
-
     } catch (error) {
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
       this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SESSIONINITFAILED, "Session Init failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, data);
@@ -1154,19 +1149,19 @@ export default class SDK implements ISDK {
 
   /**
    * Helper function for logging.
-   * 
+   *
    * @param logLevel Log level for logging.
    * @param telemetryEventType Telemetry event type in which event will be logged.
    * @param description Description of the event.
    * @param requestId Request ID
    * @param response Response
-   * @param elapsedTimeInMilliseconds Elapsed time in ms 
+   * @param elapsedTimeInMilliseconds Elapsed time in ms
    * @param requestPath Request path
    * @param method Method
    * @param error Error
    * @param data Data
    */
-  private logWithLogger(logLevel: LogLevel, telemetryEventType: OCSDKTelemetryEvent, description: string, requestId?: string, response?: AxiosResponse<any>, elapsedTimeInMilliseconds?: number, requestPath?: string, method?: string, error?: unknown, requestPayload?: any): void { // eslint-disable-line @typescript-eslint/no-explicit-any
+  private logWithLogger(logLevel: LogLevel, telemetryEventType: OCSDKTelemetryEvent, description: string, requestId?: string, response?: AxiosResponse<any>, elapsedTimeInMilliseconds?: number, requestPath?: string, method?: string, error?: unknown, requestPayload?: any): void { // eslint-disable-line @typescript-eslint/no-explicit-any    
     if (!this.logger) {
       return;
     }
