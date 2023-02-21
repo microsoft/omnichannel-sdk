@@ -7,4 +7,8 @@ export default interface IAxiosRetryOptions {
    * Whether to retry on 429 HTTP status code response
    */
   retryOn429?: boolean | true;
+  /**
+   * Callback to fetch current auth nonce in case of failure and retry
+   */
+  fetchAuthCodeNonce?: () => string;
 }

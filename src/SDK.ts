@@ -45,24 +45,25 @@ import throwClientHTTPTimeoutError from "./Utils/throwClientHTTPError";
 export default class SDK implements ISDK {
   private static defaultRequestTimeoutConfig: RequestTimeoutConfig = {
     getChatConfig: 30000,
-    getLWIDetails: 5000,
+    getLWIDetails: 10000,
     getChatToken: 10000,
-    sessionInit: 5000,
+    sessionInit: 10000,
     sessionClose: 10000,
-    getReconnectableChats: 5000,
-    getReconnectAvailability: 5000,
+    getReconnectableChats: 10000,
+    getReconnectAvailability: 10000,
     submitPostChatResponse: 10000,
     getSurveyInviteLink: 10000,
     getChatTranscripts: 30000,
     emailTranscript: 5000,
-    fetchDataMaskingInfo: 1000,
-    makeSecondaryChannelEventRequest: 5000,
-    getAgentAvailability: 5000,
+    fetchDataMaskingInfo: 5000,
+    makeSecondaryChannelEventRequest: 10000,
+    getAgentAvailability: 10000,
     sendTypingIndicator: 5000,
-    validateAuthChatRecordTimeout: 5000
+    validateAuthChatRecordTimeout: 10000
   };
 
   private static defaultConfiguration: ISDKConfiguration = {
+    authCodeNonce: uuidv4().substring(0, 8),
     getChatTokenRetryCount: 10,
     getChatTokenTimeBetweenRetriesOnFailure: 10000,
     getChatTokenRetryOn429: false,
@@ -166,7 +167,7 @@ export default class SDK implements ISDK {
     // construct a endpoint for anonymous chats to get LWI Details
     let requestPath = `/${OmnichannelEndpoints.LiveChatLiveWorkItemDetailsPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
     const axiosInstance = axios.create();
-    axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
+    axiosRetry(axiosInstance, { fetchAuthCodeNonce: this.fetchAuthCodeNonce.bind(this),  retries: this.configuration.maxRequestRetriesOnFailure });
 
     // Extract auth token and reconnect id from optional param
     const { authenticatedUserToken, reconnectId } = getLWIDetailsOptionalParams;
@@ -176,6 +177,7 @@ export default class SDK implements ISDK {
     if (authenticatedUserToken) {
       requestPath = `/${OmnichannelEndpoints.LiveChatAuthLiveWorkItemDetailsPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
       headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+      headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
     }
 
     // Append reconnect id on the endpoint if vailable
@@ -197,7 +199,12 @@ export default class SDK implements ISDK {
       try {
         const response = await axiosInstance(options);
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        const { data } = response;
+        const { data, headers } = response;
+
+        if (headers?.authcodenonce) {
+          this.configuration.authCodeNonce = headers?.authcodenonce;
+        }
+
         this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETLWISTATUSSUCCEEDED, "Get LWI Details succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
         resolve(data);
       } catch (error) {
@@ -210,6 +217,7 @@ export default class SDK implements ISDK {
       }
     });
   }
+
   /**
    * Fetches the chat token from Omnichannel to join T1 thread.
    * @param requestId: RequestId to use for getchattoken (Optional).
@@ -236,11 +244,13 @@ export default class SDK implements ISDK {
       if (authenticatedUserToken) {
         requestPath = `/${OmnichannelEndpoints.LiveChatv2AuthGetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
         headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+        headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
       }
     } else {
       if (authenticatedUserToken) {
         requestPath = `/${OmnichannelEndpoints.LiveChatAuthGetChatTokenPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
         headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+        headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
       }
     }
 
@@ -261,18 +271,22 @@ export default class SDK implements ISDK {
     };
 
     const axiosInstance = axios.create();
-    axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure, retryOn429: this.configuration.getChatTokenRetryOn429 });
+    axiosRetry(axiosInstance, { fetchAuthCodeNonce: this.fetchAuthCodeNonce.bind(this),  retries: this.configuration.maxRequestRetriesOnFailure, retryOn429: this.configuration.getChatTokenRetryOn429 });
 
     return new Promise(async (resolve, reject) => {
       let getChatTokenError = undefined;
       try {
         const response = await axiosInstance(options);
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        const { data } = response;
+        const { data, headers } = response;
 
         // Resolves only if it contains chat token response which only happens on status 200
         if (data) {
           data.requestId = requestId;
+
+          if (headers?.authcodenonce) {
+            this.configuration.authCodeNonce = headers?.authcodenonce;
+          }
 
           this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATTOKENSUCCEEDED, "Get Chat Token succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
 
@@ -329,6 +343,7 @@ export default class SDK implements ISDK {
     const requestPath = `/${OmnichannelEndpoints.LiveChatGetReconnectableChatsPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${this.omnichannelConfiguration.orgId}?channelId=${this.omnichannelConfiguration.channelId}`;
     const headers: StringMap = Constants.defaultHeaders;
     headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+    headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
@@ -347,7 +362,11 @@ export default class SDK implements ISDK {
       try {
         const response = await axiosInstance(options);
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        const { data } = response;
+        const { data, headers } = response;
+
+        if (headers?.authcodenonce) {
+          this.configuration.authCodeNonce = headers?.authcodenonce;
+        }
 
         // Resolves only if it contains reconnectable chats response which only happens on status 200
         if (data) {
@@ -430,7 +449,7 @@ export default class SDK implements ISDK {
 
     const requestPath = `/${OmnichannelEndpoints.GetAgentAvailabilityPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=lcw`;
     const axiosInstance = axios.create();
-    axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
+    axiosRetry(axiosInstance, { fetchAuthCodeNonce: this.fetchAuthCodeNonce.bind(this),  retries: this.configuration.maxRequestRetriesOnFailure });
 
     const { authenticatedUserToken, initContext, getContext } = queueAvailabilityOptionalParams;
 
@@ -438,6 +457,7 @@ export default class SDK implements ISDK {
 
     if (authenticatedUserToken) {
       headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+      headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
     }
 
     const data: InitContext = initContext || {};
@@ -493,8 +513,12 @@ export default class SDK implements ISDK {
       try {
         const response = await axiosInstance(options);
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        const { data } = response;
+        const { data, headers } = response;
         if (data) {
+          if (headers?.authcodenonce) {
+            this.configuration.authCodeNonce = headers?.authcodenonce;
+          }
+
           this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETAGENTAVAILABILITYSUCCEEDED, "Get agent availability succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
 
           resolve(data);
@@ -521,7 +545,7 @@ export default class SDK implements ISDK {
 
 
     const axiosInstance = axios.create();
-    axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
+    axiosRetry(axiosInstance, { fetchAuthCodeNonce: this.fetchAuthCodeNonce.bind(this),  retries: this.configuration.maxRequestRetriesOnFailure });
 
     const { reconnectId, authenticatedUserToken, initContext, getContext } = sessionInitOptionalParams;
 
@@ -531,6 +555,7 @@ export default class SDK implements ISDK {
     if (authenticatedUserToken) {
       requestPath = `/${OmnichannelEndpoints.LiveChatAuthSessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
       headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+      headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
     }
 
     if (reconnectId) {
@@ -576,6 +601,11 @@ export default class SDK implements ISDK {
     try {
       const response = await axiosInstance(options);
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+      const { headers } = response;
+      if (headers?.authcodenonce) {
+        this.configuration.authCodeNonce = headers?.authcodenonce;
+      }
+
       this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSUCCEEDED, "Session Init Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, data);
 
     } catch (error) {
@@ -599,7 +629,7 @@ export default class SDK implements ISDK {
 
     let requestPath = `/${OmnichannelEndpoints.LiveChatSessionClosePath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
     const axiosInstance = axios.create();
-    axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
+    axiosRetry(axiosInstance, { fetchAuthCodeNonce: this.fetchAuthCodeNonce.bind(this),  retries: this.configuration.maxRequestRetriesOnFailure });
 
     const { authenticatedUserToken, isReconnectChat, isPersistentChat, chatId } = sessionCloseOptionalParams;
 
@@ -610,6 +640,7 @@ export default class SDK implements ISDK {
     if (authenticatedUserToken) {
       requestPath = `/${OmnichannelEndpoints.LiveChatAuthSessionClosePath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
       headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+      headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
     }
 
     if (isReconnectChat) {
@@ -633,6 +664,11 @@ export default class SDK implements ISDK {
     return new Promise(async (resolve, reject) => {
       try {
         const response = await axiosInstance(options);
+        const { headers } = response;
+        if (headers?.authcodenonce) {
+          this.configuration.authCodeNonce = headers?.authcodenonce;
+        }
+
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONCLOSESUCCEEDED, "Session Close succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
 
@@ -659,10 +695,11 @@ export default class SDK implements ISDK {
     const { authenticatedUserToken, chatId } = validateAuthChatRecordOptionalParams;
     const requestPath = `/${OmnichannelEndpoints.LiveChatValidateAuthChatMapRecordPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
     const axiosInstance = axios.create();
-    axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
+    axiosRetry(axiosInstance, { fetchAuthCodeNonce: this.fetchAuthCodeNonce.bind(this),  retries: this.configuration.maxRequestRetriesOnFailure });
     const headers: StringMap = Constants.defaultHeaders;
     if (authenticatedUserToken) {
       headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+      headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
     }
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
@@ -676,6 +713,12 @@ export default class SDK implements ISDK {
 
     try {
       const response = await axiosInstance(options);
+      
+      const { headers } = response;
+      if (headers?.authcodenonce) {
+        this.configuration.authCodeNonce = headers?.authcodenonce;
+      }
+
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
       if (response.data?.authChatExist === true) {
         this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDSUCCEEDED, "Validate Auth Chat Record succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
@@ -715,7 +758,7 @@ export default class SDK implements ISDK {
 
     let requestPath = `/${OmnichannelEndpoints.LiveChatSubmitPostChatPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
     const axiosInstance = axios.create();
-    axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
+    axiosRetry(axiosInstance, { fetchAuthCodeNonce: this.fetchAuthCodeNonce.bind(this),  retries: this.configuration.maxRequestRetriesOnFailure });
 
     const { authenticatedUserToken } = submitPostChatResponseOptionalParams;
 
@@ -724,6 +767,7 @@ export default class SDK implements ISDK {
     if (authenticatedUserToken) {
       requestPath = `/${OmnichannelEndpoints.LiveChatAuthSubmitPostChatPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
       headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+      headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
     }
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
@@ -736,10 +780,15 @@ export default class SDK implements ISDK {
       timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.submitPostChatResponse
     };
 
-
     return new Promise(async (resolve, reject) => {
       try {
         const response = await axiosInstance(options);
+        
+        const { headers } = response;
+        if (headers?.authcodenonce) {
+          this.configuration.authCodeNonce = headers?.authcodenonce;
+        }
+
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SUBMITPOSTCHATSUCCEEDED, "Submit Post Chat succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
 
@@ -771,7 +820,7 @@ export default class SDK implements ISDK {
     }
     let requestPath = `/${OmnichannelEndpoints.LiveChatGetSurveyInviteLinkPath}/${this.omnichannelConfiguration.orgId}/${surveyOwnerId}`;
     const axiosInstance = axios.create();
-    axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
+    axiosRetry(axiosInstance, { fetchAuthCodeNonce: this.fetchAuthCodeNonce.bind(this),  retries: this.configuration.maxRequestRetriesOnFailure });
 
     const { authenticatedUserToken, requestId } = getsurveyInviteLinkOptionalParams;
 
@@ -780,6 +829,7 @@ export default class SDK implements ISDK {
     if (authenticatedUserToken) {
       requestPath = `/${OmnichannelEndpoints.LiveChatAuthGetSurveyInviteLinkPath}/${this.omnichannelConfiguration.orgId}/${surveyOwnerId}`;
       headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+      headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
       headers[OmnichannelHTTPHeaders.widgetAppId] = this.omnichannelConfiguration.widgetId;
     }
 
@@ -800,7 +850,11 @@ export default class SDK implements ISDK {
     return new Promise(async (resolve, reject) => {
       try {
         const response = await axiosInstance(options);
-        const { data } = response;
+        const { data, headers } = response;
+        if (headers?.authcodenonce) {
+          this.configuration.authCodeNonce = headers?.authcodenonce;
+        }
+
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETSURVEYINVITELINKSUCCEEDED, "Get Survey Invite Link Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
 
@@ -829,7 +883,7 @@ export default class SDK implements ISDK {
 
     let requestPath = `/${OmnichannelEndpoints.LiveChatGetChatTranscriptPath}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
     const axiosInstance = axios.create();
-    axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
+    axiosRetry(axiosInstance, { fetchAuthCodeNonce: this.fetchAuthCodeNonce.bind(this),  retries: this.configuration.maxRequestRetriesOnFailure });
 
     const { authenticatedUserToken, currentLiveChatVersion } = getChatTranscriptsOptionalParams;
 
@@ -841,10 +895,14 @@ export default class SDK implements ISDK {
     if (this.liveChatVersion === LiveChatVersion.V2 || (currentLiveChatVersion && currentLiveChatVersion === LiveChatVersion.V2)) {
       requestPath = `/${OmnichannelEndpoints.LiveChatv2GetChatTranscriptPath}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
       if (authenticatedUserToken) {
+        headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+        headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
         requestPath = `/${OmnichannelEndpoints.LiveChatv2AuthGetChatTranscriptPath}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
       }
     }
     else if (authenticatedUserToken) {
+      headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+      headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
       requestPath = `/${OmnichannelEndpoints.LiveChatAuthGetChatTranscriptPath}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
     }
 
@@ -861,7 +919,11 @@ export default class SDK implements ISDK {
       try {
         const response = await axiosInstance(options);
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        const { data } = response;
+        const { data, headers } = response;
+        if (headers?.authcodenonce) {
+          this.configuration.authCodeNonce = headers?.authcodenonce;
+        }
+
         this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATTRANSCRIPTSUCCEEDED, "Get Chat Transcript succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
 
         resolve(data);
@@ -889,7 +951,7 @@ export default class SDK implements ISDK {
 
     let requestPath = `/${OmnichannelEndpoints.LiveChatTranscriptEmailRequestPath}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
     const axiosInstance = axios.create();
-    axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
+    axiosRetry(axiosInstance, { fetchAuthCodeNonce: this.fetchAuthCodeNonce.bind(this),  retries: this.configuration.maxRequestRetriesOnFailure });
 
     const { authenticatedUserToken } = emailTranscriptOptionalParams;
 
@@ -899,6 +961,8 @@ export default class SDK implements ISDK {
     headers[OmnichannelHTTPHeaders.authorization] = token;
 
     if (authenticatedUserToken) {
+      headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+      headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
       requestPath = `/${OmnichannelEndpoints.LiveChatAuthTranscriptEmailRequestPath}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
     }
 
@@ -915,6 +979,11 @@ export default class SDK implements ISDK {
     return new Promise(async (resolve, reject) => {
       try {
         const response = await axiosInstance(options);
+        const { headers } = response;
+        if (headers?.authcodenonce) {
+          this.configuration.authCodeNonce = headers?.authcodenonce;
+        }
+
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.EMAILTRANSCRIPTSUCCEEDED, "Email Transcript succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
 
@@ -989,7 +1058,7 @@ export default class SDK implements ISDK {
 
     let requestPath = `/${OmnichannelEndpoints.LiveChatSecondaryChannelEventPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
     const axiosInstance = axios.create();
-    axiosRetry(axiosInstance, { retries: this.configuration.maxRequestRetriesOnFailure });
+    axiosRetry(axiosInstance, { fetchAuthCodeNonce: this.fetchAuthCodeNonce.bind(this),  retries: this.configuration.maxRequestRetriesOnFailure });
 
     const { authenticatedUserToken } = secondaryChannelEventOptionalParams;
 
@@ -998,6 +1067,7 @@ export default class SDK implements ISDK {
 
     if (authenticatedUserToken) {
       headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+      headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
       requestPath = `/${OmnichannelEndpoints.LiveChatAuthSecondaryChannelEventPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
     }
 
@@ -1015,6 +1085,11 @@ export default class SDK implements ISDK {
 
     try {
       const response = await axiosInstance(options);
+      const { headers } = response;
+      if (headers?.authcodenonce) {
+        this.configuration.authCodeNonce = headers?.authcodenonce;
+      }
+
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
       this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SECONDARYCHANNELEVENTREQUESTSUCCEEDED, "Secondary Channel Event Request Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
 
@@ -1123,5 +1198,9 @@ export default class SDK implements ISDK {
       RequestPayload: sanitizedRequestPayload
     };
     this.logger.log(logLevel, telemetryEventType, customData, description);
+  }
+
+  private fetchAuthCodeNonce(): string {
+    return this.configuration.authCodeNonce;
   }
 }

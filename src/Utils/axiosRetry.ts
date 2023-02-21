@@ -1,5 +1,6 @@
 import { AxiosInstance, AxiosError } from "axios";
 import Constants from "../Common/Constants";
+import OmnichannelHTTPHeaders from "../Common/OmnichannelHTTPHeaders";
 import IAxiosRetryOptions from "../Interfaces/IAxiosRetryOptions";
 import sleep from "./sleep";
 
@@ -17,7 +18,7 @@ const axiosRetry = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryOptions)
     axiosRetryOptions.retryOn429 = true;
   }
 
-  const { retries } = axiosRetryOptions;
+  const { retries, fetchAuthCodeNonce } = axiosRetryOptions;
 
   let currentTry = 1; // Executed as soon as after 1st try
 
@@ -43,6 +44,12 @@ const axiosRetry = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryOptions)
 
     if (shouldRetry) {
       currentTry++;
+
+      if (fetchAuthCodeNonce) {
+        const nonce = fetchAuthCodeNonce();
+        config.headers[OmnichannelHTTPHeaders.authCodeNonce] = nonce;
+      }
+
       return new Promise((resolve) => sleep(retryInterval as number| 1000).then(() => resolve(axios(config))));
     }
 
