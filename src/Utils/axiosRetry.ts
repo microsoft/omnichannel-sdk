@@ -17,7 +17,7 @@ const axiosRetry = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryOptions)
     axiosRetryOptions.retryOn429 = true;
   }
 
-  const { retries } = axiosRetryOptions;
+  const { retries, headerOverwrites } = axiosRetryOptions;
 
   let currentTry = 1; // Executed as soon as after 1st try
 
@@ -52,6 +52,17 @@ const axiosRetry = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryOptions)
 
     if (shouldRetry) {
       currentTry++;
+
+      if (headerOverwrites && response?.headers) {
+        for (const headerName of headerOverwrites) {
+          const responseHeader = response?.headers[headerName.toLocaleLowerCase()];
+          if (responseHeader) {
+            // eslint-disable-next-line security/detect-object-injection
+            config.headers[headerName] = responseHeader;
+          }
+        }
+      }
+
       return new Promise((resolve) => sleep(retryInterval as number | 1000).then(() => resolve(axios(config))));
     }
     return Promise.reject(error);

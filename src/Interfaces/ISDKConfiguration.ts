@@ -27,4 +27,8 @@ export default interface ISDKConfiguration {
    * Individual Request timeouts
    */
   requestTimeoutConfig: RequestTimeoutConfig;
+  /**
+   * Nonce for Auth V2 requests
+   */
+  authCodeNonce: string;
 }
