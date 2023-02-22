@@ -1166,10 +1166,6 @@ export default class SDK implements ISDK {
     this.logger.log(logLevel, telemetryEventType, customData, description);
   }
 
-  private fetchAuthCodeNonce(): string {
-    return this.configuration.authCodeNonce;
-  }
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private setAuthCodeNonce = (headers: any) => {
     if (headers?.authcodenonce) {

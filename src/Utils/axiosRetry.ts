@@ -1,6 +1,5 @@
 import { AxiosInstance, AxiosError } from "axios";
 import Constants from "../Common/Constants";
-import OmnichannelHTTPHeaders from "../Common/OmnichannelHTTPHeaders";
 import IAxiosRetryOptions from "../Interfaces/IAxiosRetryOptions";
 import sleep from "./sleep";
 
