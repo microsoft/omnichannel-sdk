@@ -13,9 +13,9 @@ export default interface IAxiosRetryOptions {
    * Function to handle logic and evaluate if retry should continue based on response results.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  shouldRetry? (response? : any, axiosRetryOptions?: IAxiosRetryOptions)  : boolean
+  shouldRetry? (response? : any, axiosRetryOptions?: IAxiosRetryOptions) : boolean
   /**
-   * Callback to fetch current auth nonce in case of failure and retry
+   * Overwrite request headers on demand based on response headers of the same name
    */
-  fetchAuthCodeNonce?: () => string;
+  headerOverwrites?: string[];
 }
