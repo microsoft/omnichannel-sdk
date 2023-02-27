@@ -47,21 +47,21 @@ import sessionInitRetryHandler from "./Utils/SessionInitRetryHandler";
 export default class SDK implements ISDK {
   private static defaultRequestTimeoutConfig: RequestTimeoutConfig = {
     getChatConfig: 30000,
-    getLWIDetails: 10000,
-    getChatToken: 10000,
-    sessionInit: 10000,
-    sessionClose: 10000,
-    getReconnectableChats: 10000,
-    getReconnectAvailability: 10000,
-    submitPostChatResponse: 10000,
-    getSurveyInviteLink: 10000,
+    getLWIDetails: 15000,
+    getChatToken: 15000,
+    sessionInit: 15000,
+    sessionClose: 15000,
+    getReconnectableChats: 15000,
+    getReconnectAvailability: 15000,
+    submitPostChatResponse: 15000,
+    getSurveyInviteLink: 15000,
     getChatTranscripts: 30000,
     emailTranscript: 5000,
     fetchDataMaskingInfo: 5000,
-    makeSecondaryChannelEventRequest: 10000,
-    getAgentAvailability: 10000,
+    makeSecondaryChannelEventRequest: 15000,
+    getAgentAvailability: 15000,
     sendTypingIndicator: 5000,
-    validateAuthChatRecordTimeout: 10000
+    validateAuthChatRecordTimeout: 15000
   };
 
   private static defaultConfiguration: ISDKConfiguration = {
@@ -214,7 +214,7 @@ export default class SDK implements ISDK {
         if (error.code === Constants.axiosTimeoutErrorCode) {
           throwClientHTTPTimeoutError();
         }
-        reject();
+        reject(error);
       }
     });
   }
@@ -310,7 +310,7 @@ export default class SDK implements ISDK {
         if (getChatTokenError && getChatTokenError.code == Constants.axiosTimeoutErrorCode) {
           throwClientHTTPTimeoutError();
         } else {
-          reject(new Error(`The retry for getchattoken has exceeded its max value of ${this.configuration.getChatTokenRetryCount}`));
+          reject(getChatTokenError);
         }
         return;
       }
@@ -583,21 +583,24 @@ export default class SDK implements ISDK {
       timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.sessionInit
     };
 
-    try {
-      const response = await axiosInstance(options);
-      const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-      const { headers } = response;
-      this.setAuthCodeNonce(headers);
+    return new Promise(async (resolve, reject) => {
+      try {
+        const response = await axiosInstance(options);
+        const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+        const { headers } = response;
+        this.setAuthCodeNonce(headers);
 
-      this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSUCCEEDED, "Session Init Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, data);
-    } catch (error) {
-      const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-      this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SESSIONINITFAILED, "Session Init failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, data);
-      if (error.code === Constants.axiosTimeoutErrorCode) {
-        throwClientHTTPTimeoutError();
+        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSUCCEEDED, "Session Init Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, data);
+        resolve();
+      } catch (error) {
+        const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SESSIONINITFAILED, "Session Init failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, data);
+        if (error.code === Constants.axiosTimeoutErrorCode) {
+          throwClientHTTPTimeoutError();
+        }
+        reject(error);
       }
-      throw error;
-    }
+    });
   }
 
   /**
@@ -659,10 +662,11 @@ export default class SDK implements ISDK {
         if (error.code === Constants.axiosTimeoutErrorCode) {
           throwClientHTTPTimeoutError();
         }
-        reject();
+        reject(error);
       }
     });
   }
+
   /**
    * Validate the auth chat record exists in database.
    * @param requestId: RequestId for validateAuthChatRecord (same request id for session init).
@@ -691,36 +695,38 @@ export default class SDK implements ISDK {
       timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.validateAuthChatRecordTimeout
     };
 
-    try {
-      const response = await axiosInstance(options);
-      const { headers } = response;
-      this.setAuthCodeNonce(headers);
+    return new Promise(async (resolve, reject) => {
+      try {
+        const response = await axiosInstance(options);
+        const { headers } = response;
+        this.setAuthCodeNonce(headers);
 
-      const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-      if (response.data?.authChatExist === true) {
-        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDSUCCEEDED, "Validate Auth Chat Record succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
+        const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+        if (response.data?.authChatExist === true) {
+          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDSUCCEEDED, "Validate Auth Chat Record succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
 
-        return Promise.resolve(response.data);
-      } else {
-        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDFAILED, "Validate Auth Chat Record Failed. Record is not found or request is not authorized", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
+          resolve(response.data);
+        } else {
+          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDFAILED, "Validate Auth Chat Record Failed. Record is not found or request is not authorized", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
 
-        return Promise.reject(new Error("Validate Auth Chat Record Failed. Record is not found or request is not authorized"));
+          reject(new Error("Validate Auth Chat Record Failed. Record is not found or request is not authorized"));
+        }
+      } catch (error) {
+        const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDFAILED, "Validate Auth Chat Record failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
+
+        if (error.code === Constants.axiosTimeoutErrorCode) {
+          throwClientHTTPTimeoutError();
+        }
+
+        if (error.toString() === "Error: Request failed with status code 404") { // backward compatibility
+          resolve({});
+        } else {
+          reject(error);
+        }
       }
-    } catch (error) {
-      const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-
-      this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDFAILED, "Validate Auth Chat Record failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
-
-      if (error.code === Constants.axiosTimeoutErrorCode) {
-        throwClientHTTPTimeoutError();
-      }
-
-      if (error.toString() === "Error: Request failed with status code 404") { // backward compatibility
-        return Promise.resolve({});
-      } else {
-        return Promise.reject();
-      }
-    }
+    });
   }
 
   /**
@@ -773,7 +779,7 @@ export default class SDK implements ISDK {
         if (error.code === Constants.axiosTimeoutErrorCode) {
           throwClientHTTPTimeoutError();
         }
-        reject();
+        reject(error);
       }
     });
   }
@@ -837,7 +843,7 @@ export default class SDK implements ISDK {
         if (error.code === Constants.axiosTimeoutErrorCode) {
           throwClientHTTPTimeoutError();
         }
-        reject();
+        reject(error);
       }
     });
   }
@@ -962,7 +968,7 @@ export default class SDK implements ISDK {
         if (error.code === Constants.axiosTimeoutErrorCode) {
           throwClientHTTPTimeoutError();
         }
-        reject();
+        reject(error);
       }
     });
   }
@@ -1009,7 +1015,7 @@ export default class SDK implements ISDK {
         if (error.code === Constants.axiosTimeoutErrorCode) {
           throwClientHTTPTimeoutError();
         }
-        reject();
+        reject(error);
       }
     });
   }
@@ -1051,22 +1057,24 @@ export default class SDK implements ISDK {
       timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.makeSecondaryChannelEventRequest
     };
 
-    try {
-      const response = await axiosInstance(options);
-      const { headers } = response;
-      this.setAuthCodeNonce(headers);
+    return new Promise(async (resolve, reject) => {
+      try {
+        const response = await axiosInstance(options);
+        const { headers } = response;
+        this.setAuthCodeNonce(headers);
 
-      const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-      this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SECONDARYCHANNELEVENTREQUESTSUCCEEDED, "Secondary Channel Event Request Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
-
-    } catch (error) {
-      const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-      this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SECONDARYCHANNELEVENTREQUESTFAILED, "Secondary Channel Event Request Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
-      if (error.code === Constants.axiosTimeoutErrorCode) {
-        throwClientHTTPTimeoutError();
+        const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SECONDARYCHANNELEVENTREQUESTSUCCEEDED, "Secondary Channel Event Request Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
+        resolve();
+      } catch (error) {
+        const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SECONDARYCHANNELEVENTREQUESTFAILED, "Secondary Channel Event Request Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
+        if (error.code === Constants.axiosTimeoutErrorCode) {
+          throwClientHTTPTimeoutError();
+        }
+        reject(error);
       }
-      throw error;
-    }
+    });
   }
 
   /** Send typing indicator
