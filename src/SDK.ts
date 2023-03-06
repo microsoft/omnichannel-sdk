@@ -110,7 +110,7 @@ export default class SDK implements ISDK {
       }
     }
 
-    this.liveChatVersion = LiveChatVersion.V1;
+    this.liveChatVersion = LiveChatVersion.V2;
   }
 
   /**
@@ -503,7 +503,7 @@ export default class SDK implements ISDK {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         const { data, headers } = response;
         this.setAuthCodeNonce(headers);
-        
+
         if (data) {
           this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETAGENTAVAILABILITYSUCCEEDED, "Get agent availability succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
 
@@ -649,7 +649,7 @@ export default class SDK implements ISDK {
     return new Promise(async (resolve, reject) => {
       try {
         const response = await axiosInstance(options);
-        const { headers } = response;  
+        const { headers } = response;
         this.setAuthCodeNonce(headers);
 
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
@@ -1140,7 +1140,7 @@ export default class SDK implements ISDK {
    * @param error Error
    * @param data Data
    */
-  private logWithLogger(logLevel: LogLevel, telemetryEventType: OCSDKTelemetryEvent, description: string, requestId?: string, response?: AxiosResponse<any>, elapsedTimeInMilliseconds?: number, requestPath?: string, method?: string, error?: unknown, requestPayload?: any): void { // eslint-disable-line @typescript-eslint/no-explicit-any    
+  private logWithLogger(logLevel: LogLevel, telemetryEventType: OCSDKTelemetryEvent, description: string, requestId?: string, response?: AxiosResponse<any>, elapsedTimeInMilliseconds?: number, requestPath?: string, method?: string, error?: unknown, requestPayload?: any): void { // eslint-disable-line @typescript-eslint/no-explicit-any
     if (!this.logger) {
       return;
     }
