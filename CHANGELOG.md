@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
 ## [0.3.4] - 2023-03-24
 ### Added
 - `livechatconnector/v3/getchattoken` endpoint
