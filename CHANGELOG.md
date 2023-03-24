@@ -1,12 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.3.4] - 2023-03-24
 ### Added
 - `livechatconnector/v3/getchattoken` endpoint
 - `livechatconnector/v3/auth/getchattoken` endpoint
 - Stop retry when the error is related to out of office hours.
-- Send and receive `AuthCodeNonce` header in order to be compliant with Omnichannel's OAuth 2.0 requirement 
+- Send and receive `AuthCodeNonce` header in order to be compliant with Omnichannel's OAuth 2.0 requirement
 - Increasing request timeout and add error handling for OAuth 2.0
 
 ## [0.3.3] - 2023-01-09
