@@ -226,7 +226,7 @@ export default class SDK implements ISDK {
    */
   public async getChatToken(requestId: string, getChatTokenOptionalParams: IGetChatTokenOptionalParams = {}, currentRetryCount: number = 0): Promise<FetchChatTokenResponse> { // eslint-disable-line @typescript-eslint/no-inferrable-types
     const timer = Timer.TIMER();
-    const { reconnectId, authenticatedUserToken, currentLiveChatVersion } = getChatTokenOptionalParams;
+    const { reconnectId, authenticatedUserToken, currentLiveChatVersion, refreshToken } = getChatTokenOptionalParams;
     this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATTOKENSTARTED, "Get Chat Token Started", requestId);
 
     if (currentRetryCount < 0) {
@@ -252,7 +252,12 @@ export default class SDK implements ISDK {
       requestPath += `/${reconnectId}`;
     }
 
-    const queryParams = `channelId=${this.omnichannelConfiguration.channelId}`;
+    let queryParams = `channelId=${this.omnichannelConfiguration.channelId}`;
+
+    if (refreshToken) {
+      queryParams += `&refreshToken=true`;
+    }
+
     requestPath += `?${queryParams}`;
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;

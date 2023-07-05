@@ -2,6 +2,8 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+### Added
+- `refreshToken` optional query parameter to `getchattoken` endpoint
 
 ## [0.3.4] - 2023-03-24
 ### Added

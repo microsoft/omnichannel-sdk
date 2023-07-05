@@ -11,4 +11,9 @@ export default interface IGetChatTokenOptionalParams {
    * Current livechatversion
    */
   currentLiveChatVersion?: number;
+
+  /**
+   * Whether to refresh chat token
+   */
+  refreshToken?: boolean;
 }
