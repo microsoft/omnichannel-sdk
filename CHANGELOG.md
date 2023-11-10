@@ -4,7 +4,12 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
-- update of typescript version, ts-load and axios version, including changes to handle new library versions.
+- including changes to handle new library versions.
+
+### Security
+- Uptake axios@1.6.1
+- Uptake ts-loader@8.4.0
+- Uptake typescript@4.9.5
 
 ## [0.4.0] - 2023-07-05
 ### Added
