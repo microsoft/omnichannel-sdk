@@ -7,9 +7,9 @@ All notable changes to this project will be documented in this file.
 - including changes to handle new library versions.
 
 ### Security
-- Uptake axios@1.6.1
-- Uptake ts-loader@8.4.0
-- Uptake typescript@4.9.5
+- Uptake [axios@1.6.1](https://www.npmjs.com/package/axios/v/1.6.1)
+- Uptake [ts-loader@8.4.0](https://www.npmjs.com/package/ts-loader/v/8.4.0)
+- Uptake [typescript@4.9.5](https://www.npmjs.com/package/typescript/v/4.9.5)
 
 ## [0.4.0] - 2023-07-05
 ### Added
