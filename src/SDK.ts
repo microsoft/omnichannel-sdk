@@ -1,5 +1,5 @@
 import { ChannelId, LiveChatVersion } from "./Common/Enums";
-import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
+import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import { BrowserInfo } from "./Utils/BrowserInfo";
 import Constants from "./Common/Constants";
 import { createGetChatTokenEndpoint } from "./Utils/endpointsCreators";
@@ -333,7 +333,7 @@ export default class SDK implements ISDK {
    * Fetches the reconnectable chats from omnichannel from the given user information in JWT token(claim name: sub).
    * @param reconnectableChatsParams Mandate parameters for get reconnectable chats.
    */
-  public async getReconnectableChats(reconnectableChatsParams: IReconnectableChatsParams): Promise<ReconnectMappingRecord> {
+  public async getReconnectableChats(reconnectableChatsParams: IReconnectableChatsParams): Promise<ReconnectMappingRecord | void> {
     const timer = Timer.TIMER();
     const { authenticatedUserToken } = reconnectableChatsParams;
     this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETRECONNECTABLECHATS, "Get Reconnectable chat Started");
@@ -371,7 +371,7 @@ export default class SDK implements ISDK {
           return;
         }
         // No data found in the old sessions so returning null
-        resolve(new ReconnectMappingRecord());
+        resolve();
         return;
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
@@ -389,7 +389,7 @@ export default class SDK implements ISDK {
  * Fetches the reconnectable chats from omnichannel from the given user information in JWT token(claim name: sub).
  * @param reconnectableChatsParams Mandate parameters for get reconnectable chats.
  */
-  public async getReconnectAvailability(reconnectId: string): Promise<ReconnectAvailability> {
+  public async getReconnectAvailability(reconnectId: string): Promise<ReconnectAvailability | void> {
     const timer = Timer.TIMER();
     this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITY, "Get Reconnectable availability Started");
 
@@ -419,7 +419,7 @@ export default class SDK implements ISDK {
         // No data found so returning null
         this.logWithLogger(LogLevel.WARN, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITY, "Get Reconnect availability didn't send any valid data", undefined, response, elapsedTimeInMilliseconds, requestPath, method);
 
-        resolve(new ReconnectAvailability());
+        resolve();
         return;
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
