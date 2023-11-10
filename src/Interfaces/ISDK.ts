@@ -9,8 +9,8 @@ export default interface ISDK {
   getChatToken(requestId: string): Promise<FetchChatTokenResponse>;
   sessionInit(requestId: string): Promise<void>;
   sessionClose(requestId: string): Promise<void>;
-  getReconnectableChats(reconnectableChatsParams: IReconnectableChatsParams): Promise<object>;
-  getReconnectAvailability(reconnectId: string): Promise<object>;
+  getReconnectableChats(reconnectableChatsParams: IReconnectableChatsParams): Promise<object | void>;
+  getReconnectAvailability(reconnectId: string): Promise<object | void>;
   submitPostChatResponse(requestId: string, postChatResponse: object): Promise<void>;
   getSurveyInviteLink(surveyOwnerId: string, surveyInviteAPIRequestBody: object): Promise<object>;
   getChatTranscripts(requestId: string, chatId: string, token: string): Promise<string>;
