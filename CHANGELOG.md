@@ -3,6 +3,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.4.1] - 2023-11-10
+
 ### Added
 - including changes to handle new library versions.
 
