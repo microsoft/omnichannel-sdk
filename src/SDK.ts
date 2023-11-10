@@ -1,5 +1,5 @@
 import { ChannelId, LiveChatVersion } from "./Common/Enums";
-import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
+import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
 import { BrowserInfo } from "./Utils/BrowserInfo";
 import Constants from "./Common/Constants";
 import { createGetChatTokenEndpoint } from "./Utils/endpointsCreators";
@@ -43,6 +43,7 @@ import { CustomContextData } from "./Utils/CustomContextData";
 import { RequestTimeoutConfig } from "./Common/RequestTimeoutConfig";
 import throwClientHTTPTimeoutError from "./Utils/throwClientHTTPError";
 import sessionInitRetryHandler from "./Utils/SessionInitRetryHandler";
+import isExpectedAxiosError from "./Utils/isExpectedAxiosError";
 
 export default class SDK implements ISDK {
   private static defaultRequestTimeoutConfig: RequestTimeoutConfig = {
@@ -208,18 +209,17 @@ export default class SDK implements ISDK {
 
         this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETLWISTATUSSUCCEEDED, "Get LWI Details succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
         resolve(data);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error:any) {
+      
+      } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETLWISTATUSFAILED, "Get LWI Details failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
-        if (error.code === Constants.axiosTimeoutErrorCode) {
+        if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           throwClientHTTPTimeoutError();
         }
         reject(error);
       }
     });
   }
-
   /**
    * Fetches the chat token from Omnichannel to join T1 thread.
    * @param requestId: RequestId to use for getchattoken (Optional).
@@ -373,11 +373,10 @@ export default class SDK implements ISDK {
         // No data found in the old sessions so returning null
         resolve(new ReconnectMappingRecord());
         return;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error:any) {
+      } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETRECONNECTABLECHATS, "Get Reconnectable Chats failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
-        if (error.code === Constants.axiosTimeoutErrorCode) {
+        if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           throwClientHTTPTimeoutError();
         }
         reject(error);
@@ -422,11 +421,10 @@ export default class SDK implements ISDK {
 
         resolve(new ReconnectAvailability());
         return;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error:any) {
+      } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITY, "Get Reconnect Availability failed", undefined, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
-        if (error.code === Constants.axiosTimeoutErrorCode) {
+        if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           throwClientHTTPTimeoutError();
         }
         reject(error);
@@ -518,11 +516,11 @@ export default class SDK implements ISDK {
 
           resolve(data);
         }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error : any) {
+      } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETAGENTAVAILABILITYFAILED, "Get agent availability failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
-        if (error.code === Constants.axiosTimeoutErrorCode) {
+        
+        if (isExpectedAxiosError(error,  Constants.axiosTimeoutErrorCode)) {
           throwClientHTTPTimeoutError();
         }
         reject(error);
@@ -602,11 +600,10 @@ export default class SDK implements ISDK {
 
         this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSUCCEEDED, "Session Init Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, data);
         resolve();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error : any) {
+      } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SESSIONINITFAILED, "Session Init failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, data);
-        if (error.code === Constants.axiosTimeoutErrorCode) {
+        if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           throwClientHTTPTimeoutError();
         }
         reject(error);
@@ -723,13 +720,14 @@ export default class SDK implements ISDK {
 
           reject(new Error("Validate Auth Chat Record Failed. Record is not found or request is not authorized"));
         }
+      
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error : any) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
 
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDFAILED, "Validate Auth Chat Record failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
 
-        if (error.code === Constants.axiosTimeoutErrorCode) {
+        if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           throwClientHTTPTimeoutError();
         }
 
@@ -786,11 +784,11 @@ export default class SDK implements ISDK {
         this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SUBMITPOSTCHATSUCCEEDED, "Submit Post Chat succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
 
         resolve();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error : any) {
+
+      } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SUBMITPOSTCHATFAILED, "Submit Post Chat Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
-        if (error.code === Constants.axiosTimeoutErrorCode) {
+        if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           throwClientHTTPTimeoutError();
         }
         reject(error);
@@ -851,11 +849,11 @@ export default class SDK implements ISDK {
         this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETSURVEYINVITELINKSUCCEEDED, "Get Survey Invite Link Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
 
         resolve(data);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error: any) {
+      
+      } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETSURVEYINVITELINKFAILED, "Get Survey Invite Link failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
-        if (error.code === Constants.axiosTimeoutErrorCode) {
+        if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           throwClientHTTPTimeoutError();
         }
         reject(error);
@@ -918,11 +916,11 @@ export default class SDK implements ISDK {
         this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATTRANSCRIPTSUCCEEDED, "Get Chat Transcript succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
 
         resolve(data);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error : any) {
+      
+      } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETCHATTRANSCRIPTFAILED, "Get Chat Transcript failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
-        if (error.code === Constants.axiosTimeoutErrorCode) {
+        if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           throwClientHTTPTimeoutError();
         }
         reject(error);
@@ -978,11 +976,11 @@ export default class SDK implements ISDK {
         this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.EMAILTRANSCRIPTSUCCEEDED, "Email Transcript succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
 
         resolve();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error : any) {
+
+      } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.EMAILTRANSCRIPTFAILED, "Email Transcript Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
-        if (error.code === Constants.axiosTimeoutErrorCode) {
+        if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           throwClientHTTPTimeoutError();
         }
         reject(error);
@@ -1026,11 +1024,11 @@ export default class SDK implements ISDK {
         this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.FETCHDATAMASKINGSUCCEEDED, "Fetch Data Masking succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
 
         resolve(data);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error:any) {
+
+      } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.FETCHDATAMASKINGFAILED, "Fetch Data Masking Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
-        if (error.code === Constants.axiosTimeoutErrorCode) {
+        if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           throwClientHTTPTimeoutError();
         }
         reject(error);
@@ -1084,11 +1082,11 @@ export default class SDK implements ISDK {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SECONDARYCHANNELEVENTREQUESTSUCCEEDED, "Secondary Channel Event Request Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
         resolve();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error : any) {
+
+      } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SECONDARYCHANNELEVENTREQUESTFAILED, "Secondary Channel Event Request Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
-        if (error.code === Constants.axiosTimeoutErrorCode) {
+        if (isExpectedAxiosError(error,  Constants.axiosTimeoutErrorCode)) {
           throwClientHTTPTimeoutError();
         }
         reject(error);
@@ -1132,13 +1130,13 @@ export default class SDK implements ISDK {
         this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SENDTYPINGINDICATORSUCCEEDED, "Send Typing Indicator Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
 
         resolve();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error:any) {
+
+      } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
 
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SENDTYPINGINDICATORFAILED, "Send Typing Indicator Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
 
-        if (error.code === Constants.axiosTimeoutErrorCode) {
+        if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           throwClientHTTPTimeoutError();
         }
         reject(error);
