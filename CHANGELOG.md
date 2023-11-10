@@ -3,6 +3,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- update of typescript version, ts-load and axios version, including changes to handle new library versions.
+
 ## [0.4.0] - 2023-07-05
 ### Added
 - `refreshToken` optional query parameter to `getchattoken` endpoint
