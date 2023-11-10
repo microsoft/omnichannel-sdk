@@ -28,13 +28,14 @@ export {
     global.window = global;
   }
 
-  if (typeof window === undefined) {
+  if (!window) {
     throw new Error(`window object not found`);
   }
 
   // Check existence of global objects to avoid overwrite/clashing
   if (!("Microsoft" in window)) {
-    window.Microsoft = {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).Microsoft = {};
   }
 
   if (!("CRM" in window.Microsoft)) {
