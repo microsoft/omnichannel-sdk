@@ -2,6 +2,8 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+### Added
+- Add `GetChatConfigFailed` telemetry event
 
 ## [0.4.1] - 2023-11-10
 
