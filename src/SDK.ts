@@ -118,9 +118,9 @@ export default class SDK implements ISDK {
    * Fetches chat config.
    * @param requestId: RequestId to use to get chat config (Optional).
    */
-  public async getChatConfig(requestId: string, bypassCache = false): Promise<object> {
+  public async getChatConfig(requestId: string, bypassCache = false): Promise<object | void> {
     const timer = Timer.TIMER();
-    this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATCONFIG, "Get Chat config started", requestId);
+    this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATCONFIGFSTARTED, "Get Chat config started", requestId);
     if (!requestId) {
       requestId = uuidv4();
     }
@@ -135,25 +135,33 @@ export default class SDK implements ISDK {
     if (bypassCache) {
       headers = { ...Constants.bypassCacheHeaders, ...headers };
     }
-    const response = await axiosInstance.get(url, {
-      headers,
-      timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.getChatConfig
-    });
-    const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-    const { data } = response;
 
-    if (data.LiveChatVersion) {
-      this.liveChatVersion = data.LiveChatVersion;
+    try {
+      const response = await axiosInstance.get(url, {
+        headers,
+        timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.getChatConfig
+      });
+      const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+      const { data } = response;
+
+      if (data.LiveChatVersion) {
+        this.liveChatVersion = data.LiveChatVersion;
+      }
+
+      data.headers = {};
+      if (response.headers && response.headers["date"]) {
+        data.headers["date"] = response.headers["date"];
+      }
+      this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATCONFIGSUCCEDED, "Get Chat config succeeded", requestId, response, elapsedTimeInMilliseconds,
+        requestPath, method);
+
+      return data;
+    } catch (error) {
+      const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+      this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATCONFIGFAILED, "Get Chat config failed", requestId, undefined, elapsedTimeInMilliseconds,
+        requestPath, method, error);
+      return Promise.reject(error);
     }
-
-    data.headers = {};
-    if (response.headers && response.headers["date"]) {
-      data.headers["date"] = response.headers["date"];
-    }
-    this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATCONFIGSUCCESS, "Get Chat config succeeded", requestId, response, elapsedTimeInMilliseconds,
-      requestPath, method);
-
-    return data;
   }
 
   /**
@@ -209,7 +217,7 @@ export default class SDK implements ISDK {
 
         this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETLWISTATUSSUCCEEDED, "Get LWI Details succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
         resolve(data);
-      
+
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETLWISTATUSFAILED, "Get LWI Details failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
@@ -519,7 +527,7 @@ export default class SDK implements ISDK {
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETAGENTAVAILABILITYFAILED, "Get agent availability failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
-        
+
         if (isExpectedAxiosError(error,  Constants.axiosTimeoutErrorCode)) {
           throwClientHTTPTimeoutError();
         }
@@ -720,7 +728,7 @@ export default class SDK implements ISDK {
 
           reject(new Error("Validate Auth Chat Record Failed. Record is not found or request is not authorized"));
         }
-      
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error : any) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
@@ -849,7 +857,7 @@ export default class SDK implements ISDK {
         this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETSURVEYINVITELINKSUCCEEDED, "Get Survey Invite Link Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
 
         resolve(data);
-      
+
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETSURVEYINVITELINKFAILED, "Get Survey Invite Link failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
@@ -916,7 +924,7 @@ export default class SDK implements ISDK {
         this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATTRANSCRIPTSUCCEEDED, "Get Chat Transcript succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
 
         resolve(data);
-      
+
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETCHATTRANSCRIPTFAILED, "Get Chat Transcript failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
