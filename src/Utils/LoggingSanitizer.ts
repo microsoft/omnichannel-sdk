@@ -33,12 +33,31 @@ export class LoggingSanitizer {
     }
   }
 
+  public static stripAuthenticationUserToken(headers: any): void { // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+    if (headers) {
+      if (Object.keys(headers).includes('AuthenticatedUserToken')) {
+        headers['AuthenticatedUserToken'] = Constants.hiddenContentPlaceholder;
+      }
+    }
+  }
+
+  public static stripAxiosErrorSensitiveProperties(errorObject: any): void { // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+    if (errorObject.isAxiosError) {
+      if (errorObject?.config?.headers) {
+        LoggingSanitizer.stripAuthenticationUserToken(errorObject?.config?.headers);
+      }
+
+      if (errorObject?.response?.config?.headers) {
+        LoggingSanitizer.stripAuthenticationUserToken(errorObject?.response?.config?.headers);
+      }
+    }
+  }
+
   public static stripErrorSensitiveProperties(errorObject: any): void { // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
     if(errorObject && typeof errorObject === 'object' && Object.keys(errorObject)?.length > 0) {
       Object.keys(errorObject)?.forEach((key) => {
           if (Constants.sensitiveProperties.indexOf(key) !== -1) {
-            // remove sensitive properties from error object
-            delete errorObject[`${key}`];
+            errorObject[`${key}`] = Constants.hiddenContentPlaceholder;
           }
 
           if (key === 'data') {
