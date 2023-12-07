@@ -33,7 +33,7 @@ describe("LoggingSanitized unit tests", () => {
         }
 
         LoggingSanitizer.stripErrorSensitiveProperties(errorObject);
-        expect(errorObject["config"]["headers"]["AuthenticatedUserToken"]).toBeUndefined();
+        expect(errorObject["config"]["headers"]["AuthenticatedUserToken"]).toEqual(Constants.hiddenContentPlaceholder);
         expect(JSON.parse(errorObject["config"]["data"])["preChatResponse"]["Type"]).toEqual(data["preChatResponse"]["Type"]);
         expect(JSON.parse(errorObject["config"]["data"])["preChatResponse"]["foo"]).toEqual(Constants.hiddenContentPlaceholder);
         expect(JSON.parse(errorObject["config"]["data"])["preChatResponse"]["bar"]).toEqual(Constants.hiddenContentPlaceholder);
@@ -56,7 +56,7 @@ describe("LoggingSanitized unit tests", () => {
             }
         }
         LoggingSanitizer.stripErrorSensitiveProperties(errorObject);
-        expect(errorObject["config"]["headers"]["AuthenticatedUserToken"]).toBeUndefined();
+        expect(errorObject["config"]["headers"]["AuthenticatedUserToken"]).toEqual(Constants.hiddenContentPlaceholder);
         done();
     });
 
