@@ -24,7 +24,8 @@ describe("LoggingSanitized unit tests", () => {
           method: "get",
           headers: {
             Accept: "application/json, text/plain, */*",
-            AuthenticatedUserToken: "authenticatedUserToken"
+            AuthenticatedUserToken: "authenticatedUserToken",
+            AuthCodeNonce: "authCodeNonce"
           },
           data: JSON.stringify(data)
         };
@@ -41,6 +42,7 @@ describe("LoggingSanitized unit tests", () => {
 
         LoggingSanitizer.stripErrorSensitiveProperties(errorObject);
         expect(errorObject["config"]["headers"]["AuthenticatedUserToken"]).toEqual(Constants.hiddenContentPlaceholder);
+        expect(errorObject["config"]["headers"]["AuthCodeNonce"]).toEqual(Constants.hiddenContentPlaceholder);
         expect(JSON.parse(errorObject["config"]["data"])["preChatResponse"]["Type"]).toEqual(data["preChatResponse"]["Type"]);
         expect(JSON.parse(errorObject["config"]["data"])["preChatResponse"]["foo"]).toEqual(Constants.hiddenContentPlaceholder);
         expect(JSON.parse(errorObject["config"]["data"])["preChatResponse"]["bar"]).toEqual(Constants.hiddenContentPlaceholder);
@@ -49,6 +51,7 @@ describe("LoggingSanitized unit tests", () => {
         expect(JSON.parse(errorObject["config"]["data"])["longitude"]).toEqual(Constants.hiddenContentPlaceholder);
 
         expect(errorObject["response"]["config"]["headers"]["AuthenticatedUserToken"]).toEqual(Constants.hiddenContentPlaceholder);
+        expect(errorObject["response"]["config"]["headers"]["AuthCodeNonce"]).toEqual(Constants.hiddenContentPlaceholder);
         expect(JSON.parse(errorObject["response"]["config"]["data"])["preChatResponse"]["Type"]).toEqual(data["preChatResponse"]["Type"]);
         expect(JSON.parse(errorObject["response"]["config"]["data"])["preChatResponse"]["foo"]).toEqual(Constants.hiddenContentPlaceholder);
         expect(JSON.parse(errorObject["response"]["config"]["data"])["preChatResponse"]["bar"]).toEqual(Constants.hiddenContentPlaceholder);

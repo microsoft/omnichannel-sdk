@@ -38,6 +38,10 @@ export class LoggingSanitizer {
       if (Object.keys(headers).includes('AuthenticatedUserToken')) {
         headers['AuthenticatedUserToken'] = Constants.hiddenContentPlaceholder;
       }
+
+      if (Object.keys(headers).includes('AuthCodeNonce')) {
+        headers['AuthCodeNonce'] = Constants.hiddenContentPlaceholder;
+      }
     }
   }
 
