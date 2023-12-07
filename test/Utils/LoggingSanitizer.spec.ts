@@ -142,7 +142,36 @@ describe("LoggingSanitized unit tests", () => {
       expect(JSON.parse(errorObject["response"]["config"]["data"])["longitude"]).toEqual(Constants.hiddenContentPlaceholder);
       expect(JSON.parse(errorObject["response"]["config"]["data"])["longitude"]).toEqual(Constants.hiddenContentPlaceholder);
       done();
-  });
+    });
+
+    it("Test process error object when payload is undefined", (done) => {
+      const configObject = {
+        method: "get",
+        headers: {
+          Accept: "application/json, text/plain, */*",
+          AuthenticatedUserToken: "authenticatedUserToken",
+          AuthCodeNonce: "authCodeNonce"
+        },
+      };
+
+      const errorObject = {
+          message: "Request failed with status code 401",
+          name: "Error",
+          config: configObject,
+          response: {
+            config: configObject
+          },
+          isAxiosError: true
+      }
+
+      LoggingSanitizer.stripErrorSensitiveProperties(errorObject);
+      expect(errorObject["config"]["headers"]["AuthenticatedUserToken"]).toEqual(Constants.hiddenContentPlaceholder);
+      expect(errorObject["config"]["headers"]["AuthCodeNonce"]).toEqual(Constants.hiddenContentPlaceholder);
+
+      expect(errorObject["response"]["config"]["headers"]["AuthenticatedUserToken"]).toEqual(Constants.hiddenContentPlaceholder);
+      expect(errorObject["response"]["config"]["headers"]["AuthCodeNonce"]).toEqual(Constants.hiddenContentPlaceholder);
+      done();
+    });
   });
 
   describe("Test removal of custom context data values", () => {
