@@ -2,6 +2,8 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+
+## [0.4.2] - 2023-12-06
 ### Added
 - Add `GetChatConfigFailed` telemetry event
 
@@ -9,7 +11,6 @@ All notable changes to this project will be documented in this file.
 - Removal of `recursive call` in `LoggingSanitizer` as preventive measure for `stack overflow`
 
 ## [0.4.1] - 2023-11-10
-
 ### Added
 - including changes to handle new library versions.
 
