@@ -91,6 +91,58 @@ describe("LoggingSanitized unit tests", () => {
         expect(errorObject).toEqual(null);
         done();
     });
+
+    it("Test process error object when headers is undefined", (done) => {
+      const data = {
+        preChatResponse: {
+          Type: "InputSubmit",
+          foo: "foo",
+          bar: "bar",
+        },
+        customContextData: {
+          contextKey: {
+            value: "value",
+            isDisplayable: true
+          },
+        },
+        longitude: "",
+        latitude: ""
+      };
+
+      const configObject = {
+        method: "get",
+        data: JSON.stringify(data)
+      };
+
+      const errorObject = {
+          message: "Request failed with status code 401",
+          name: "Error",
+          config: configObject,
+          response: {
+            config: configObject
+          },
+          isAxiosError: true
+      }
+
+      LoggingSanitizer.stripErrorSensitiveProperties(errorObject);
+
+      expect(errorObject["config"]["headers"]).toBeUndefined();
+      expect(JSON.parse(errorObject["config"]["data"])["preChatResponse"]["Type"]).toEqual(data["preChatResponse"]["Type"]);
+      expect(JSON.parse(errorObject["config"]["data"])["preChatResponse"]["foo"]).toEqual(Constants.hiddenContentPlaceholder);
+      expect(JSON.parse(errorObject["config"]["data"])["preChatResponse"]["bar"]).toEqual(Constants.hiddenContentPlaceholder);
+      expect(JSON.parse(errorObject["config"]["data"])["customContextData"]["contextKey"]["value"]).toEqual(Constants.hiddenContentPlaceholder);
+      expect(JSON.parse(errorObject["config"]["data"])["longitude"]).toEqual(Constants.hiddenContentPlaceholder);
+      expect(JSON.parse(errorObject["config"]["data"])["longitude"]).toEqual(Constants.hiddenContentPlaceholder);
+
+      expect(errorObject["response"]["config"]["headers"]).toBeUndefined();
+      expect(JSON.parse(errorObject["response"]["config"]["data"])["preChatResponse"]["Type"]).toEqual(data["preChatResponse"]["Type"]);
+      expect(JSON.parse(errorObject["response"]["config"]["data"])["preChatResponse"]["foo"]).toEqual(Constants.hiddenContentPlaceholder);
+      expect(JSON.parse(errorObject["response"]["config"]["data"])["preChatResponse"]["bar"]).toEqual(Constants.hiddenContentPlaceholder);
+      expect(JSON.parse(errorObject["response"]["config"]["data"])["customContextData"]["contextKey"]["value"]).toEqual(Constants.hiddenContentPlaceholder);
+      expect(JSON.parse(errorObject["response"]["config"]["data"])["longitude"]).toEqual(Constants.hiddenContentPlaceholder);
+      expect(JSON.parse(errorObject["response"]["config"]["data"])["longitude"]).toEqual(Constants.hiddenContentPlaceholder);
+      done();
+  });
   });
 
   describe("Test removal of custom context data values", () => {
