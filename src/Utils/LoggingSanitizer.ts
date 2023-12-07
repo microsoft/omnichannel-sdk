@@ -88,7 +88,7 @@ export class LoggingSanitizer {
   }
 
   public static stripErrorSensitiveProperties(errorObject: any): void { // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
-    if(errorObject && typeof errorObject === 'object' && Object.keys(errorObject)?.length > 0) {
+    if (errorObject && typeof errorObject === 'object' && Object.keys(errorObject)?.length > 0) {
       this.stripAxiosErrorSensitiveProperties(errorObject);
     }
   }
