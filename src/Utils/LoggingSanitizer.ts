@@ -41,10 +41,44 @@ export class LoggingSanitizer {
     }
   }
 
+  public static stripRequestPayloadData(configObject: any): void {  // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+    if (configObject?.data) {
+      let data;
+      if (typeof configObject.data === 'string') { // eslint-disable-line security/detect-object-injection
+        try {
+          data = JSON.parse(configObject.data); // eslint-disable-line security/detect-object-injection
+        } catch {
+          data = undefined;
+        }
+      }
+
+      if (data) {
+        if (Object.keys(data).includes('preChatResponse')) {
+          LoggingSanitizer.stripPreChatResponse(data.preChatResponse);
+        }
+
+        if (Object.keys(data).includes('customContextData')) {
+          LoggingSanitizer.stripCustomContextDataValues(data.customContextData);
+        }
+
+        LoggingSanitizer.stripGeolocation(data);
+        configObject.data = JSON.stringify(data); // eslint-disable-line security/detect-object-injection
+      }
+    }
+  }
+
   public static stripAxiosErrorSensitiveProperties(errorObject: any): void { // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
     if (errorObject.isAxiosError) {
       if (errorObject?.config?.headers) {
         LoggingSanitizer.stripAuthenticationUserToken(errorObject?.config?.headers);
+      }
+
+      if (errorObject?.config?.data) {
+        this.stripRequestPayloadData(errorObject?.config);
+      }
+
+      if (errorObject?.response?.config?.data) {
+        this.stripRequestPayloadData(errorObject?.response?.config);
       }
 
       if (errorObject?.response?.config?.headers) {
@@ -55,41 +89,7 @@ export class LoggingSanitizer {
 
   public static stripErrorSensitiveProperties(errorObject: any): void { // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
     if(errorObject && typeof errorObject === 'object' && Object.keys(errorObject)?.length > 0) {
-      Object.keys(errorObject)?.forEach((key) => {
-          if (Constants.sensitiveProperties.indexOf(key) !== -1) {
-            errorObject[`${key}`] = Constants.hiddenContentPlaceholder;
-          }
-
-          if (key === 'data') {
-            let data;
-            if (typeof errorObject[key] === 'string') { // eslint-disable-line security/detect-object-injection
-              try {
-                data = JSON.parse(errorObject[key]); // eslint-disable-line security/detect-object-injection
-              } catch {
-                data = undefined;
-              }
-            }
-
-            if (data) {
-              if (Object.keys(data).includes('preChatResponse')) {
-                LoggingSanitizer.stripPreChatResponse(data.preChatResponse);
-              }
-
-              if (Object.keys(data).includes('customContextData')) {
-                LoggingSanitizer.stripCustomContextDataValues(data.customContextData);
-              }
-
-              LoggingSanitizer.stripGeolocation(data);
-              errorObject[key] = JSON.stringify(data); // eslint-disable-line security/detect-object-injection
-            }
-          }
-
-          if (errorObject[`${key}`] !== null && typeof errorObject[`${key}`] === 'object') {
-            // check sensitive properties in nested error object
-            this.stripErrorSensitiveProperties(errorObject[`${key}`]);
-            return;
-          }
-      });
+      this.stripAxiosErrorSensitiveProperties(errorObject);
     }
   }
 }
