@@ -72,7 +72,8 @@ export default class SDK implements ISDK {
     getChatTokenRetryOn429: false,
     maxRequestRetriesOnFailure: 3,
     defaultRequestTimeout: undefined,
-    requestTimeoutConfig: SDK.defaultRequestTimeoutConfig
+    requestTimeoutConfig: SDK.defaultRequestTimeoutConfig,
+    useUnauthReconnectIdSigQueryParam: false
   };
 
   liveChatVersion: number;
@@ -193,11 +194,22 @@ export default class SDK implements ISDK {
       headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
     }
 
-    // Append reconnect id on the endpoint if vailable
-    if (reconnectId) {
-      requestPath += `/${reconnectId}`;
+    if (!this.configuration.useUnauthReconnectIdSigQueryParam) {
+      // Append reconnect id on the endpoint if vailable
+      if (reconnectId) {
+        requestPath += `/${reconnectId}`;
+      }
     }
-    requestPath += `?channelId=${this.omnichannelConfiguration.channelId}`;
+
+    let params: any = {
+      channelId: this.omnichannelConfiguration.channelId
+    };
+
+    if (this.configuration.useUnauthReconnectIdSigQueryParam) {
+      if (reconnectId) {
+        params.sig = reconnectId;
+      }
+    }
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
@@ -205,6 +217,7 @@ export default class SDK implements ISDK {
       headers,
       method,
       url,
+      params,
       timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.getLWIDetails
     };
 
@@ -257,17 +270,25 @@ export default class SDK implements ISDK {
 
     let requestPath = `/${endpoint}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
 
-    if (reconnectId) {
-      requestPath += `/${reconnectId}`;
+    if (!this.configuration.useUnauthReconnectIdSigQueryParam) {
+      if (reconnectId) {
+        requestPath += `/${reconnectId}`;
+      }
     }
 
-    let queryParams = `channelId=${this.omnichannelConfiguration.channelId}`;
+    let params: any = {
+      channelId: this.omnichannelConfiguration.channelId
+    }
 
     if (refreshToken) {
-      queryParams += `&refreshToken=true`;
+      params.refreshToken = 'true'
     }
 
-    requestPath += `?${queryParams}`;
+    if (this.configuration.useUnauthReconnectIdSigQueryParam) {
+      if (reconnectId) {
+        params.sig = reconnectId;
+      }
+    }
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
@@ -275,6 +296,7 @@ export default class SDK implements ISDK {
       headers,
       method,
       url,
+      params,
       timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.getChatToken
     };
 
@@ -561,17 +583,28 @@ export default class SDK implements ISDK {
       headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
     }
 
-    if (reconnectId) {
-      requestPath += `/${reconnectId}`;
+    if (!this.configuration.useUnauthReconnectIdSigQueryParam) {
+      if (reconnectId) {
+        requestPath += `/${reconnectId}`;
+      }
     }
 
-    const queryParams = `channelId=${this.omnichannelConfiguration.channelId}`;
-    requestPath += `?${queryParams}`;
+    let params: any = {
+      channelId: this.omnichannelConfiguration.channelId
+    }
+
+    if (this.configuration.useUnauthReconnectIdSigQueryParam) {
+      if (reconnectId) {
+        params.sig = reconnectId
+      }
+    }
+
     const data: InitContext = initContext || {};
 
     if (getContext && !window.document) {
       return Promise.reject(new Error(`getContext is only supported on web browsers`));
     }
+
     if (getContext) {
       data.browser = BrowserInfo.getBrowserName();
       data.device = DeviceInfo.getDeviceType();
@@ -596,6 +629,7 @@ export default class SDK implements ISDK {
       headers,
       method,
       url,
+      params,
       timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.sessionInit
     };
 
