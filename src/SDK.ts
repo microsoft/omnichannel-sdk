@@ -201,7 +201,7 @@ export default class SDK implements ISDK {
       }
     }
 
-    let params: any = {
+    const params: any = {
       channelId: this.omnichannelConfiguration.channelId
     };
 
@@ -276,7 +276,7 @@ export default class SDK implements ISDK {
       }
     }
 
-    let params: any = {
+    const params: any = {
       channelId: this.omnichannelConfiguration.channelId
     }
 
@@ -589,7 +589,7 @@ export default class SDK implements ISDK {
       }
     }
 
-    let params: any = {
+    const params: any = {
       channelId: this.omnichannelConfiguration.channelId
     }
 
