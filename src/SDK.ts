@@ -44,6 +44,7 @@ import { RequestTimeoutConfig } from "./Common/RequestTimeoutConfig";
 import throwClientHTTPTimeoutError from "./Utils/throwClientHTTPError";
 import sessionInitRetryHandler from "./Utils/SessionInitRetryHandler";
 import isExpectedAxiosError from "./Utils/isExpectedAxiosError";
+import OmnichannelQueryParameter from "./Interfaces/OmnichannelQueryParameter";
 
 export default class SDK implements ISDK {
   private static defaultRequestTimeoutConfig: RequestTimeoutConfig = {
@@ -201,7 +202,7 @@ export default class SDK implements ISDK {
       }
     }
 
-    const params: any = {
+    const params: OmnichannelQueryParameter = {
       channelId: this.omnichannelConfiguration.channelId
     };
 
@@ -276,7 +277,7 @@ export default class SDK implements ISDK {
       }
     }
 
-    const params: any = {
+    const params: OmnichannelQueryParameter = {
       channelId: this.omnichannelConfiguration.channelId
     }
 
@@ -589,7 +590,7 @@ export default class SDK implements ISDK {
       }
     }
 
-    const params: any = {
+    const params: OmnichannelQueryParameter = {
       channelId: this.omnichannelConfiguration.channelId
     }
 
