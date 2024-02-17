@@ -31,4 +31,6 @@ export default interface ISDKConfiguration {
    * Nonce for Auth V2 requests
    */
   authCodeNonce: string;
+
+  useUnauthReconnectIdSigQueryParam: boolean;
 }
