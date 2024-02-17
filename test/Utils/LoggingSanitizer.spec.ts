@@ -114,7 +114,7 @@ describe("LoggingSanitized unit tests", () => {
         data: JSON.stringify(data)
       };
 
-      const errorObject = {
+      const errorObject: any = {
           message: "Request failed with status code 401",
           name: "Error",
           config: configObject,

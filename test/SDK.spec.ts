@@ -205,7 +205,7 @@ describe("SDK unit tests", () => {
             try {
                 const result = await sdk.getChatToken(requestId, {}, -1);
                 throw new Error("Should throw an error");
-            } catch (error) {
+            } catch (error: any) {
                 expect(error.message).toEqual("Invalid currentRetryCount");
                 expect(ocsdkLogger.log).toHaveBeenCalled();
             }
@@ -695,7 +695,7 @@ describe("SDK unit tests", () => {
             spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; }});
             try {
                 await sdk.getChatConfig("");
-            } catch (error) {
+            } catch (error: any) {
                 expect(error.code).toEqual("ECONNABORTED ");
                 expect(error.message).toContain("timeout");
             }
@@ -705,7 +705,7 @@ describe("SDK unit tests", () => {
             spyOn<any>(axios, "create").and.returnValue(axiosInstMock);
             try {
                 await sdk.getChatToken(requestId, {}, 0);
-            } catch (error) {
+            } catch (error: any) {
                 expect(error.message).toEqual(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
             }
         });
@@ -714,7 +714,7 @@ describe("SDK unit tests", () => {
             spyOn<any>(axios, "create").and.returnValue(axiosInstMock);
             try {
                 await sdk.getReconnectableChats({ authenticatedUserToken : "Token"} as IReconnectableChatsParams);
-            } catch (error) {
+            } catch (error: any) {
                 expect(error.message).toEqual(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
             }
         });
@@ -723,7 +723,7 @@ describe("SDK unit tests", () => {
             spyOn<any>(axios, "create").and.returnValue(axiosInstMock);
             try {
                 await sdk.getReconnectAvailability("reconnectId");
-            } catch (error) {
+            } catch (error: any) {
                 expect(error.message).toEqual(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
             }
         });
@@ -732,7 +732,7 @@ describe("SDK unit tests", () => {
             spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; }});
             try {
                 sdk.sessionInit(requestId, defaultOpt as ISessionInitOptionalParams);
-            } catch (error) {
+            } catch (error: any) {
                 expect(error.message).toEqual(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
             }
         });
@@ -741,7 +741,7 @@ describe("SDK unit tests", () => {
             spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; }});
             try {
                 sdk.getAgentAvailability(requestId, defaultOpt as ISessionInitOptionalParams);
-            } catch (error) {
+            } catch (error: any) {
                 expect(error.message).toEqual(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
             }
         });
@@ -750,7 +750,7 @@ describe("SDK unit tests", () => {
             spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; }});
             try {
                 sdk.sessionClose(requestId, defaultOpt as ISessionCloseOptionalParams);
-            } catch (error) {
+            } catch (error: any) {
                 expect(error.code).toEqual("ECONNABORTED ");
                 expect(error.message).toContain("timeout");
             }
@@ -760,7 +760,7 @@ describe("SDK unit tests", () => {
             spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; }});
             try {
                 sdk.submitPostChatResponse(requestId, defaultOpt as ISubmitPostChatResponseOptionalParams);
-            } catch (error) {
+            } catch (error: any) {
                 expect(error.message).toEqual(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
             }
         });
@@ -769,7 +769,7 @@ describe("SDK unit tests", () => {
             spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; }});
             try {
                 sdk.getSurveyInviteLink(requestId, defaultOpt as IGetSurveyInviteLinkOptionalParams);
-            } catch (error) {
+            } catch (error: any) {
                 expect(error.message).toEqual(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
             }
         });
@@ -778,7 +778,7 @@ describe("SDK unit tests", () => {
             spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; }});
             try {
                 sdk.getChatTranscripts(requestId, "coolId", "coolId", defaultOpt as IGetChatTranscriptsOptionalParams);
-            } catch (error) {
+            } catch (error: any) {
                 expect(error.message).toEqual(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
             }
         });
@@ -787,7 +787,7 @@ describe("SDK unit tests", () => {
             spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; }});
             try {
                 sdk.makeSecondaryChannelEventRequest(requestId, requestBody, defaultOpt as ISecondaryChannelEventOptionalParams);
-            } catch (error) {
+            } catch (error: any) {
                 expect(error.message).toEqual(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
             }
         });
@@ -796,7 +796,7 @@ describe("SDK unit tests", () => {
             spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; }});
             try {
                 sdk.validateAuthChatRecord(requestId, defaultOpt as IValidateAuthChatRecordOptionalParams);
-            } catch (error) {
+            } catch (error: any) {
                 expect(error.message).toEqual(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
             }
         });
