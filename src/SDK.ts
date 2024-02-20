@@ -78,6 +78,7 @@ export default class SDK implements ISDK {
   };
 
   liveChatVersion: number;
+  sessionId?: string;
 
   public constructor(private omnichannelConfiguration: IOmnichannelConfiguration, private configuration: ISDKConfiguration = SDK.defaultConfiguration, private logger?: OCSDKLogger) {
     // Sets to default configuration if passed configuration is empty or is not an object
@@ -312,6 +313,12 @@ export default class SDK implements ISDK {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         const { data, headers } = response;
         this.setAuthCodeNonce(headers);
+
+        if (headers) {
+          if (headers[OmnichannelHTTPHeaders.ocSessionId]) {
+            this.sessionId = headers[OmnichannelHTTPHeaders.ocSessionId];
+          }
+        }
 
         // Resolves only if it contains chat token response which only happens on status 200
         if (data) {
