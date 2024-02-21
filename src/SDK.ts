@@ -315,8 +315,8 @@ export default class SDK implements ISDK {
         this.setAuthCodeNonce(headers);
 
         if (headers) {
-          if (headers[OmnichannelHTTPHeaders.ocSessionId]) {
-            this.sessionId = headers[OmnichannelHTTPHeaders.ocSessionId];
+          if (headers[OmnichannelHTTPHeaders.ocSessionId.toLowerCase()]) {
+            this.sessionId = headers[OmnichannelHTTPHeaders.ocSessionId.toLowerCase()];
           }
         }
 
@@ -684,6 +684,10 @@ export default class SDK implements ISDK {
       requestPath = `/${OmnichannelEndpoints.LiveChatAuthSessionClosePath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
       headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
       headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
+    }
+
+    if (this.sessionId) {
+      headers[OmnichannelHTTPHeaders.ocSessionId] = this.sessionId;
     }
 
     if (isReconnectChat) {

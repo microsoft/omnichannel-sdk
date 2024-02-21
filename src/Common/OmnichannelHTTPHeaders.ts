@@ -5,5 +5,5 @@ export default class OmnichannelHTTPHeaders {
   public static readonly widgetAppId = `widgetAppId`;
   public static readonly requestId = `Request-Id`;
   public static readonly authCodeNonce = `AuthCodeNonce`;
-  public static readonly ocSessionId = `oc-sessionid`;
+  public static readonly ocSessionId = `Oc-Sessionid`;
 }
