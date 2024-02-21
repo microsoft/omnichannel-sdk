@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 ### Added
 - Add `useUnauthReconnectIdSigQueryParam` configuration to use `sig` as query parameter to pass `reconnectId` for `Unauthenticated Chat Reconnect` APIs
+- Add `Oc-Sessionid` as part of request headers if exists
 
 ## [0.4.2] - 2023-12-06
 ### Added
