@@ -196,6 +196,10 @@ export default class SDK implements ISDK {
       headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
     }
 
+    if (this.sessionId) {
+      headers[OmnichannelHTTPHeaders.ocSessionId] = this.sessionId;
+    }
+
     if (!this.configuration.useUnauthReconnectIdSigQueryParam) {
       // Append reconnect id on the endpoint if vailable
       if (reconnectId) {
@@ -381,6 +385,10 @@ export default class SDK implements ISDK {
     headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
     headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
 
+    if (this.sessionId) {
+      headers[OmnichannelHTTPHeaders.ocSessionId] = this.sessionId;
+    }
+
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
     const options: AxiosRequestConfig = {
@@ -433,6 +441,11 @@ export default class SDK implements ISDK {
 
     const requestPath = `/${OmnichannelEndpoints.LiveChatReconnectAvailabilityPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${reconnectId}`;
     const headers: StringMap = Constants.defaultHeaders;
+
+    if (this.sessionId) {
+      headers[OmnichannelHTTPHeaders.ocSessionId] = this.sessionId;
+    }
+
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
     const options: AxiosRequestConfig = {
@@ -491,6 +504,10 @@ export default class SDK implements ISDK {
     if (authenticatedUserToken) {
       headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
       headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
+    }
+
+    if (this.sessionId) {
+      headers[OmnichannelHTTPHeaders.ocSessionId] = this.sessionId;
     }
 
     const data: InitContext = initContext || {};
@@ -589,6 +606,10 @@ export default class SDK implements ISDK {
       requestPath = `/${OmnichannelEndpoints.LiveChatAuthSessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
       headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
       headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
+    }
+
+    if (this.sessionId) {
+      headers[OmnichannelHTTPHeaders.ocSessionId] = this.sessionId;
     }
 
     if (!this.configuration.useUnauthReconnectIdSigQueryParam) {
@@ -749,6 +770,10 @@ export default class SDK implements ISDK {
       headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
     }
 
+    if (this.sessionId) {
+      headers[OmnichannelHTTPHeaders.ocSessionId] = this.sessionId;
+    }
+
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
     const options: AxiosRequestConfig = {
@@ -879,6 +904,10 @@ export default class SDK implements ISDK {
       headers[OmnichannelHTTPHeaders.widgetAppId] = this.omnichannelConfiguration.widgetId;
     }
 
+    if (this.sessionId) {
+      headers[OmnichannelHTTPHeaders.ocSessionId] = this.sessionId;
+    }
+
     if (requestId) {
       headers[OmnichannelHTTPHeaders.requestId] = requestId;
     }
@@ -951,6 +980,10 @@ export default class SDK implements ISDK {
       requestPath = `/${OmnichannelEndpoints.LiveChatAuthGetChatTranscriptPath}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
     }
 
+    if (this.sessionId) {
+      headers[OmnichannelHTTPHeaders.ocSessionId] = this.sessionId;
+    }
+
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
     const options: AxiosRequestConfig = {
@@ -1010,6 +1043,10 @@ export default class SDK implements ISDK {
       requestPath = `/${OmnichannelEndpoints.LiveChatAuthTranscriptEmailRequestPath}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
     }
 
+    if (this.sessionId) {
+      headers[OmnichannelHTTPHeaders.ocSessionId] = this.sessionId;
+    }
+
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "POST";
     const options: AxiosRequestConfig = {
@@ -1060,6 +1097,10 @@ export default class SDK implements ISDK {
     const headers: StringMap = Constants.defaultHeaders;
     headers[OmnichannelHTTPHeaders.organizationId] = this.omnichannelConfiguration.orgId;
     headers[OmnichannelHTTPHeaders.requestId] = requestId;
+
+    if (this.sessionId) {
+      headers[OmnichannelHTTPHeaders.ocSessionId] = this.sessionId;
+    }
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
@@ -1115,6 +1156,10 @@ export default class SDK implements ISDK {
       requestPath = `/${OmnichannelEndpoints.LiveChatAuthSecondaryChannelEventPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
     }
 
+    if (this.sessionId) {
+      headers[OmnichannelHTTPHeaders.ocSessionId] = this.sessionId;
+    }
+
     requestPath += "?channelId=" + Constants.defaultChannelId;
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
@@ -1166,6 +1211,10 @@ export default class SDK implements ISDK {
     headers[OmnichannelHTTPHeaders.organizationId] = this.omnichannelConfiguration.orgId;
     if (customerDisplayName) {
       headers[Constants.customerDisplayName] = customerDisplayName;
+    }
+
+    if (this.sessionId) {
+      headers[OmnichannelHTTPHeaders.ocSessionId] = this.sessionId;
     }
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
