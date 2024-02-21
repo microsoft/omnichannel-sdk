@@ -196,9 +196,7 @@ export default class SDK implements ISDK {
       headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
     }
 
-    if (this.sessionId) {
-      headers[OmnichannelHTTPHeaders.ocSessionId] = this.sessionId;
-    }
+    this.setSessionIdHeader(this.sessionId, headers);
 
     if (!this.configuration.useUnauthReconnectIdSigQueryParam) {
       // Append reconnect id on the endpoint if vailable
@@ -385,9 +383,7 @@ export default class SDK implements ISDK {
     headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
     headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
 
-    if (this.sessionId) {
-      headers[OmnichannelHTTPHeaders.ocSessionId] = this.sessionId;
-    }
+    this.setSessionIdHeader(this.sessionId, headers);
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
@@ -442,9 +438,7 @@ export default class SDK implements ISDK {
     const requestPath = `/${OmnichannelEndpoints.LiveChatReconnectAvailabilityPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${reconnectId}`;
     const headers: StringMap = Constants.defaultHeaders;
 
-    if (this.sessionId) {
-      headers[OmnichannelHTTPHeaders.ocSessionId] = this.sessionId;
-    }
+    this.setSessionIdHeader(this.sessionId, headers);
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
@@ -506,9 +500,7 @@ export default class SDK implements ISDK {
       headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
     }
 
-    if (this.sessionId) {
-      headers[OmnichannelHTTPHeaders.ocSessionId] = this.sessionId;
-    }
+    this.setSessionIdHeader(this.sessionId, headers);
 
     const data: InitContext = initContext || {};
 
@@ -608,9 +600,7 @@ export default class SDK implements ISDK {
       headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
     }
 
-    if (this.sessionId) {
-      headers[OmnichannelHTTPHeaders.ocSessionId] = this.sessionId;
-    }
+    this.setSessionIdHeader(this.sessionId, headers);
 
     if (!this.configuration.useUnauthReconnectIdSigQueryParam) {
       if (reconnectId) {
@@ -707,9 +697,7 @@ export default class SDK implements ISDK {
       headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
     }
 
-    if (this.sessionId) {
-      headers[OmnichannelHTTPHeaders.ocSessionId] = this.sessionId;
-    }
+    this.setSessionIdHeader(this.sessionId, headers);
 
     if (isReconnectChat) {
       requestPath += `&isReconnectChat=true`;
@@ -770,9 +758,7 @@ export default class SDK implements ISDK {
       headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
     }
 
-    if (this.sessionId) {
-      headers[OmnichannelHTTPHeaders.ocSessionId] = this.sessionId;
-    }
+    this.setSessionIdHeader(this.sessionId, headers);
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
@@ -904,9 +890,7 @@ export default class SDK implements ISDK {
       headers[OmnichannelHTTPHeaders.widgetAppId] = this.omnichannelConfiguration.widgetId;
     }
 
-    if (this.sessionId) {
-      headers[OmnichannelHTTPHeaders.ocSessionId] = this.sessionId;
-    }
+    this.setSessionIdHeader(this.sessionId, headers);
 
     if (requestId) {
       headers[OmnichannelHTTPHeaders.requestId] = requestId;
@@ -980,9 +964,7 @@ export default class SDK implements ISDK {
       requestPath = `/${OmnichannelEndpoints.LiveChatAuthGetChatTranscriptPath}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
     }
 
-    if (this.sessionId) {
-      headers[OmnichannelHTTPHeaders.ocSessionId] = this.sessionId;
-    }
+    this.setSessionIdHeader(this.sessionId, headers);
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
@@ -1043,9 +1025,7 @@ export default class SDK implements ISDK {
       requestPath = `/${OmnichannelEndpoints.LiveChatAuthTranscriptEmailRequestPath}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
     }
 
-    if (this.sessionId) {
-      headers[OmnichannelHTTPHeaders.ocSessionId] = this.sessionId;
-    }
+    this.setSessionIdHeader(this.sessionId, headers);
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "POST";
@@ -1098,9 +1078,7 @@ export default class SDK implements ISDK {
     headers[OmnichannelHTTPHeaders.organizationId] = this.omnichannelConfiguration.orgId;
     headers[OmnichannelHTTPHeaders.requestId] = requestId;
 
-    if (this.sessionId) {
-      headers[OmnichannelHTTPHeaders.ocSessionId] = this.sessionId;
-    }
+    this.setSessionIdHeader(this.sessionId, headers);
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
@@ -1156,9 +1134,7 @@ export default class SDK implements ISDK {
       requestPath = `/${OmnichannelEndpoints.LiveChatAuthSecondaryChannelEventPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
     }
 
-    if (this.sessionId) {
-      headers[OmnichannelHTTPHeaders.ocSessionId] = this.sessionId;
-    }
+    this.setSessionIdHeader(this.sessionId, headers);
 
     requestPath += "?channelId=" + Constants.defaultChannelId;
 
@@ -1213,9 +1189,7 @@ export default class SDK implements ISDK {
       headers[Constants.customerDisplayName] = customerDisplayName;
     }
 
-    if (this.sessionId) {
-      headers[OmnichannelHTTPHeaders.ocSessionId] = this.sessionId;
-    }
+    this.setSessionIdHeader(this.sessionId, headers);
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "POST";
@@ -1299,6 +1273,13 @@ export default class SDK implements ISDK {
   private setAuthCodeNonce = (headers: any) => {
     if (headers?.authcodenonce) {
       this.configuration.authCodeNonce = headers?.authcodenonce;
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private setSessionIdHeader = (sessionId: string | undefined, headers: any) => {
+    if (sessionId) {
+      headers[OmnichannelHTTPHeaders.ocSessionId] = sessionId;
     }
   }
 }
