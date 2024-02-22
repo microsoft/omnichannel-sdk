@@ -83,7 +83,7 @@ describe("SDK unit tests", () => {
 
     describe("Test constructor", () => {
 
-        it("Ctor with valid parameters", () => {
+        it("Constructor with valid parameters", () => {
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
             expect(sdk).not.toBeUndefined();
         });
