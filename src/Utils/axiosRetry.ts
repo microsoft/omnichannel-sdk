@@ -63,7 +63,7 @@ const axiosRetry = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryOptions)
         }
       }
 
-      return new Promise((resolve) => sleep(axiosRetryOptions.waitTimeInMsBetweenRetries as number).then(() => resolve(axios(config))));
+      return new Promise((resolve) => sleep(axiosRetryOptions.waitTimeInMsBetweenRetries).then(() => resolve(axios(config))));
     }
     return Promise.reject(error);
   };
