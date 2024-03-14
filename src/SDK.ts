@@ -80,6 +80,7 @@ export default class SDK implements ISDK {
   };
 
   liveChatVersion: number;
+  sessionId?: string;
 
   public constructor(private omnichannelConfiguration: IOmnichannelConfiguration, private configuration: ISDKConfiguration = SDK.defaultConfiguration, private logger?: OCSDKLogger) {
     // Sets to default configuration if passed configuration is empty or is not an object
@@ -202,6 +203,8 @@ export default class SDK implements ISDK {
       headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
       headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
     }
+
+    this.setSessionIdHeader(this.sessionId, headers);
 
     if (!this.configuration.useUnauthReconnectIdSigQueryParam) {
       // Append reconnect id on the endpoint if vailable
@@ -327,6 +330,12 @@ export default class SDK implements ISDK {
         const { data, headers } = response;
         this.setAuthCodeNonce(headers);
 
+        if (headers) {
+          if (headers[OmnichannelHTTPHeaders.ocSessionId.toLowerCase()]) {
+            this.sessionId = headers[OmnichannelHTTPHeaders.ocSessionId.toLowerCase()];
+          }
+        }
+
         // Resolves only if it contains chat token response which only happens on status 200
         if (data) {
           data.requestId = requestId;
@@ -388,6 +397,8 @@ export default class SDK implements ISDK {
     headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
     headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
 
+    this.setSessionIdHeader(this.sessionId, headers);
+
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
     const options: AxiosRequestConfig = {
@@ -440,6 +451,9 @@ export default class SDK implements ISDK {
 
     const requestPath = `/${OmnichannelEndpoints.LiveChatReconnectAvailabilityPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${reconnectId}`;
     const headers: StringMap = Constants.defaultHeaders;
+
+    this.setSessionIdHeader(this.sessionId, headers);
+
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
     const options: AxiosRequestConfig = {
@@ -503,6 +517,8 @@ export default class SDK implements ISDK {
       headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
       headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
     }
+
+    this.setSessionIdHeader(this.sessionId, headers);
 
     const data: InitContext = initContext || {};
 
@@ -603,6 +619,8 @@ export default class SDK implements ISDK {
       headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
     }
 
+    this.setSessionIdHeader(this.sessionId, headers);
+
     if (!this.configuration.useUnauthReconnectIdSigQueryParam) {
       if (reconnectId) {
         requestPath += `/${reconnectId}`;
@@ -702,6 +720,8 @@ export default class SDK implements ISDK {
       headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
     }
 
+    this.setSessionIdHeader(this.sessionId, headers);
+
     if (isReconnectChat) {
       requestPath += `&isReconnectChat=true`;
     }
@@ -766,6 +786,8 @@ export default class SDK implements ISDK {
       headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
       headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
     }
+
+    this.setSessionIdHeader(this.sessionId, headers);
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
@@ -903,6 +925,8 @@ export default class SDK implements ISDK {
       headers[OmnichannelHTTPHeaders.widgetAppId] = this.omnichannelConfiguration.widgetId;
     }
 
+    this.setSessionIdHeader(this.sessionId, headers);
+
     if (requestId) {
       headers[OmnichannelHTTPHeaders.requestId] = requestId;
     }
@@ -980,6 +1004,8 @@ export default class SDK implements ISDK {
       requestPath = `/${OmnichannelEndpoints.LiveChatAuthGetChatTranscriptPath}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
     }
 
+    this.setSessionIdHeader(this.sessionId, headers);
+
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
     const options: AxiosRequestConfig = {
@@ -1044,6 +1070,8 @@ export default class SDK implements ISDK {
       requestPath = `/${OmnichannelEndpoints.LiveChatAuthTranscriptEmailRequestPath}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
     }
 
+    this.setSessionIdHeader(this.sessionId, headers);
+
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "POST";
     const options: AxiosRequestConfig = {
@@ -1099,6 +1127,8 @@ export default class SDK implements ISDK {
     headers[OmnichannelHTTPHeaders.organizationId] = this.omnichannelConfiguration.orgId;
     headers[OmnichannelHTTPHeaders.requestId] = requestId;
 
+    this.setSessionIdHeader(this.sessionId, headers);
+
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
     const options: AxiosRequestConfig = {
@@ -1153,6 +1183,8 @@ export default class SDK implements ISDK {
       requestPath = `/${OmnichannelEndpoints.LiveChatAuthSecondaryChannelEventPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
     }
 
+    this.setSessionIdHeader(this.sessionId, headers);
+
     requestPath += "?channelId=" + Constants.defaultChannelId;
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
@@ -1205,6 +1237,8 @@ export default class SDK implements ISDK {
     if (customerDisplayName) {
       headers[Constants.customerDisplayName] = customerDisplayName;
     }
+
+    this.setSessionIdHeader(this.sessionId, headers);
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "POST";
@@ -1288,6 +1322,13 @@ export default class SDK implements ISDK {
   private setAuthCodeNonce = (headers: any) => {
     if (headers?.authcodenonce) {
       this.configuration.authCodeNonce = headers?.authcodenonce;
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private setSessionIdHeader = (sessionId: string | undefined, headers: any) => {
+    if (sessionId) {
+      headers[OmnichannelHTTPHeaders.ocSessionId] = sessionId;
     }
   }
 }
