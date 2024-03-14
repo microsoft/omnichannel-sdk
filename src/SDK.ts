@@ -1170,7 +1170,12 @@ export default class SDK implements ISDK {
 
     let requestPath = `/${OmnichannelEndpoints.LiveChatSecondaryChannelEventPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
     const axiosInstance = axios.create();
-    axiosRetry(axiosInstance, { headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce], retries: this.configuration.maxRequestRetriesOnFailure });
+    
+    axiosRetry(axiosInstance, {
+      headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce],
+      retries: this.configuration.maxRequestRetriesOnFailure,
+      waitTimeInMsBetweenRetries: waitTimeBetweenRetriesConfigs.makeSecondaryChannelEventRequest
+    });
 
     const { authenticatedUserToken } = secondaryChannelEventOptionalParams;
 
