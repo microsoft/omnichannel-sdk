@@ -46,7 +46,7 @@ import isExpectedAxiosError from "./Utils/isExpectedAxiosError";
 import sessionInitRetryHandler from "./Utils/SessionInitRetryHandler";
 import throwClientHTTPTimeoutError from "./Utils/throwClientHTTPError";
 import { uuidv4 } from "./Utils/uuid";
-import { waitTimeBetweenRetriesConfigs } from "./Utils/defaultWaitTiimeConfig";
+import { waitTimeBetweenRetriesConfigs } from "./Utils/waitTimeBetweenRetriesConfigs";
 
 export default class SDK implements ISDK {
   private static defaultRequestTimeoutConfig: RequestTimeoutConfig = {
