@@ -135,6 +135,7 @@ export default class SDK implements ISDK {
     const method = "GET";
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const axiosInstance = axios.create();
+    
     axiosRetry(axiosInstance, { 
       retries: this.configuration.maxRequestRetriesOnFailure,
       waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.getChatConfig
@@ -190,6 +191,7 @@ export default class SDK implements ISDK {
     let requestPath = `/${OmnichannelEndpoints.LiveChatLiveWorkItemDetailsPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
     const axiosInstance = axios.create();
     this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETLWISTATUSSTARTED, "GETLWI : 1 : " + waitTimeBetweenRetriesConfigs.getLWIDetails, requestId);  
+    
     axiosRetry(axiosInstance, { headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce], 
       retries: this.configuration.maxRequestRetriesOnFailure,
       waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.getLWIDetails
@@ -341,9 +343,7 @@ export default class SDK implements ISDK {
         // Resolves only if it contains chat token response which only happens on status 200
         if (data) {
           data.requestId = requestId;
-
           this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATTOKENSUCCEEDED, "Get Chat Token succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
-
           resolve(data);
           return;
         }
@@ -848,13 +848,13 @@ export default class SDK implements ISDK {
 
     let requestPath = `/${OmnichannelEndpoints.LiveChatSubmitPostChatPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
     const axiosInstance = axios.create();
+
     axiosRetry(axiosInstance, { headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce], 
       retries: this.configuration.maxRequestRetriesOnFailure,
       waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.submitPostChatResponse
      });
 
     const { authenticatedUserToken } = submitPostChatResponseOptionalParams;
-
     const headers: StringMap = Constants.defaultHeaders;
 
     if (authenticatedUserToken) {
@@ -986,7 +986,6 @@ export default class SDK implements ISDK {
     });
 
     const { authenticatedUserToken, currentLiveChatVersion } = getChatTranscriptsOptionalParams;
-
     const headers: StringMap = Constants.defaultHeaders;
     headers[OmnichannelHTTPHeaders.organizationId] = this.omnichannelConfiguration.orgId;
     headers[OmnichannelHTTPHeaders.widgetAppId] = this.omnichannelConfiguration.widgetId;
@@ -1060,7 +1059,6 @@ export default class SDK implements ISDK {
     });
 
     const { authenticatedUserToken } = emailTranscriptOptionalParams;
-
     const headers: StringMap = Constants.defaultHeaders;
     headers[OmnichannelHTTPHeaders.organizationId] = this.omnichannelConfiguration.orgId;
     headers[OmnichannelHTTPHeaders.widgetAppId] = this.omnichannelConfiguration.widgetId;
@@ -1180,7 +1178,6 @@ export default class SDK implements ISDK {
     });
 
     const { authenticatedUserToken } = secondaryChannelEventOptionalParams;
-
     const headers: StringMap = Constants.defaultHeaders;
     headers[OmnichannelHTTPHeaders.organizationId] = this.omnichannelConfiguration.orgId;
 
