@@ -16,9 +16,9 @@ export default interface IAxiosRetryOptions {
   shouldRetry? (response? : any, axiosRetryOptions?: IAxiosRetryOptions) : boolean
   /**
    * Overwrite request headers on demand based on response headers of the same name
-   */s
+   */
   headerOverwrites?: string[];
 
-  // wait time in milliseconds to hold the next retry
+  // wait time in milliseconds between retries
   waitTimeInMsBetweenRetries: number | 1000;
 }
