@@ -1,35 +1,56 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-## [0.4.3] - 2024-02-28
+## [0.4.4] - 2024-03-18
+
 ### Added
+
+- Add configurable wait time between retries componenets, and set to 3 secnds for getLWI, and 1 second for all other requests
+
+## [0.4.3] - 2024-02-28
+
+### Added
+
 - Add `useUnauthReconnectIdSigQueryParam` configuration to use `sig` as query parameter to pass `reconnectId` for `Unauthenticated Chat Reconnect` APIs
 - Add `Oc-Sessionid` as part of request headers if exists
+- Add configurable wait time between retries componenets, and set to 3 secnds for getLWI, and 1 second for all other requests
+
 
 ## [0.4.2] - 2023-12-06
+
 ### Added
+
 - Add `GetChatConfigFailed` telemetry event
 
 ### Changed
+
 - Removal of `recursive call` in `LoggingSanitizer` as preventive measure for `stack overflow`
 
 ## [0.4.1] - 2023-11-10
+
 ### Added
+
 - including changes to handle new library versions.
 
 ### Security
+
 - Uptake [axios@1.6.1](https://www.npmjs.com/package/axios/v/1.6.1)
 - Uptake [ts-loader@8.4.0](https://www.npmjs.com/package/ts-loader/v/8.4.0)
 - Uptake [typescript@4.9.5](https://www.npmjs.com/package/typescript/v/4.9.5)
 
 ## [0.4.0] - 2023-07-05
+
 ### Added
+
 - `refreshToken` optional query parameter to `getchattoken` endpoint
 
 ## [0.3.4] - 2023-03-24
+
 ### Added
+
 - `livechatconnector/v3/getchattoken` endpoint
 - `livechatconnector/v3/auth/getchattoken` endpoint
 - Stop retry when the error is related to out of office hours.
@@ -37,39 +58,51 @@ All notable changes to this project will be documented in this file.
 - Increasing request timeout and add error handling for OAuth 2.0
 
 ## [0.3.3] - 2023-01-09
+
 ### Fix
+
 - Added `requestTimeoutConfig` and `defaultRequestTimeout` to set timeouts on endpoints.
 - Throw `ClientHTTPTimeoutError` exception in case of timeouts.
 - Update `InitContext` to include `isProactiveChat`.
 
 ## [0.3.2] - 2022-11-03
+
 ### Changed
+
 - Update methods to log `RequestPath`, `RequestMethod` and `ResponseStatusCode`
 
 ### Fix
+
 - Update `getChatToken`'s `error.response` to be optional
 
 ### Security
 
 ## [0.3.1] - 2022-07-06
+
 ### Added
+
 - Add `RequestPayload`, `RequestPath`, `RequestMethod` and `ResponseStatusCode` as log data
 - Strip `Geolocation` log data
 
 ### Fix
+
 - Stop `getchattoken` retry calls on `429`
 - Fix `axiosRetry` counter
 
 ### Changed
+
 - Rename `getQueueAvailability` to `getAgentAvailability`
 
 ## [0.3.0] - 2021-09-23
+
 ### Added
+
 - Remove sensitive properties from `Error` object
 - Return `date` field on `getChatConfig` response
 - Add `customerDisplayName` as optional parameter in `sendTypingIndicator`
 
 ### Security
+
 - Uptake [@babel/runtime@7.15.4](https://www.npmjs.com/package/@babel/runtime/v/7.15.4)
 - Uptake [@types/node@12.20.26](https://www.npmjs.com/package/@types/node/v/12.20.26)
 - Uptake [axios@0.21.4](https://www.npmjs.com/package/axios/v/0.21.4)
@@ -92,17 +125,22 @@ All notable changes to this project will be documented in this file.
 - Uptake [webpack-dev-server@3.11.2](https://www.npmjs.com/package/webpack-dev-server/v/3.11.2)
 
 ## [0.2.0] - 2021-05-05
+
 ### Added
+
 - `livechatconnector/v2/auth/getchattoken` endpoint
 - `inbound/typingindicator/livechat/sendtypingindicator` endpoint
 - `livechatconnector/v2/getchattranscripts` endpoint
 - `livechatconnector/v2/auth/getchattranscripts` endpoint
 
 ## [0.1.1] - 2021-02-16
+
 ### Added
+
 - `livechatconnector/v2/getchattoken` endpoint
 
 ### Security
+
 - Uptake [@babel/cli@7.12.1](https://www.npmjs.com/package/@babel/cli/v/7.12.1)
 - Uptake [karma@5.2.3](https://www.npmjs.com/package/karma/v/5.2.3)
 - Uptake [webpack-dev-server@3.11.0](https://www.npmjs.com/package/webpack-dev-server/v/3.11.0)
@@ -110,5 +148,7 @@ All notable changes to this project will be documented in this file.
 - Uptake [axios@0.21.1](https://www.npmjs.com/package/axios/v/0.21.1)
 
 ## [0.1.0] - 2020-09-21
+
 ### Added
+
 - Initial release of Omnichannel SDK v0.1.0
