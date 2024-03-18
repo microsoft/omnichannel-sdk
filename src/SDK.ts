@@ -190,7 +190,6 @@ export default class SDK implements ISDK {
     // construct a endpoint for anonymous chats to get LWI Details
     let requestPath = `/${OmnichannelEndpoints.LiveChatLiveWorkItemDetailsPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
     const axiosInstance = axios.create();
-    this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETLWISTATUSSTARTED, "GETLWI : 1 : " + waitTimeBetweenRetriesConfigs.getLWIDetails, requestId);  
     
     axiosRetry(axiosInstance, { headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce], 
       retries: this.configuration.maxRequestRetriesOnFailure,
