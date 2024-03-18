@@ -3,7 +3,11 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
-## Changes
+
+## [0.4.5] - 2024-03-18
+
+### Changed
+
 - Remove telemetry lane, which was duplicating events for GetLWI
 
 ## [0.4.4] - 2024-03-18
