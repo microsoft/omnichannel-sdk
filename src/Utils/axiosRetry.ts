@@ -1,4 +1,5 @@
-import { AxiosInstance, AxiosError } from "axios";
+import { AxiosError, AxiosInstance } from "axios";
+
 import Constants from "../Common/Constants";
 import IAxiosRetryOptions from "../Interfaces/IAxiosRetryOptions";
 import sleep from "./sleep";
@@ -10,7 +11,6 @@ import sleep from "./sleep";
  * @param axiosRetryOptions Options for axios retry.
  */
 const axiosRetry = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryOptions) => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
-  const retryInterval = 1000; // 1 second interval between retries
 
   // Default values
   if (axiosRetryOptions.retryOn429 === undefined || axiosRetryOptions.retryOn429 === null) {
@@ -27,7 +27,7 @@ const axiosRetry = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryOptions)
   // define default behaviour for 429 retries in case the handler was not included by the caller.
   if (!axiosRetryOptions.shouldRetry) {
     axiosRetryOptions.shouldRetry = (response) => {
-      if (response && response.status && response.status === Constants.tooManyRequestsStatusCode && axiosRetryOptions.retryOn429 === false) {
+      if (response?.status && response.status === Constants.tooManyRequestsStatusCode && axiosRetryOptions.retryOn429 === false) {
         return false;
       }
       return true;
@@ -63,7 +63,7 @@ const axiosRetry = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryOptions)
         }
       }
 
-      return new Promise((resolve) => sleep(retryInterval as number | 1000).then(() => resolve(axios(config))));
+      return new Promise((resolve) => sleep(axiosRetryOptions.waitTimeInMsBetweenRetries).then(() => resolve(axios(config))));
     }
     return Promise.reject(error);
   };

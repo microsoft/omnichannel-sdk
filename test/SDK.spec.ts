@@ -25,8 +25,8 @@ import { LogLevel } from "../src/Model/LogLevel";
 import OCSDKLogger from "../src/Common/OCSDKLogger";
 import { OSInfo } from "../src/Utils/OSInfo";
 import SDK from "../src/SDK";
-import axios from "axios";
 import { SDKError } from "../src/Common/Enums";
+import axios from "axios";
 
 describe("SDK unit tests", () => {
 
@@ -46,26 +46,7 @@ describe("SDK unit tests", () => {
         logClientSdkTelemetryEvent: (loglevel: LogLevel,
             logData: IOCSDKLogData): void => { }
     } as ILogger;
-
-    const telemetryEvent = "Test Event";
-    const description = "Test Description";
-    const customData = {
-        ElapsedTimeInMilliseconds: 200,
-        ExceptionDetails: {ErrorDetails: "test Error"},
-        Region: "Test Region",
-        RequestId: "Test RequestId",
-        TransactionId: "Test TransactionId"
-    };
-    const logEvent = {
-        Event: "Test Event",
-        ElapsedTimeInMilliseconds: 200,
-        ExceptionDetails: {ErrorDetails: "test Error"},
-        Region: "Test Region",
-        RequestId: "Test RequestId",
-        TransactionId: "Test TransactionId",
-        Description: "Test Description"
-    } as IOCSDKLogData;
-
+   
     beforeEach(() => {
         ochannelConfig = {
             channelId: "lcw",
@@ -144,7 +125,7 @@ describe("SDK unit tests", () => {
             spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; }});
             spyOn(ocsdkLogger, "log").and.callFake(() => { });
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
-            const config = sdk.getChatConfig("");
+            sdk.getChatConfig("");
             expect(uuidvSpy).toHaveBeenCalled();
             expect(axios.create).toHaveBeenCalled();
             expect(axiosRetry.default).toHaveBeenCalled();
@@ -155,7 +136,7 @@ describe("SDK unit tests", () => {
             spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; }});
             spyOn(ocsdkLogger, "log").and.callFake(() => { });
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
-            const config = sdk.getChatConfig("");
+            sdk.getChatConfig("");
             expect(uuidvSpy).toHaveBeenCalled();
             expect(axios.create).toHaveBeenCalled();
             expect(axiosRetry.default).toHaveBeenCalled();
@@ -163,7 +144,7 @@ describe("SDK unit tests", () => {
         });
 
         it("Test getChatConfig method to set LiveChatVersion", () => {
-            let configmock = {data: { requestId: "someId", LiveChatVersion: 2 }};
+            const configmock = {data: { requestId: "someId", LiveChatVersion: 2 }};
             spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return configmock;}});
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
             axiosInstMock = jasmine.createSpy("axiosInstance").and.returnValue(configmock);
@@ -178,7 +159,7 @@ describe("SDK unit tests", () => {
             spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; } });
             spyOn(ocsdkLogger, "log").and.callFake(() => { });
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
-            const config = sdk.getLWIDetails("");
+            sdk.getLWIDetails("");
             expect(uuidvSpy).toHaveBeenCalled();
             expect(axios.create).toHaveBeenCalled();
             expect(axiosRetry.default).toHaveBeenCalled();
@@ -189,7 +170,7 @@ describe("SDK unit tests", () => {
         spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; } });
         spyOn(ocsdkLogger, "log").and.callFake(() => { });
         const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
-        const config = sdk.getLWIDetails("");
+        sdk.getLWIDetails("");
         expect(uuidvSpy).toHaveBeenCalled();
         expect(axios.create).toHaveBeenCalled();
         expect(axiosRetry.default).toHaveBeenCalled();
@@ -203,7 +184,7 @@ describe("SDK unit tests", () => {
             spyOn(ocsdkLogger, "log").and.callFake(() => { });
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
             try {
-                const result = await sdk.getChatToken(requestId, {}, -1);
+                await sdk.getChatToken(requestId, {}, -1);
                 throw new Error("Should throw an error");
             } catch (error: any) {
                 expect(error.message).toEqual("Invalid currentRetryCount");
@@ -649,7 +630,7 @@ describe("SDK unit tests", () => {
 
     describe("Test sendtypingindicator method", () => {
         it("Should return promise resolve", (done) => {
-            let currentLiveChatVersion = 2;
+            const currentLiveChatVersion = 2;
             spyOn<any>(axios, "create").and.returnValue(axiosInstMock);
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
             const result = sdk.sendTypingIndicator(requestId, currentLiveChatVersion);
@@ -660,7 +641,7 @@ describe("SDK unit tests", () => {
         });
 
         it("Should reject when axiosInstance throws an error", (done) => {
-            let currentLiveChatVersion = 2;
+            const currentLiveChatVersion = 2;
             spyOn<any>(axios, "create").and.returnValue(axiosInstMockWithError);
             spyOn(ocsdkLogger, "log").and.callFake(() => { });
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);

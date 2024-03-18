@@ -33,4 +33,9 @@ export default interface ISDKConfiguration {
   authCodeNonce: string;
 
   useUnauthReconnectIdSigQueryParam: boolean;
+
+  /**
+    * Time in milliseconds between call retries.
+    */
+  waitTimeBetweenRetriesConfig: RequestTimeoutConfig;
 }
