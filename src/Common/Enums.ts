@@ -44,7 +44,7 @@ export enum ChannelId {
 
 export enum OCSDKTelemetryEvent {
   GETCHATCONFIGFSTARTED = "GetChatConfig",
-  GETCHATCONFIGSUCCEDED = "GetChatConfigSucceeded",
+  GETCHATCONFIGSUCCEEDED = "GetChatConfigSucceeded",
   GETCHATCONFIGFAILED = "GetChatConfigFailed",
   GETRECONNECTABLECHATS = "GetReconnnectableChats",
   GETRECONNECTAVAILABILITY = "GetReconnnectableAvailability",
