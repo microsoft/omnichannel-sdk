@@ -4,6 +4,7 @@ import IGetQueueAvailabilityOptionalParams from "./IGetQueueAvailabilityOptional
 import IReconnectableChatsParams from "../Interfaces/IReconnectableChatsParams";
 
 export default interface ISDK {
+  getLcwFcsDetails(): Promise<object | void>;
   getChatConfig(requestId: string, bypassCache?: boolean): Promise<object | void>;
   getLWIDetails(requestId: string): Promise<object>;
   getChatToken(requestId: string): Promise<FetchChatTokenResponse>;
