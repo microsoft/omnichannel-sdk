@@ -121,6 +121,38 @@ export default class SDK implements ISDK {
   }
 
   /**
+   * Fetches LCW FCS Details of the Org.
+   */
+  public async getLcwFcsDetails(): Promise<object | void> {
+    const timer = Timer.TIMER();
+    this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETLCWFCSDETAILSSTARTED, "Get LCW FCS details started", "");
+
+    const requestPath = `/${OmnichannelEndpoints.LcwFcsDetailsPath}/${this.omnichannelConfiguration.orgId}`;
+    const method = "GET";
+    const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
+    const axiosInstance = axios.create();
+
+    axiosRetry(axiosInstance, {
+      retries: this.configuration.maxRequestRetriesOnFailure,
+      waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.getChatConfig
+    });
+
+    try {
+      const response = await axiosInstance.get(url, {
+        timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.getChatConfig
+      });
+      const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+      const { data } = response;
+      this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETLCWFCSDETAILSSUCCEEDED, "Get LCW FCS details succeeded", "", response, elapsedTimeInMilliseconds, requestPath, method);
+      return data;
+    } catch (error) {
+      const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+      this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETLCWFCSDETAILSFAILED, "Get LCW FCS details failed", "", undefined, elapsedTimeInMilliseconds, requestPath, method, error);
+      throw error;
+    }
+  }
+
+  /**
    * Fetches chat config.
    * @param requestId: RequestId to use to get chat config (Optional).
    */
@@ -162,7 +194,7 @@ export default class SDK implements ISDK {
       if (response.headers && response.headers["date"]) {
         data.headers["date"] = response.headers["date"];
       }
-      this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATCONFIGSUCCEDED, "Get Chat config succeeded", requestId, response, elapsedTimeInMilliseconds,
+      this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATCONFIGSUCCEEDED, "Get Chat config succeeded", requestId, response, elapsedTimeInMilliseconds,
         requestPath, method);
 
       return data;

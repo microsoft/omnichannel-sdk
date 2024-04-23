@@ -43,8 +43,11 @@ export enum ChannelId {
 }
 
 export enum OCSDKTelemetryEvent {
+  GETLCWFCSDETAILSSTARTED = "GetLcwFcsDetailsStarted",
+  GETLCWFCSDETAILSSUCCEEDED = "GetLcwFcsDetailsSucceeded",
+  GETLCWFCSDETAILSFAILED = "GetLcwFcsDetailsFailed",
   GETCHATCONFIGFSTARTED = "GetChatConfig",
-  GETCHATCONFIGSUCCEDED = "GetChatConfigSucceeded",
+  GETCHATCONFIGSUCCEEDED = "GetChatConfigSucceeded",
   GETCHATCONFIGFAILED = "GetChatConfigFailed",
   GETRECONNECTABLECHATS = "GetReconnnectableChats",
   GETRECONNECTAVAILABILITY = "GetReconnnectableAvailability",

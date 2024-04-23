@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Add `livechatconnector/v2/lcwfcsdetails` endpoint
+
 ## [0.4.5] - 2024-03-18
 
 ### Changed

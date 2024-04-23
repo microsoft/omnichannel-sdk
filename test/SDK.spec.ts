@@ -178,6 +178,27 @@ describe("SDK unit tests", () => {
         });
     });
 
+    describe("Test getLcwFcsDetails method", () => {
+        it("Should return promise", async () => {
+            spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; } });
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+            const result = await sdk.getLcwFcsDetails();
+            expect(result).not.toBeUndefined();
+            expect(axios.create).toHaveBeenCalled();
+            expect(axiosRetry.default).toHaveBeenCalled();
+        });
+
+        it("Should throw error when axiosInstance throws and error" , async(done) => {
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockWithError);
+            spyOn(ocsdkLogger, "log").and.callFake(() => { });
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
+            sdk.getLcwFcsDetails().then(() => {}, () => {
+                expect(ocsdkLogger.log).toHaveBeenCalled();
+                done();
+            });
+        });
+    });
+
     describe("Test getChatToken method", () => {
 
         it("Should throw error when retryCount is invalid value", async () => {
