@@ -77,11 +77,13 @@ export default class SDK implements ISDK {
     defaultRequestTimeout: undefined,
     requestTimeoutConfig: SDK.defaultRequestTimeoutConfig,
     useUnauthReconnectIdSigQueryParam: false,
-    waitTimeBetweenRetriesConfig: waitTimeBetweenRetriesConfigs
+    waitTimeBetweenRetriesConfig: waitTimeBetweenRetriesConfigs,
+    ocUserAgent: []
   };
 
   liveChatVersion: number;
   sessionId?: string;
+  ocUserAgent: string[];
 
   public constructor(private omnichannelConfiguration: IOmnichannelConfiguration, private configuration: ISDKConfiguration = SDK.defaultConfiguration, private logger?: OCSDKLogger) {
     // Sets to default configuration if passed configuration is empty or is not an object
@@ -117,6 +119,7 @@ export default class SDK implements ISDK {
       }
     }
 
+    this.ocUserAgent = this.configuration.ocUserAgent;
     this.liveChatVersion = LiveChatVersion.V2;
   }
 
