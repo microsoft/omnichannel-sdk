@@ -47,6 +47,7 @@ import sessionInitRetryHandler from "./Utils/SessionInitRetryHandler";
 import throwClientHTTPTimeoutError from "./Utils/throwClientHTTPError";
 import { uuidv4 } from "./Utils/uuid";
 import { waitTimeBetweenRetriesConfigs } from "./Utils/waitTimeBetweenRetriesConfigs";
+import { addOcUserAgentHeader } from "./Utils/httpHeadersUtils";
 
 export default class SDK implements ISDK {
   private static defaultRequestTimeoutConfig: RequestTimeoutConfig = {
@@ -140,6 +141,9 @@ export default class SDK implements ISDK {
       waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.getChatConfig
     });
 
+    let headers = {};
+    addOcUserAgentHeader(this.ocUserAgent, headers);
+
     try {
       const response = await axiosInstance.get(url, {
         timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.getChatConfig
@@ -177,6 +181,8 @@ export default class SDK implements ISDK {
      });
 
     let headers = {};
+    addOcUserAgentHeader(this.ocUserAgent, headers);
+
     if (bypassCache) {
       headers = { ...Constants.bypassCacheHeaders, ...headers };
     }
@@ -242,6 +248,7 @@ export default class SDK implements ISDK {
       headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
     }
 
+    addOcUserAgentHeader(this.ocUserAgent, headers);
     this.setSessionIdHeader(this.sessionId, headers);
 
     if (!this.configuration.useUnauthReconnectIdSigQueryParam) {
@@ -310,6 +317,7 @@ export default class SDK implements ISDK {
     }
 
     const headers: StringMap = Constants.defaultHeaders;
+    addOcUserAgentHeader(this.ocUserAgent, headers);
 
     const endpoint = createGetChatTokenEndpoint(currentLiveChatVersion as LiveChatVersion || this.liveChatVersion, authenticatedUserToken ? true : false);
 
@@ -434,6 +442,7 @@ export default class SDK implements ISDK {
     headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
 
     this.setSessionIdHeader(this.sessionId, headers);
+    addOcUserAgentHeader(this.ocUserAgent, headers);
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
@@ -489,6 +498,7 @@ export default class SDK implements ISDK {
     const headers: StringMap = Constants.defaultHeaders;
 
     this.setSessionIdHeader(this.sessionId, headers);
+    addOcUserAgentHeader(this.ocUserAgent, headers);
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
@@ -555,6 +565,7 @@ export default class SDK implements ISDK {
     }
 
     this.setSessionIdHeader(this.sessionId, headers);
+    addOcUserAgentHeader(this.ocUserAgent, headers);
 
     const data: InitContext = initContext || {};
 
@@ -656,6 +667,7 @@ export default class SDK implements ISDK {
     }
 
     this.setSessionIdHeader(this.sessionId, headers);
+    addOcUserAgentHeader(this.ocUserAgent, headers);
 
     if (!this.configuration.useUnauthReconnectIdSigQueryParam) {
       if (reconnectId) {
@@ -757,6 +769,7 @@ export default class SDK implements ISDK {
     }
 
     this.setSessionIdHeader(this.sessionId, headers);
+    addOcUserAgentHeader(this.ocUserAgent, headers);
 
     if (isReconnectChat) {
       requestPath += `&isReconnectChat=true`;
@@ -824,6 +837,7 @@ export default class SDK implements ISDK {
     }
 
     this.setSessionIdHeader(this.sessionId, headers);
+    addOcUserAgentHeader(this.ocUserAgent, headers);
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
@@ -962,6 +976,7 @@ export default class SDK implements ISDK {
     }
 
     this.setSessionIdHeader(this.sessionId, headers);
+    addOcUserAgentHeader(this.ocUserAgent, headers);
 
     if (requestId) {
       headers[OmnichannelHTTPHeaders.requestId] = requestId;
@@ -1040,6 +1055,7 @@ export default class SDK implements ISDK {
     }
 
     this.setSessionIdHeader(this.sessionId, headers);
+    addOcUserAgentHeader(this.ocUserAgent, headers);
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
@@ -1105,6 +1121,7 @@ export default class SDK implements ISDK {
     }
 
     this.setSessionIdHeader(this.sessionId, headers);
+    addOcUserAgentHeader(this.ocUserAgent, headers);
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "POST";
@@ -1162,6 +1179,7 @@ export default class SDK implements ISDK {
     headers[OmnichannelHTTPHeaders.requestId] = requestId;
 
     this.setSessionIdHeader(this.sessionId, headers);
+    addOcUserAgentHeader(this.ocUserAgent, headers);
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
@@ -1222,6 +1240,7 @@ export default class SDK implements ISDK {
     }
 
     this.setSessionIdHeader(this.sessionId, headers);
+    addOcUserAgentHeader(this.ocUserAgent, headers);
 
     requestPath += "?channelId=" + Constants.defaultChannelId;
 
@@ -1277,6 +1296,7 @@ export default class SDK implements ISDK {
     }
 
     this.setSessionIdHeader(this.sessionId, headers);
+    addOcUserAgentHeader(this.ocUserAgent, headers);
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "POST";
