@@ -316,14 +316,14 @@ export default class SDK implements ISDK {
       requestId = uuidv4();
     }
 
-    const headers: StringMap = Constants.defaultHeaders;
-    addOcUserAgentHeader(this.ocUserAgent, headers);
+    const requestHeaders: StringMap = Constants.defaultHeaders;
+    addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
 
     const endpoint = createGetChatTokenEndpoint(currentLiveChatVersion as LiveChatVersion || this.liveChatVersion, authenticatedUserToken ? true : false);
 
     if (authenticatedUserToken) {
-      headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
-      headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
+      requestHeaders[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+      requestHeaders[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
     }
 
     let requestPath = `/${endpoint}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
@@ -351,7 +351,7 @@ export default class SDK implements ISDK {
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
     const options: AxiosRequestConfig = {
-      headers,
+      headers: requestHeaders,
       method,
       url,
       params,
@@ -385,7 +385,7 @@ export default class SDK implements ISDK {
         // Resolves only if it contains chat token response which only happens on status 200
         if (data) {
           data.requestId = requestId;
-          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATTOKENSUCCEEDED, "Get Chat Token succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
+          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATTOKENSUCCEEDED, "Get Chat Token succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
           resolve(data);
           return;
         }
@@ -398,7 +398,7 @@ export default class SDK implements ISDK {
 
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETCHATTOKENFAILED, "Get Chat Token failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETCHATTOKENFAILED, "Get Chat Token failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
         getChatTokenError = error;
 
         // Stop retry on 429
@@ -1342,7 +1342,7 @@ export default class SDK implements ISDK {
    * @param error Error
    * @param data Data
    */
-  private logWithLogger(logLevel: LogLevel, telemetryEventType: OCSDKTelemetryEvent, description: string, requestId?: string, response?: AxiosResponse<any>, elapsedTimeInMilliseconds?: number, requestPath?: string, method?: string, error?: unknown, requestPayload?: any): void { // eslint-disable-line @typescript-eslint/no-explicit-any
+  private logWithLogger(logLevel: LogLevel, telemetryEventType: OCSDKTelemetryEvent, description: string, requestId?: string, response?: AxiosResponse<any>, elapsedTimeInMilliseconds?: number, requestPath?: string, method?: string, error?: unknown, requestPayload?: any, requestHeaders?: any): void { // eslint-disable-line @typescript-eslint/no-explicit-any
     if (!this.logger) {
       return;
     }
@@ -1362,6 +1362,12 @@ export default class SDK implements ISDK {
       LoggingSanitizer.stripGeolocation(sanitizedRequestPayload);
     }
 
+    let sanitizedRequestHeaders = undefined;
+    if (requestHeaders) {
+      sanitizedRequestHeaders = { ...requestHeaders };
+      LoggingSanitizer.stripRequestHeadersSensitiveProperties(sanitizedRequestHeaders);
+    }
+
     const customData = {
       RequestId: requestId,
       Region: response?.data.Region,
@@ -1371,7 +1377,8 @@ export default class SDK implements ISDK {
       RequestMethod: method,
       ResponseStatusCode: response ? response.status : error ? (error as any).response?.status : undefined, // eslint-disable-line @typescript-eslint/no-explicit-any
       ExceptionDetails: error,
-      RequestPayload: sanitizedRequestPayload
+      RequestPayload: sanitizedRequestPayload,
+      RequestHeaders: sanitizedRequestHeaders
     };
     this.logger.log(logLevel, telemetryEventType, customData, description);
   }
