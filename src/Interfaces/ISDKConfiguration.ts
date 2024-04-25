@@ -1,7 +1,7 @@
 import { RequestTimeoutConfig } from "../Common/RequestTimeoutConfig";
 
 export default interface ISDKConfiguration {
-  [key: string]: number | string | boolean | RequestTimeoutConfig | undefined;
+  [key: string]: number | string | boolean | RequestTimeoutConfig | undefined | string[];
 
   /**
    * Number of times a getchattoken request is retried.
@@ -38,4 +38,9 @@ export default interface ISDKConfiguration {
     * Time in milliseconds between call retries.
     */
   waitTimeBetweenRetriesConfig: RequestTimeoutConfig;
+
+  /**
+   * `Ms-Oc-User-Agent` HTTP Request Headers to be sent on every OC request
+   */
+  ocUserAgent: string[];
 }
