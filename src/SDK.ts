@@ -1,7 +1,7 @@
 import * as hash from "crypto";
 
 import { ChannelId, LiveChatVersion, OCSDKTelemetryEvent } from "./Common/Enums";
-import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
+import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
 
 import { BrowserInfo } from "./Utils/BrowserInfo";
 import Constants from "./Common/Constants";
@@ -40,13 +40,15 @@ import ReconnectMappingRecord from "./Model/ReconnectMappingRecord";
 import { RequestTimeoutConfig } from "./Common/RequestTimeoutConfig";
 import { StringMap } from "./Common/Mappings";
 import { Timer } from "./Utils/Timer";
-import axiosRetry from "./Utils/axiosRetry";
+//import axiosRetry from "./Utils/axiosRetry";
+import axiosRetry from "axios-retry";
 import { createGetChatTokenEndpoint } from "./Utils/endpointsCreators";
 import isExpectedAxiosError from "./Utils/isExpectedAxiosError";
 import sessionInitRetryHandler from "./Utils/SessionInitRetryHandler";
 import throwClientHTTPTimeoutError from "./Utils/throwClientHTTPError";
 import { uuidv4 } from "./Utils/uuid";
 import { waitTimeBetweenRetriesConfigs } from "./Utils/waitTimeBetweenRetriesConfigs";
+import overwriteHeaders from "./Utils/headersRetryHandler";
 
 export default class SDK implements ISDK {
   private static defaultRequestTimeoutConfig: RequestTimeoutConfig = {
@@ -134,7 +136,7 @@ export default class SDK implements ISDK {
 
     axiosRetry(axiosInstance, {
       retries: this.configuration.maxRequestRetriesOnFailure,
-      waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.getChatConfig
+      retryDelay:() => this.configuration.waitTimeBetweenRetriesConfig.getChatConfig
     });
 
     try {
@@ -170,7 +172,7 @@ export default class SDK implements ISDK {
     
     axiosRetry(axiosInstance, { 
       retries: this.configuration.maxRequestRetriesOnFailure,
-      waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.getChatConfig
+      retryDelay:() => this.configuration.waitTimeBetweenRetriesConfig.getChatConfig
      });
 
     let headers = {};
@@ -200,6 +202,7 @@ export default class SDK implements ISDK {
       return data;
     } catch (error) {
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+      console.log("In error block and error is ",error)
       this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATCONFIGFAILED, "Get Chat config failed", requestId, undefined, elapsedTimeInMilliseconds,
         requestPath, method, error);
       return Promise.reject(error);
@@ -223,9 +226,11 @@ export default class SDK implements ISDK {
     let requestPath = `/${OmnichannelEndpoints.LiveChatLiveWorkItemDetailsPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
     const axiosInstance = axios.create();
     
-    axiosRetry(axiosInstance, { headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce], 
+    axiosRetry(axiosInstance, { 
+      //headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce], 
+      onRetry: (retryCount,error,requestConfig) => overwriteHeaders(error,requestConfig,[OmnichannelHTTPHeaders.authCodeNonce]),
       retries: this.configuration.maxRequestRetriesOnFailure,
-      waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.getLWIDetails
+      retryDelay:() => this.configuration.waitTimeBetweenRetriesConfig.getLWIDetails
     });
 
     // Extract auth token and reconnect id from optional param
@@ -270,6 +275,7 @@ export default class SDK implements ISDK {
 
     return new Promise(async (resolve, reject) => {
       try {
+        console.log("Inside promise")
         const response = await axiosInstance(options);
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         const { data, headers } = response;
@@ -350,10 +356,12 @@ export default class SDK implements ISDK {
     const axiosInstance = axios.create();
 
     axiosRetry(axiosInstance, {
-      headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce],
+      //headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce],
+      onRetry: (retryCount,error,requestConfig) => overwriteHeaders(error,requestConfig,[OmnichannelHTTPHeaders.authCodeNonce]),
       retries: this.configuration.maxRequestRetriesOnFailure, 
-      retryOn429: this.configuration.getChatTokenRetryOn429,
-      waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.getChatToken
+      // retryOn429: this.configuration.getChatTokenRetryOn429,
+      retryCondition: (error) => error.response?.status === Constants.tooManyRequestsStatusCode && this.configuration.getChatTokenRetryOn429,
+      retryDelay: () => this.configuration.waitTimeBetweenRetriesConfig.getChatToken
     });
 
     return new Promise(async (resolve, reject) => {
@@ -537,9 +545,10 @@ export default class SDK implements ISDK {
     const requestPath = `/${OmnichannelEndpoints.GetAgentAvailabilityPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=lcw`;
     const axiosInstance = axios.create();
     axiosRetry(axiosInstance, {
-      headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce],
+      //headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce],
+      onRetry: (retryCount,error,requestConfig) => overwriteHeaders(error,requestConfig,[OmnichannelHTTPHeaders.authCodeNonce]),
       retries: this.configuration.maxRequestRetriesOnFailure,
-      waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.getAgentAvailability
+      retryDelay: () => this.configuration.waitTimeBetweenRetriesConfig.getAgentAvailability
     });
 
     const { authenticatedUserToken, initContext, getContext } = queueAvailabilityOptionalParams;
@@ -638,9 +647,10 @@ export default class SDK implements ISDK {
 
     axiosRetry(axiosInstance, {
       retries: this.configuration.maxRequestRetriesOnFailure,
-      waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.sessionInit,
-      shouldRetry: sessionInitRetryHandler,
-      headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce]
+      retryDelay: () => this.configuration.waitTimeBetweenRetriesConfig.sessionInit,
+      retryCondition: (error:AxiosError) => sessionInitRetryHandler(error,true),
+      //headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce]
+      onRetry: (retryCount,error,requestConfig:AxiosRequestConfig) => overwriteHeaders(error,requestConfig,[OmnichannelHTTPHeaders.authCodeNonce]),
     });
 
     const { reconnectId, authenticatedUserToken, initContext, getContext } = sessionInitOptionalParams;
@@ -736,9 +746,10 @@ export default class SDK implements ISDK {
     let requestPath = `/${OmnichannelEndpoints.LiveChatSessionClosePath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
     const axiosInstance = axios.create();
     axiosRetry(axiosInstance, {
-      headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce],
+      //headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce],
+      onRetry: (retryCount,error,requestConfig) => overwriteHeaders(error,requestConfig,[OmnichannelHTTPHeaders.authCodeNonce]),
       retries: this.configuration.maxRequestRetriesOnFailure,
-      waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.sessionClose
+      retryDelay: () => this.configuration.waitTimeBetweenRetriesConfig.sessionClose
     });
 
     const { authenticatedUserToken, isReconnectChat, isPersistentChat, chatId } = sessionCloseOptionalParams;
@@ -809,9 +820,10 @@ export default class SDK implements ISDK {
     const axiosInstance = axios.create();
     
     axiosRetry(axiosInstance, {
-      headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce],
+      //headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce],
+      onRetry: (retryCount,error,requestConfig) => overwriteHeaders(error,requestConfig,[OmnichannelHTTPHeaders.authCodeNonce]),
       retries: this.configuration.maxRequestRetriesOnFailure,
-      waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.validateAuthChatRecord
+      retryDelay: () => this.configuration.waitTimeBetweenRetriesConfig.validateAuthChatRecord
     });
 
     const headers: StringMap = Constants.defaultHeaders;
@@ -880,9 +892,11 @@ export default class SDK implements ISDK {
     let requestPath = `/${OmnichannelEndpoints.LiveChatSubmitPostChatPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
     const axiosInstance = axios.create();
 
-    axiosRetry(axiosInstance, { headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce], 
+    axiosRetry(axiosInstance, { 
+      //headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce], 
+      onRetry: (retryCount,error,requestConfig) => overwriteHeaders(error,requestConfig,[OmnichannelHTTPHeaders.authCodeNonce]),
       retries: this.configuration.maxRequestRetriesOnFailure,
-      waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.submitPostChatResponse
+      retryDelay: () => this.configuration.waitTimeBetweenRetriesConfig.submitPostChatResponse
      });
 
     const { authenticatedUserToken } = submitPostChatResponseOptionalParams;
@@ -942,9 +956,11 @@ export default class SDK implements ISDK {
     }
     let requestPath = `/${OmnichannelEndpoints.LiveChatGetSurveyInviteLinkPath}/${this.omnichannelConfiguration.orgId}/${surveyOwnerId}`;
     const axiosInstance = axios.create();
-    axiosRetry(axiosInstance, { headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce], 
+    axiosRetry(axiosInstance, { 
+      //headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce], 
+      onRetry: (retryCount,error,requestConfig) => overwriteHeaders(error,requestConfig,[OmnichannelHTTPHeaders.authCodeNonce]),
       retries: this.configuration.maxRequestRetriesOnFailure,
-      waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.getSurveyInviteLink
+      retryDelay: () => this.configuration.waitTimeBetweenRetriesConfig.getSurveyInviteLink
     });
 
     const { authenticatedUserToken, requestId } = getsurveyInviteLinkOptionalParams;
@@ -1011,9 +1027,10 @@ export default class SDK implements ISDK {
     const axiosInstance = axios.create();
     
     axiosRetry(axiosInstance, {
-      headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce],
+      //headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce],
+      onRetry: (retryCount,error,requestConfig) => overwriteHeaders(error,requestConfig,[OmnichannelHTTPHeaders.authCodeNonce]),
       retries: this.configuration.maxRequestRetriesOnFailure,
-      waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.getChatTranscripts
+      retryDelay: () => this.configuration.waitTimeBetweenRetriesConfig.getChatTranscripts
     });
 
     const { authenticatedUserToken, currentLiveChatVersion } = getChatTranscriptsOptionalParams;
@@ -1084,9 +1101,10 @@ export default class SDK implements ISDK {
     const axiosInstance = axios.create();
     
     axiosRetry(axiosInstance, {
-      headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce],
+      //headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce],
+      onRetry: (retryCount,error,requestConfig) => overwriteHeaders(error,requestConfig,[OmnichannelHTTPHeaders.authCodeNonce]),
       retries: this.configuration.maxRequestRetriesOnFailure,
-      waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.emailTranscript
+      retryDelay: () => this.configuration.waitTimeBetweenRetriesConfig.emailTranscript
     });
 
     const { authenticatedUserToken } = emailTranscriptOptionalParams;
@@ -1151,7 +1169,7 @@ export default class SDK implements ISDK {
     
     axiosRetry(axiosInstance, {
       retries: this.configuration.maxRequestRetriesOnFailure,
-      waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.fetchDataMaskingInfo
+      retryDelay: () => this.configuration.waitTimeBetweenRetriesConfig.fetchDataMaskingInfo
     });
 
     const headers: StringMap = Constants.defaultHeaders;
@@ -1203,9 +1221,10 @@ export default class SDK implements ISDK {
     const axiosInstance = axios.create();
     
     axiosRetry(axiosInstance, {
-      headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce],
+      //headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce],
+      onRetry: (retryCount,error,requestConfig) => overwriteHeaders(error,requestConfig,[OmnichannelHTTPHeaders.authCodeNonce]),
       retries: this.configuration.maxRequestRetriesOnFailure,
-      waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.makeSecondaryChannelEventRequest
+      retryDelay: () => this.configuration.waitTimeBetweenRetriesConfig.makeSecondaryChannelEventRequest
     });
 
     const { authenticatedUserToken } = secondaryChannelEventOptionalParams;
