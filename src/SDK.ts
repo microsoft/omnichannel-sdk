@@ -2,7 +2,6 @@ import * as hash from "crypto";
 
 import { ChannelId, LiveChatVersion, OCSDKTelemetryEvent } from "./Common/Enums";
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
-
 import { BrowserInfo } from "./Utils/BrowserInfo";
 import Constants from "./Common/Constants";
 import { CustomContextData } from "./Utils/CustomContextData";
@@ -141,7 +140,7 @@ export default class SDK implements ISDK {
       waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.getChatConfig
     });
 
-    let requestHeaders = {};
+    const requestHeaders = {};
     addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
 
     try {
