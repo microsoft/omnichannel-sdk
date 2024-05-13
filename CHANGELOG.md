@@ -7,6 +7,8 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Add `livechatconnector/v2/lcwfcsdetails` endpoint
+- Add `Ms-Oc-User-Agent` as default request headers
+- Log `RequestHeaders`
 
 ## [0.4.5] - 2024-03-18
 
