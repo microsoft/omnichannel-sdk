@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-empty-function */
 
-import * as axiosRetry from "../src/Utils/axiosRetry";
+import * as axiosRetryHandler from "../src/Utils/axiosRetryHandler";
 import * as uuidvModule from "../src/Utils/uuid";
 
 import { BrowserInfo } from "../src/Utils/BrowserInfo";
@@ -57,7 +57,7 @@ describe("SDK unit tests", () => {
         ocsdkLogger = new OCSDKLogger(logger);
         dataMock = { data: { requestId: "someId" } };
         uuidvSpy = spyOn(uuidvModule, "uuidv4").and.returnValue("reqId");
-        spyOn(axiosRetry, "default").and.callFake(() => {});
+        spyOn(axiosRetryHandler, "default").and.callFake(() => {});
         axiosInstMock = jasmine.createSpy("axiosInstance").and.returnValue(dataMock);
         axiosInstMockWithError = jasmine.createSpy("axiosInstance").and.throwError(AxiosError);
     });
@@ -128,7 +128,7 @@ describe("SDK unit tests", () => {
             sdk.getChatConfig("");
             expect(uuidvSpy).toHaveBeenCalled();
             expect(axios.create).toHaveBeenCalled();
-            expect(axiosRetry.default).toHaveBeenCalled();
+            expect(axiosRetryHandler.default).toHaveBeenCalled();
             expect(ocsdkLogger.log).toHaveBeenCalled();
         });
 
@@ -139,7 +139,7 @@ describe("SDK unit tests", () => {
             sdk.getChatConfig("");
             expect(uuidvSpy).toHaveBeenCalled();
             expect(axios.create).toHaveBeenCalled();
-            expect(axiosRetry.default).toHaveBeenCalled();
+            expect(axiosRetryHandler.default).toHaveBeenCalled();
             expect(ocsdkLogger.log).not.toHaveBeenCalled();
         });
 
@@ -162,7 +162,7 @@ describe("SDK unit tests", () => {
             sdk.getLWIDetails("");
             expect(uuidvSpy).toHaveBeenCalled();
             expect(axios.create).toHaveBeenCalled();
-            expect(axiosRetry.default).toHaveBeenCalled();
+            expect(axiosRetryHandler.default).toHaveBeenCalled();
             expect(ocsdkLogger.log).toHaveBeenCalled();
         });
 
@@ -173,7 +173,7 @@ describe("SDK unit tests", () => {
         sdk.getLWIDetails("");
         expect(uuidvSpy).toHaveBeenCalled();
         expect(axios.create).toHaveBeenCalled();
-        expect(axiosRetry.default).toHaveBeenCalled();
+        expect(axiosRetryHandler.default).toHaveBeenCalled();
         expect(ocsdkLogger.log).not.toHaveBeenCalled();
         });
     });
@@ -185,7 +185,7 @@ describe("SDK unit tests", () => {
             const result = await sdk.getLcwFcsDetails();
             expect(result).not.toBeUndefined();
             expect(axios.create).toHaveBeenCalled();
-            expect(axiosRetry.default).toHaveBeenCalled();
+            expect(axiosRetryHandler.default).toHaveBeenCalled();
         });
 
         it("Should throw error when axiosInstance throws and error" , async(done) => {
@@ -220,7 +220,7 @@ describe("SDK unit tests", () => {
             expect(result).not.toBeUndefined();
             expect(uuidvSpy).not.toHaveBeenCalled();
             expect(axios.create).toHaveBeenCalled();
-            expect(axiosRetry.default).toHaveBeenCalled();
+            expect(axiosRetryHandler.default).toHaveBeenCalled();
         });
     });
 
@@ -305,9 +305,9 @@ describe("SDK unit tests", () => {
             result.then(() => {}, (error) => {
                 expect(OSInfo.getOsType).toHaveBeenCalled();
                 expect(DeviceInfo.getDeviceType).toHaveBeenCalled();
-                expect(axiosRetry.default).toHaveBeenCalled();
+                expect(axiosRetryHandler.default).toHaveBeenCalled();
                 expect(BrowserInfo.getBrowserName).toHaveBeenCalled();
-                expect(axiosRetry.default).toHaveBeenCalled();
+                expect(axiosRetryHandler.default).toHaveBeenCalled();
                 expect(ocsdkLogger.log).toHaveBeenCalled();
                 done();
             });
@@ -369,9 +369,9 @@ describe("SDK unit tests", () => {
             result.then(() => {}, (error) => {
                 expect(OSInfo.getOsType).toHaveBeenCalled();
                 expect(DeviceInfo.getDeviceType).toHaveBeenCalled();
-                expect(axiosRetry.default).toHaveBeenCalled();
+                expect(axiosRetryHandler.default).toHaveBeenCalled();
                 expect(BrowserInfo.getBrowserName).toHaveBeenCalled();
-                expect(axiosRetry.default).toHaveBeenCalled();
+                expect(axiosRetryHandler.default).toHaveBeenCalled();
                 expect(ocsdkLogger.log).toHaveBeenCalled();
                 done();
             });
@@ -411,7 +411,7 @@ describe("SDK unit tests", () => {
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
             const result = sdk.sessionClose(requestId, sessionInitOpt as ISessionCloseOptionalParams);
             expect(axios.create).toHaveBeenCalled();
-            expect(axiosRetry.default).toHaveBeenCalled();
+            expect(axiosRetryHandler.default).toHaveBeenCalled();
             expect(result).not.toBeUndefined();
             expect(ocsdkLogger.log).toHaveBeenCalled();
         });
@@ -450,7 +450,7 @@ describe("SDK unit tests", () => {
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
             const result = sdk.submitPostChatResponse(requestId, sessionInitOpt as ISubmitPostChatResponseOptionalParams);
             expect(axios.create).toHaveBeenCalled();
-            expect(axiosRetry.default).toHaveBeenCalled();
+            expect(axiosRetryHandler.default).toHaveBeenCalled();
             expect(result).not.toBeUndefined();
             expect(ocsdkLogger.log).toHaveBeenCalled();
         });
@@ -489,7 +489,7 @@ describe("SDK unit tests", () => {
       const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
       const result = sdk.getSurveyInviteLink(requestId, sessionInitOpt as IGetSurveyInviteLinkOptionalParams);
       expect(axios.create).toHaveBeenCalled();
-      expect(axiosRetry.default).toHaveBeenCalled();
+      expect(axiosRetryHandler.default).toHaveBeenCalled();
       expect(result).not.toBeUndefined();
       expect(ocsdkLogger.log).toHaveBeenCalled();
     });
@@ -530,7 +530,7 @@ describe("SDK unit tests", () => {
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
             const result = sdk.getChatTranscripts(requestId, coolId, coolId, sessionInitOpt as IGetChatTranscriptsOptionalParams);
             expect(axios.create).toHaveBeenCalled();
-            expect(axiosRetry.default).toHaveBeenCalled();
+            expect(axiosRetryHandler.default).toHaveBeenCalled();
             expect(result).not.toBeUndefined();
             expect(ocsdkLogger.log).toHaveBeenCalled();
         });
@@ -573,7 +573,7 @@ describe("SDK unit tests", () => {
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
             const result = sdk.makeSecondaryChannelEventRequest(requestId, requestBody, secondaryChannelEventOpt as ISecondaryChannelEventOptionalParams);
             expect(axios.create).toHaveBeenCalled();
-            expect(axiosRetry.default).toHaveBeenCalled();
+            expect(axiosRetryHandler.default).toHaveBeenCalled();
             expect(result).not.toBeUndefined();
             expect(ocsdkLogger.log).toHaveBeenCalled();
         });
