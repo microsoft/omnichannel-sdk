@@ -13,6 +13,7 @@ export default class TelemetryHelper {
       Region: customData.Region,
       RequestId: customData.RequestId,
       TransactionId: customData.TransactionId,
+      RequestHeaders: customData.RequestHeaders,
       RequestPayload: customData.RequestPayload,
       RequestPath: customData.RequestPath,
       RequestMethod: customData.RequestMethod,

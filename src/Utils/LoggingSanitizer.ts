@@ -1,4 +1,5 @@
 import Constants from "../Common/Constants";
+import OmnichannelHTTPHeaders from "../Common/OmnichannelHTTPHeaders";
 
 export class LoggingSanitizer {
   public static stripCustomContextDataValues(customContextData: any): void { // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
@@ -35,13 +36,23 @@ export class LoggingSanitizer {
 
   public static stripAuthenticationUserToken(headers: any): void { // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
     if (headers) {
-      if (Object.keys(headers).includes('AuthenticatedUserToken')) {
-        headers['AuthenticatedUserToken'] = Constants.hiddenContentPlaceholder;
+      if (Object.keys(headers).includes(OmnichannelHTTPHeaders.authenticatedUserToken)) {
+        headers[OmnichannelHTTPHeaders.authenticatedUserToken] = Constants.hiddenContentPlaceholder;
       }
 
-      if (Object.keys(headers).includes('AuthCodeNonce')) {
-        headers['AuthCodeNonce'] = Constants.hiddenContentPlaceholder;
+      if (Object.keys(headers).includes(OmnichannelHTTPHeaders.authCodeNonce)) {
+        headers[OmnichannelHTTPHeaders.authCodeNonce] = Constants.hiddenContentPlaceholder;
       }
+    }
+  }
+
+  public static stripRequestHeadersSensitiveProperties(headers: any): void { // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+    console.log("[stripRequestHeadersSensitiveProperties]");
+    console.log(headers);
+    LoggingSanitizer.stripAuthenticationUserToken(headers);
+
+    if (Object.keys(headers).includes(OmnichannelHTTPHeaders.authorization)) {
+      headers[OmnichannelHTTPHeaders.authorization] = Constants.hiddenContentPlaceholder;
     }
   }
 

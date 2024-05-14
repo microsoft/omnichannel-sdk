@@ -9,4 +9,5 @@ export default interface IOCSDKLogData {
   RequestPayload?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
   RequestPath?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
   RequestMethod?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  RequestHeaders?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
