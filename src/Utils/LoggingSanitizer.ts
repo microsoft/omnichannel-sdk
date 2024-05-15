@@ -47,8 +47,6 @@ export class LoggingSanitizer {
   }
 
   public static stripRequestHeadersSensitiveProperties(headers: any): void { // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
-    console.log("[stripRequestHeadersSensitiveProperties]");
-    console.log(headers);
     LoggingSanitizer.stripAuthenticationUserToken(headers);
 
     if (Object.keys(headers).includes(OmnichannelHTTPHeaders.authorization)) {
