@@ -8,6 +8,8 @@ All notable changes to this project will be documented in this file.
 
 - Add `livechatconnector/v2/lcwfcsdetails` endpoint
 
+- Added axios-retry library support
+
 ## [0.4.5] - 2024-03-18
 
 ### Changed

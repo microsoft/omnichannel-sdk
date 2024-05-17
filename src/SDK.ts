@@ -167,11 +167,11 @@ export default class SDK implements ISDK {
     const method = "GET";
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const axiosInstance = axios.create();
-    
-    axiosRetryHandler(axiosInstance, { 
+
+    axiosRetryHandler(axiosInstance, {
       retries: this.configuration.maxRequestRetriesOnFailure,
       waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.getChatConfig
-     });
+    });
 
     let headers = {};
     if (bypassCache) {
@@ -222,8 +222,9 @@ export default class SDK implements ISDK {
     // construct a endpoint for anonymous chats to get LWI Details
     let requestPath = `/${OmnichannelEndpoints.LiveChatLiveWorkItemDetailsPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
     const axiosInstance = axios.create();
-    
-    axiosRetryHandler(axiosInstance, { headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce], 
+
+    axiosRetryHandler(axiosInstance, {
+      headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce],
       retries: this.configuration.maxRequestRetriesOnFailure,
       waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.getLWIDetails
     });
@@ -351,14 +352,12 @@ export default class SDK implements ISDK {
 
     axiosRetryHandler(axiosInstance, {
       headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce],
-      retries: this.configuration.maxRequestRetriesOnFailure, 
+      retries: (currentRetryCount > this.configuration.maxRequestRetriesOnFailure) ? currentRetryCount : this.configuration.maxRequestRetriesOnFailure,
       retryOn429: this.configuration.getChatTokenRetryOn429,
       waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.getChatToken
     });
 
     return new Promise(async (resolve, reject) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let getChatTokenError:any = undefined;
       try {
         const response = await axiosInstance(options);
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
@@ -388,31 +387,11 @@ export default class SDK implements ISDK {
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETCHATTOKENFAILED, "Get Chat Token failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
-        getChatTokenError = error;
-
-        // Stop retry on 429
-        if ((error as any).response?.status === Constants.tooManyRequestsStatusCode && !this.configuration.getChatTokenRetryOn429) { // eslint-disable-line @typescript-eslint/no-explicit-any
-          reject(error);
-          return;
-        }
-
-        // No return/reject to recursively retry on failures up to chat token retry count limit
-      }
-
-      // Base case
-      if (currentRetryCount + 1 >= this.configuration.getChatTokenRetryCount) {
-        if (getChatTokenError && getChatTokenError.code == Constants.axiosTimeoutErrorCode) {
+        if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           throwClientHTTPTimeoutError();
-        } else {
-          reject(getChatTokenError);
         }
-        return;
+        reject(error);
       }
-
-      // Retries until it reaches its limit
-      setTimeout(() => {
-        this.getChatToken(requestId, getChatTokenOptionalParams, currentRetryCount + 1).then((response) => resolve(response)).catch((error) => reject(error));
-      }, this.configuration.getChatTokenTimeBetweenRetriesOnFailure);
     });
   }
 
@@ -618,7 +597,7 @@ export default class SDK implements ISDK {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETAGENTAVAILABILITYFAILED, "Get agent availability failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
 
-        if (isExpectedAxiosError(error,  Constants.axiosTimeoutErrorCode)) {
+        if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           throwClientHTTPTimeoutError();
         }
         reject(error);
@@ -635,11 +614,11 @@ export default class SDK implements ISDK {
     const timer = Timer.TIMER();
     this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSTARTED, "Session Init Started", requestId);
     const axiosInstance = axios.create();
-
+    const retryOn429 = true;
     axiosRetryHandler(axiosInstance, {
       retries: this.configuration.maxRequestRetriesOnFailure,
       waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.sessionInit,
-      shouldRetry: sessionInitRetryHandler,
+      shouldRetry: (error) => sessionInitRetryHandler(error, retryOn429),
       headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce]
     });
 
@@ -783,8 +762,8 @@ export default class SDK implements ISDK {
         this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONCLOSESUCCEEDED, "Session Close succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
 
         resolve();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error : any) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (error: any) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SESSIONCLOSEFAILED, "Session close failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
         if (error.code === Constants.axiosTimeoutErrorCode) {
@@ -807,7 +786,7 @@ export default class SDK implements ISDK {
     const { authenticatedUserToken, chatId } = validateAuthChatRecordOptionalParams;
     const requestPath = `/${OmnichannelEndpoints.LiveChatValidateAuthChatMapRecordPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
     const axiosInstance = axios.create();
-    
+
     axiosRetryHandler(axiosInstance, {
       headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce],
       retries: this.configuration.maxRequestRetriesOnFailure,
@@ -848,8 +827,8 @@ export default class SDK implements ISDK {
           reject(new Error("Validate Auth Chat Record Failed. Record is not found or request is not authorized"));
         }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error : any) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (error: any) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
 
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDFAILED, "Validate Auth Chat Record failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
@@ -880,10 +859,11 @@ export default class SDK implements ISDK {
     let requestPath = `/${OmnichannelEndpoints.LiveChatSubmitPostChatPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
     const axiosInstance = axios.create();
 
-    axiosRetryHandler(axiosInstance, { headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce], 
+    axiosRetryHandler(axiosInstance, {
+      headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce],
       retries: this.configuration.maxRequestRetriesOnFailure,
       waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.submitPostChatResponse
-     });
+    });
 
     const { authenticatedUserToken } = submitPostChatResponseOptionalParams;
     const headers: StringMap = Constants.defaultHeaders;
@@ -942,7 +922,8 @@ export default class SDK implements ISDK {
     }
     let requestPath = `/${OmnichannelEndpoints.LiveChatGetSurveyInviteLinkPath}/${this.omnichannelConfiguration.orgId}/${surveyOwnerId}`;
     const axiosInstance = axios.create();
-    axiosRetryHandler(axiosInstance, { headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce], 
+    axiosRetryHandler(axiosInstance, {
+      headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce],
       retries: this.configuration.maxRequestRetriesOnFailure,
       waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.getSurveyInviteLink
     });
@@ -1009,7 +990,7 @@ export default class SDK implements ISDK {
 
     let requestPath = `/${OmnichannelEndpoints.LiveChatGetChatTranscriptPath}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
     const axiosInstance = axios.create();
-    
+
     axiosRetryHandler(axiosInstance, {
       headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce],
       retries: this.configuration.maxRequestRetriesOnFailure,
@@ -1082,7 +1063,7 @@ export default class SDK implements ISDK {
 
     let requestPath = `/${OmnichannelEndpoints.LiveChatTranscriptEmailRequestPath}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
     const axiosInstance = axios.create();
-    
+
     axiosRetryHandler(axiosInstance, {
       headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce],
       retries: this.configuration.maxRequestRetriesOnFailure,
@@ -1148,7 +1129,7 @@ export default class SDK implements ISDK {
 
     const requestPath = `/${OmnichannelEndpoints.LiveChatFetchDataMaskingInfoPath}/${this.omnichannelConfiguration.orgId}`;
     const axiosInstance = axios.create();
-    
+
     axiosRetryHandler(axiosInstance, {
       retries: this.configuration.maxRequestRetriesOnFailure,
       waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.fetchDataMaskingInfo
@@ -1201,7 +1182,7 @@ export default class SDK implements ISDK {
 
     let requestPath = `/${OmnichannelEndpoints.LiveChatSecondaryChannelEventPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
     const axiosInstance = axios.create();
-    
+
     axiosRetryHandler(axiosInstance, {
       headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce],
       retries: this.configuration.maxRequestRetriesOnFailure,
@@ -1245,7 +1226,7 @@ export default class SDK implements ISDK {
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SECONDARYCHANNELEVENTREQUESTFAILED, "Secondary Channel Event Request Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
-        if (isExpectedAxiosError(error,  Constants.axiosTimeoutErrorCode)) {
+        if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           throwClientHTTPTimeoutError();
         }
         reject(error);
