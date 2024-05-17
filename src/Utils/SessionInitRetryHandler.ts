@@ -17,9 +17,9 @@ const sessionInitRetryHandler = (error: AxiosError, retryOn429: boolean | undefi
                     return false;
                 }
                 break;
-            default: return isRetryableError(error) || isNetworkError(error) || error.response?.status === 408 || error.response?.status == 0 || !error.response?.status;
+            default: return isRetryableError(error) || isNetworkError(error) || error.response?.status == 0 || !error.response?.status;
         }
     }
-    return isRetryableError(error) || isNetworkError(error) || error.response?.status === 408 || error.response?.status == 0 || !error.response?.status;
+    return isRetryableError(error) || isNetworkError(error) || error.response?.status == 0 || !error.response?.status;
 }
 export default sessionInitRetryHandler;

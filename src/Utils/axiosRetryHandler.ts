@@ -25,8 +25,7 @@ const axiosRetryHandler = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryO
         return false;
       }
 
-      // Retry for response status 408 (Request Timeout)
-      return isRetryableError(error) || isNetworkError(error) || error.response?.status === 408 || error.response?.status == 0 || !error.response?.status;
+      return isRetryableError(error) || isNetworkError(error) || error.response?.status == 0 || !error.response?.status;
     }
 
   }
@@ -64,9 +63,8 @@ const axiosRetryHandler = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryO
             retryAfterTime = Math.max(0, retryAfterDate.getTime() - currentTime);
           }
         }
-      } else if (error?.response?.status === 408) {
         return retryAfterTime;
-      }
+      } 
       return Math.pow(2, retryCount) * timeBetweenRetry;
     },
 
