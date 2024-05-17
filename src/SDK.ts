@@ -2,7 +2,6 @@ import * as hash from "crypto";
 
 import { ChannelId, LiveChatVersion, OCSDKTelemetryEvent } from "./Common/Enums";
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
-
 import { BrowserInfo } from "./Utils/BrowserInfo";
 import Constants from "./Common/Constants";
 import { CustomContextData } from "./Utils/CustomContextData";
@@ -47,6 +46,7 @@ import sessionInitRetryHandler from "./Utils/SessionInitRetryHandler";
 import throwClientHTTPTimeoutError from "./Utils/throwClientHTTPError";
 import { uuidv4 } from "./Utils/uuid";
 import { waitTimeBetweenRetriesConfigs } from "./Utils/waitTimeBetweenRetriesConfigs";
+import { addOcUserAgentHeader } from "./Utils/httpHeadersUtils";
 
 export default class SDK implements ISDK {
   private static defaultRequestTimeoutConfig: RequestTimeoutConfig = {
@@ -77,11 +77,13 @@ export default class SDK implements ISDK {
     defaultRequestTimeout: undefined,
     requestTimeoutConfig: SDK.defaultRequestTimeoutConfig,
     useUnauthReconnectIdSigQueryParam: false,
-    waitTimeBetweenRetriesConfig: waitTimeBetweenRetriesConfigs
+    waitTimeBetweenRetriesConfig: waitTimeBetweenRetriesConfigs,
+    ocUserAgent: []
   };
 
   liveChatVersion: number;
   sessionId?: string;
+  ocUserAgent: string[];
 
   public constructor(private omnichannelConfiguration: IOmnichannelConfiguration, private configuration: ISDKConfiguration = SDK.defaultConfiguration, private logger?: OCSDKLogger) {
     // Sets to default configuration if passed configuration is empty or is not an object
@@ -117,6 +119,7 @@ export default class SDK implements ISDK {
       }
     }
 
+    this.ocUserAgent = this.configuration.ocUserAgent;
     this.liveChatVersion = LiveChatVersion.V2;
   }
 
@@ -137,17 +140,21 @@ export default class SDK implements ISDK {
       waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.getChatConfig
     });
 
+    const requestHeaders = {};
+    addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
+
     try {
       const response = await axiosInstance.get(url, {
+        headers: requestHeaders,
         timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.getChatConfig
       });
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
       const { data } = response;
-      this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETLCWFCSDETAILSSUCCEEDED, "Get LCW FCS details succeeded", "", response, elapsedTimeInMilliseconds, requestPath, method);
+      this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETLCWFCSDETAILSSUCCEEDED, "Get LCW FCS details succeeded", "", response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
       return data;
     } catch (error) {
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-      this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETLCWFCSDETAILSFAILED, "Get LCW FCS details failed", "", undefined, elapsedTimeInMilliseconds, requestPath, method, error);
+      this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETLCWFCSDETAILSFAILED, "Get LCW FCS details failed", "", undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
       throw error;
     }
   }
@@ -173,14 +180,16 @@ export default class SDK implements ISDK {
       waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.getChatConfig
     });
 
-    let headers = {};
+    let requestHeaders = {};
+    addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
+
     if (bypassCache) {
-      headers = { ...Constants.bypassCacheHeaders, ...headers };
+      requestHeaders = { ...Constants.bypassCacheHeaders, ...requestHeaders };
     }
 
     try {
       const response = await axiosInstance.get(url, {
-        headers,
+        headers: requestHeaders,
         timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.getChatConfig
       });
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
@@ -194,14 +203,12 @@ export default class SDK implements ISDK {
       if (response.headers && response.headers["date"]) {
         data.headers["date"] = response.headers["date"];
       }
-      this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATCONFIGSUCCEEDED, "Get Chat config succeeded", requestId, response, elapsedTimeInMilliseconds,
-        requestPath, method);
+      this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATCONFIGSUCCEEDED, "Get Chat config succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
 
       return data;
     } catch (error) {
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-      this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATCONFIGFAILED, "Get Chat config failed", requestId, undefined, elapsedTimeInMilliseconds,
-        requestPath, method, error);
+      this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATCONFIGFAILED, "Get Chat config failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
       return Promise.reject(error);
     }
   }
@@ -231,16 +238,17 @@ export default class SDK implements ISDK {
 
     // Extract auth token and reconnect id from optional param
     const { authenticatedUserToken, reconnectId } = getLWIDetailsOptionalParams;
-    const headers: StringMap = Constants.defaultHeaders;
+    const requestHeaders: StringMap = Constants.defaultHeaders;
 
     // updated auth endpoint for authenticated chats and add auth token in header
     if (authenticatedUserToken) {
       requestPath = `/${OmnichannelEndpoints.LiveChatAuthLiveWorkItemDetailsPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
-      headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
-      headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
+      requestHeaders[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+      requestHeaders[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
     }
 
-    this.setSessionIdHeader(this.sessionId, headers);
+    addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
+    this.setSessionIdHeader(this.sessionId, requestHeaders);
 
     if (!this.configuration.useUnauthReconnectIdSigQueryParam) {
       // Append reconnect id on the endpoint if vailable
@@ -262,7 +270,7 @@ export default class SDK implements ISDK {
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
     const options: AxiosRequestConfig = {
-      headers,
+      headers: requestHeaders,
       method,
       url,
       params,
@@ -276,12 +284,12 @@ export default class SDK implements ISDK {
         const { data, headers } = response;
         this.setAuthCodeNonce(headers);
 
-        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETLWISTATUSSUCCEEDED, "Get LWI Details succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
+        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETLWISTATUSSUCCEEDED, "Get LWI Details succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
         resolve(data);
 
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETLWISTATUSFAILED, "Get LWI Details failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETLWISTATUSFAILED, "Get LWI Details failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           throwClientHTTPTimeoutError();
         }
@@ -307,13 +315,14 @@ export default class SDK implements ISDK {
       requestId = uuidv4();
     }
 
-    const headers: StringMap = Constants.defaultHeaders;
+    const requestHeaders: StringMap = Constants.defaultHeaders;
+    addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
 
     const endpoint = createGetChatTokenEndpoint(currentLiveChatVersion as LiveChatVersion || this.liveChatVersion, authenticatedUserToken ? true : false);
 
     if (authenticatedUserToken) {
-      headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
-      headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
+      requestHeaders[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+      requestHeaders[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
     }
 
     let requestPath = `/${endpoint}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
@@ -341,7 +350,7 @@ export default class SDK implements ISDK {
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
     const options: AxiosRequestConfig = {
-      headers,
+      headers: requestHeaders,
       method,
       url,
       params,
@@ -373,7 +382,7 @@ export default class SDK implements ISDK {
         // Resolves only if it contains chat token response which only happens on status 200
         if (data) {
           data.requestId = requestId;
-          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATTOKENSUCCEEDED, "Get Chat Token succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
+          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATTOKENSUCCEEDED, "Get Chat Token succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
           resolve(data);
           return;
         }
@@ -386,7 +395,7 @@ export default class SDK implements ISDK {
 
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETCHATTOKENFAILED, "Get Chat Token failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETCHATTOKENFAILED, "Get Chat Token failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           throwClientHTTPTimeoutError();
         }
@@ -405,16 +414,17 @@ export default class SDK implements ISDK {
     this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETRECONNECTABLECHATS, "Get Reconnectable chat Started");
 
     const requestPath = `/${OmnichannelEndpoints.LiveChatGetReconnectableChatsPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${this.omnichannelConfiguration.orgId}?channelId=${this.omnichannelConfiguration.channelId}`;
-    const headers: StringMap = Constants.defaultHeaders;
-    headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
-    headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
+    const requestHeaders: StringMap = Constants.defaultHeaders;
+    requestHeaders[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+    requestHeaders[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
 
-    this.setSessionIdHeader(this.sessionId, headers);
+    this.setSessionIdHeader(this.sessionId, requestHeaders);
+    addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
     const options: AxiosRequestConfig = {
-      headers,
+      headers: requestHeaders,
       method,
       url,
       timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.getReconnectableChats
@@ -433,8 +443,7 @@ export default class SDK implements ISDK {
 
         // Resolves only if it contains reconnectable chats response which only happens on status 200
         if (data) {
-          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETRECONNECTABLECHATS, "Get Reconnectable Chats Succeeded and old session returned", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
-
+          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETRECONNECTABLECHATS, "Get Reconnectable Chats Succeeded and old session returned", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
           resolve(data);
           return;
         }
@@ -443,7 +452,7 @@ export default class SDK implements ISDK {
         return;
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETRECONNECTABLECHATS, "Get Reconnectable Chats failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETRECONNECTABLECHATS, "Get Reconnectable Chats failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           throwClientHTTPTimeoutError();
         }
@@ -462,14 +471,15 @@ export default class SDK implements ISDK {
     this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITY, "Get Reconnectable availability Started");
 
     const requestPath = `/${OmnichannelEndpoints.LiveChatReconnectAvailabilityPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${reconnectId}`;
-    const headers: StringMap = Constants.defaultHeaders;
+    const requestHeaders: StringMap = Constants.defaultHeaders;
 
-    this.setSessionIdHeader(this.sessionId, headers);
+    this.setSessionIdHeader(this.sessionId, requestHeaders);
+    addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
     const options: AxiosRequestConfig = {
-      headers,
+      headers: requestHeaders,
       method,
       url,
       timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.getReconnectAvailability
@@ -482,19 +492,19 @@ export default class SDK implements ISDK {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         const { data } = response;
         if (data) {
-          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITY, "Get Reconnect availability succeeded", undefined, response, elapsedTimeInMilliseconds, requestPath, method);
+          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITY, "Get Reconnect availability succeeded", undefined, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
 
           resolve(data);
           return;
         }
         // No data found so returning null
-        this.logWithLogger(LogLevel.WARN, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITY, "Get Reconnect availability didn't send any valid data", undefined, response, elapsedTimeInMilliseconds, requestPath, method);
+        this.logWithLogger(LogLevel.WARN, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITY, "Get Reconnect availability didn't send any valid data", undefined, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
 
         resolve();
         return;
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITY, "Get Reconnect Availability failed", undefined, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITY, "Get Reconnect Availability failed", undefined, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           throwClientHTTPTimeoutError();
         }
@@ -523,14 +533,15 @@ export default class SDK implements ISDK {
 
     const { authenticatedUserToken, initContext, getContext } = queueAvailabilityOptionalParams;
 
-    const headers: StringMap = Constants.defaultHeaders;
+    const requestHeaders: StringMap = Constants.defaultHeaders;
 
     if (authenticatedUserToken) {
-      headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
-      headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
+      requestHeaders[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+      requestHeaders[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
     }
 
-    this.setSessionIdHeader(this.sessionId, headers);
+    this.setSessionIdHeader(this.sessionId, requestHeaders);
+    addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
 
     const data: InitContext = initContext || {};
 
@@ -575,7 +586,7 @@ export default class SDK implements ISDK {
 
     const options: AxiosRequestConfig = {
       data,
-      headers,
+      headers: requestHeaders,
       method,
       url,
       timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.getAgentAvailability
@@ -589,13 +600,13 @@ export default class SDK implements ISDK {
         this.setAuthCodeNonce(headers);
 
         if (data) {
-          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETAGENTAVAILABILITYSUCCEEDED, "Get agent availability succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
+          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETAGENTAVAILABILITYSUCCEEDED, "Get agent availability succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
 
           resolve(data);
         }
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETAGENTAVAILABILITYFAILED, "Get agent availability failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETAGENTAVAILABILITYFAILED, "Get agent availability failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
 
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           throwClientHTTPTimeoutError();
@@ -623,15 +634,16 @@ export default class SDK implements ISDK {
     });
 
     const { reconnectId, authenticatedUserToken, initContext, getContext } = sessionInitOptionalParams;
-    const headers: StringMap = Constants.defaultHeaders;
+    const requestHeaders: StringMap = Constants.defaultHeaders;
     let requestPath = `/${OmnichannelEndpoints.LiveChatSessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
     if (authenticatedUserToken) {
       requestPath = `/${OmnichannelEndpoints.LiveChatAuthSessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
-      headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
-      headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
+      requestHeaders[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+      requestHeaders[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
     }
 
-    this.setSessionIdHeader(this.sessionId, headers);
+    this.setSessionIdHeader(this.sessionId, requestHeaders);
+    addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
 
     if (!this.configuration.useUnauthReconnectIdSigQueryParam) {
       if (reconnectId) {
@@ -676,7 +688,7 @@ export default class SDK implements ISDK {
     const method = "POST";
     const options: AxiosRequestConfig = {
       data,
-      headers,
+      headers: requestHeaders,
       method,
       url,
       params,
@@ -690,11 +702,11 @@ export default class SDK implements ISDK {
         const { headers } = response;
         this.setAuthCodeNonce(headers);
 
-        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSUCCEEDED, "Session Init Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, data);
+        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSUCCEEDED, "Session Init Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, data, requestHeaders);
         resolve();
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SESSIONINITFAILED, "Session Init failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, data);
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SESSIONINITFAILED, "Session Init failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, data, requestHeaders);
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           throwClientHTTPTimeoutError();
         }
@@ -722,17 +734,18 @@ export default class SDK implements ISDK {
 
     const { authenticatedUserToken, isReconnectChat, isPersistentChat, chatId } = sessionCloseOptionalParams;
 
-    const headers: StringMap = Constants.defaultHeaders;
+    const requestHeaders: StringMap = Constants.defaultHeaders;
     const data: any = {}; // eslint-disable-line @typescript-eslint/no-explicit-any
     data.chatId = chatId;
 
     if (authenticatedUserToken) {
       requestPath = `/${OmnichannelEndpoints.LiveChatAuthSessionClosePath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
-      headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
-      headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
+      requestHeaders[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+      requestHeaders[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
     }
 
-    this.setSessionIdHeader(this.sessionId, headers);
+    this.setSessionIdHeader(this.sessionId, requestHeaders);
+    addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
 
     if (isReconnectChat) {
       requestPath += `&isReconnectChat=true`;
@@ -746,7 +759,7 @@ export default class SDK implements ISDK {
     const method = "POST";
     const options: AxiosRequestConfig = {
       data,
-      headers,
+      headers: requestHeaders,
       method,
       url,
       timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.sessionClose
@@ -759,13 +772,13 @@ export default class SDK implements ISDK {
         this.setAuthCodeNonce(headers);
 
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONCLOSESUCCEEDED, "Session Close succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
+        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONCLOSESUCCEEDED, "Session Close succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
 
         resolve();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SESSIONCLOSEFAILED, "Session close failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SESSIONCLOSEFAILED, "Session close failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
         if (error.code === Constants.axiosTimeoutErrorCode) {
           throwClientHTTPTimeoutError();
         }
@@ -793,18 +806,19 @@ export default class SDK implements ISDK {
       waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.validateAuthChatRecord
     });
 
-    const headers: StringMap = Constants.defaultHeaders;
+    const requestHeaders: StringMap = Constants.defaultHeaders;
     if (authenticatedUserToken) {
-      headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
-      headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
+      requestHeaders[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+      requestHeaders[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
     }
 
-    this.setSessionIdHeader(this.sessionId, headers);
+    this.setSessionIdHeader(this.sessionId, requestHeaders);
+    addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
     const options: AxiosRequestConfig = {
-      headers,
+      headers: requestHeaders,
       method,
       url,
       timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.validateAuthChatRecordTimeout
@@ -818,11 +832,11 @@ export default class SDK implements ISDK {
 
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         if (response.data?.authChatExist === true) {
-          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDSUCCEEDED, "Validate Auth Chat Record succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
+          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDSUCCEEDED, "Validate Auth Chat Record succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
 
           resolve(response.data);
         } else {
-          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDFAILED, "Validate Auth Chat Record Failed. Record is not found or request is not authorized", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
+          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDFAILED, "Validate Auth Chat Record Failed. Record is not found or request is not authorized", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
 
           reject(new Error("Validate Auth Chat Record Failed. Record is not found or request is not authorized"));
         }
@@ -831,7 +845,7 @@ export default class SDK implements ISDK {
       } catch (error: any) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
 
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDFAILED, "Validate Auth Chat Record failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDFAILED, "Validate Auth Chat Record failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
 
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           throwClientHTTPTimeoutError();
@@ -866,19 +880,19 @@ export default class SDK implements ISDK {
     });
 
     const { authenticatedUserToken } = submitPostChatResponseOptionalParams;
-    const headers: StringMap = Constants.defaultHeaders;
+    const requestHeaders: StringMap = Constants.defaultHeaders;
 
     if (authenticatedUserToken) {
       requestPath = `/${OmnichannelEndpoints.LiveChatAuthSubmitPostChatPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
-      headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
-      headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
+      requestHeaders[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+      requestHeaders[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
     }
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "POST";
     const options: AxiosRequestConfig = {
       data: JSON.stringify(postChatResponse),
-      headers,
+      headers: requestHeaders,
       method,
       url,
       timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.submitPostChatResponse
@@ -891,13 +905,13 @@ export default class SDK implements ISDK {
         this.setAuthCodeNonce(headers);
 
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SUBMITPOSTCHATSUCCEEDED, "Submit Post Chat succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
+        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SUBMITPOSTCHATSUCCEEDED, "Submit Post Chat succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
 
         resolve();
 
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SUBMITPOSTCHATFAILED, "Submit Post Chat Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SUBMITPOSTCHATFAILED, "Submit Post Chat Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           throwClientHTTPTimeoutError();
         }
@@ -930,26 +944,27 @@ export default class SDK implements ISDK {
 
     const { authenticatedUserToken, requestId } = getsurveyInviteLinkOptionalParams;
 
-    const headers: StringMap = Constants.defaultHeaders;
+    const requestHeaders: StringMap = Constants.defaultHeaders;
 
     if (authenticatedUserToken) {
       requestPath = `/${OmnichannelEndpoints.LiveChatAuthGetSurveyInviteLinkPath}/${this.omnichannelConfiguration.orgId}/${surveyOwnerId}`;
-      headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
-      headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
-      headers[OmnichannelHTTPHeaders.widgetAppId] = this.omnichannelConfiguration.widgetId;
+      requestHeaders[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+      requestHeaders[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
+      requestHeaders[OmnichannelHTTPHeaders.widgetAppId] = this.omnichannelConfiguration.widgetId;
     }
 
-    this.setSessionIdHeader(this.sessionId, headers);
+    this.setSessionIdHeader(this.sessionId, requestHeaders);
+    addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
 
     if (requestId) {
-      headers[OmnichannelHTTPHeaders.requestId] = requestId;
+      requestHeaders[OmnichannelHTTPHeaders.requestId] = requestId;
     }
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "POST";
     const options: AxiosRequestConfig = {
       data: JSON.stringify(surveyInviteAPIRequestBody),
-      headers,
+      headers: requestHeaders,
       method,
       url,
       timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.getSurveyInviteLink
@@ -962,13 +977,11 @@ export default class SDK implements ISDK {
         this.setAuthCodeNonce(headers);
 
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETSURVEYINVITELINKSUCCEEDED, "Get Survey Invite Link Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
-
+        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETSURVEYINVITELINKSUCCEEDED, "Get Survey Invite Link Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
         resolve(data);
-
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETSURVEYINVITELINKFAILED, "Get Survey Invite Link failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETSURVEYINVITELINKFAILED, "Get Survey Invite Link failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           throwClientHTTPTimeoutError();
         }
@@ -998,31 +1011,32 @@ export default class SDK implements ISDK {
     });
 
     const { authenticatedUserToken, currentLiveChatVersion } = getChatTranscriptsOptionalParams;
-    const headers: StringMap = Constants.defaultHeaders;
-    headers[OmnichannelHTTPHeaders.organizationId] = this.omnichannelConfiguration.orgId;
-    headers[OmnichannelHTTPHeaders.widgetAppId] = this.omnichannelConfiguration.widgetId;
-    headers[OmnichannelHTTPHeaders.authorization] = token;
+    const requestHeaders: StringMap = Constants.defaultHeaders;
+    requestHeaders[OmnichannelHTTPHeaders.organizationId] = this.omnichannelConfiguration.orgId;
+    requestHeaders[OmnichannelHTTPHeaders.widgetAppId] = this.omnichannelConfiguration.widgetId;
+    requestHeaders[OmnichannelHTTPHeaders.authorization] = token;
 
     if (this.liveChatVersion === LiveChatVersion.V2 || (currentLiveChatVersion && currentLiveChatVersion === LiveChatVersion.V2)) {
       requestPath = `/${OmnichannelEndpoints.LiveChatv2GetChatTranscriptPath}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
       if (authenticatedUserToken) {
-        headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
-        headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
+        requestHeaders[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+        requestHeaders[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
         requestPath = `/${OmnichannelEndpoints.LiveChatv2AuthGetChatTranscriptPath}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
       }
     }
     else if (authenticatedUserToken) {
-      headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
-      headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
+      requestHeaders[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+      requestHeaders[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
       requestPath = `/${OmnichannelEndpoints.LiveChatAuthGetChatTranscriptPath}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
     }
 
-    this.setSessionIdHeader(this.sessionId, headers);
+    this.setSessionIdHeader(this.sessionId, requestHeaders);
+    addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
     const options: AxiosRequestConfig = {
-      headers,
+      headers: requestHeaders,
       method,
       url,
       timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.getChatTranscripts
@@ -1034,14 +1048,11 @@ export default class SDK implements ISDK {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         const { data, headers } = response;
         this.setAuthCodeNonce(headers);
-
-        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATTRANSCRIPTSUCCEEDED, "Get Chat Transcript succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
-
+        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATTRANSCRIPTSUCCEEDED, "Get Chat Transcript succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
         resolve(data);
-
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETCHATTRANSCRIPTFAILED, "Get Chat Transcript failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETCHATTRANSCRIPTFAILED, "Get Chat Transcript failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           throwClientHTTPTimeoutError();
         }
@@ -1071,24 +1082,25 @@ export default class SDK implements ISDK {
     });
 
     const { authenticatedUserToken } = emailTranscriptOptionalParams;
-    const headers: StringMap = Constants.defaultHeaders;
-    headers[OmnichannelHTTPHeaders.organizationId] = this.omnichannelConfiguration.orgId;
-    headers[OmnichannelHTTPHeaders.widgetAppId] = this.omnichannelConfiguration.widgetId;
-    headers[OmnichannelHTTPHeaders.authorization] = token;
+    const requestHeaders: StringMap = Constants.defaultHeaders;
+    requestHeaders[OmnichannelHTTPHeaders.organizationId] = this.omnichannelConfiguration.orgId;
+    requestHeaders[OmnichannelHTTPHeaders.widgetAppId] = this.omnichannelConfiguration.widgetId;
+    requestHeaders[OmnichannelHTTPHeaders.authorization] = token;
 
     if (authenticatedUserToken) {
-      headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
-      headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
+      requestHeaders[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+      requestHeaders[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
       requestPath = `/${OmnichannelEndpoints.LiveChatAuthTranscriptEmailRequestPath}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
     }
 
-    this.setSessionIdHeader(this.sessionId, headers);
+    this.setSessionIdHeader(this.sessionId, requestHeaders);
+    addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "POST";
     const options: AxiosRequestConfig = {
       data: JSON.stringify(emailRequestBody),
-      headers,
+      headers: requestHeaders,
       method,
       url,
       timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.emailTranscript
@@ -1101,13 +1113,11 @@ export default class SDK implements ISDK {
         this.setAuthCodeNonce(headers);
 
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.EMAILTRANSCRIPTSUCCEEDED, "Email Transcript succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
-
+        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.EMAILTRANSCRIPTSUCCEEDED, "Email Transcript succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
         resolve();
-
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.EMAILTRANSCRIPTFAILED, "Email Transcript Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.EMAILTRANSCRIPTFAILED, "Email Transcript Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           throwClientHTTPTimeoutError();
         }
@@ -1135,16 +1145,17 @@ export default class SDK implements ISDK {
       waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.fetchDataMaskingInfo
     });
 
-    const headers: StringMap = Constants.defaultHeaders;
-    headers[OmnichannelHTTPHeaders.organizationId] = this.omnichannelConfiguration.orgId;
-    headers[OmnichannelHTTPHeaders.requestId] = requestId;
+    const requestHeaders: StringMap = Constants.defaultHeaders;
+    requestHeaders[OmnichannelHTTPHeaders.organizationId] = this.omnichannelConfiguration.orgId;
+    requestHeaders[OmnichannelHTTPHeaders.requestId] = requestId;
 
-    this.setSessionIdHeader(this.sessionId, headers);
+    this.setSessionIdHeader(this.sessionId, requestHeaders);
+    addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
     const options: AxiosRequestConfig = {
-      headers,
+      headers: requestHeaders,
       method,
       url,
       timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.fetchDataMaskingInfo
@@ -1155,13 +1166,11 @@ export default class SDK implements ISDK {
         const response = await axiosInstance(options);
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         const { data } = response;
-        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.FETCHDATAMASKINGSUCCEEDED, "Fetch Data Masking succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
-
+        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.FETCHDATAMASKINGSUCCEEDED, "Fetch Data Masking succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
         resolve(data);
-
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.FETCHDATAMASKINGFAILED, "Fetch Data Masking Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.FETCHDATAMASKINGFAILED, "Fetch Data Masking Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           throwClientHTTPTimeoutError();
         }
@@ -1190,16 +1199,17 @@ export default class SDK implements ISDK {
     });
 
     const { authenticatedUserToken } = secondaryChannelEventOptionalParams;
-    const headers: StringMap = Constants.defaultHeaders;
-    headers[OmnichannelHTTPHeaders.organizationId] = this.omnichannelConfiguration.orgId;
+    const requestHeaders: StringMap = Constants.defaultHeaders;
+    requestHeaders[OmnichannelHTTPHeaders.organizationId] = this.omnichannelConfiguration.orgId;
 
     if (authenticatedUserToken) {
-      headers[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
-      headers[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
+      requestHeaders[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+      requestHeaders[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
       requestPath = `/${OmnichannelEndpoints.LiveChatAuthSecondaryChannelEventPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
     }
 
-    this.setSessionIdHeader(this.sessionId, headers);
+    this.setSessionIdHeader(this.sessionId, requestHeaders);
+    addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
 
     requestPath += "?channelId=" + Constants.defaultChannelId;
 
@@ -1207,7 +1217,7 @@ export default class SDK implements ISDK {
     const method = "POST";
     const options: AxiosRequestConfig = {
       data: JSON.stringify(secondaryChannelEventRequestBody),
-      headers,
+      headers: requestHeaders,
       method,
       url,
       timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.makeSecondaryChannelEventRequest
@@ -1220,12 +1230,11 @@ export default class SDK implements ISDK {
         this.setAuthCodeNonce(headers);
 
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SECONDARYCHANNELEVENTREQUESTSUCCEEDED, "Secondary Channel Event Request Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
+        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SECONDARYCHANNELEVENTREQUESTSUCCEEDED, "Secondary Channel Event Request Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
         resolve();
-
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SECONDARYCHANNELEVENTREQUESTFAILED, "Secondary Channel Event Request Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SECONDARYCHANNELEVENTREQUESTFAILED, "Secondary Channel Event Request Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           throwClientHTTPTimeoutError();
         }
@@ -1248,18 +1257,19 @@ export default class SDK implements ISDK {
     const requestPath = `/${OmnichannelEndpoints.SendTypingIndicatorPath}/${requestId}`;
     const axiosInstance = axios.create();
 
-    const headers: StringMap = Constants.defaultHeaders;
-    headers[OmnichannelHTTPHeaders.organizationId] = this.omnichannelConfiguration.orgId;
+    const requestHeaders: StringMap = Constants.defaultHeaders;
+    requestHeaders[OmnichannelHTTPHeaders.organizationId] = this.omnichannelConfiguration.orgId;
     if (customerDisplayName) {
-      headers[Constants.customerDisplayName] = customerDisplayName;
+      requestHeaders[Constants.customerDisplayName] = customerDisplayName;
     }
 
-    this.setSessionIdHeader(this.sessionId, headers);
+    this.setSessionIdHeader(this.sessionId, requestHeaders);
+    addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "POST";
     const options: AxiosRequestConfig = {
-      headers,
+      headers: requestHeaders,
       method,
       url,
       timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.sendTypingIndicator
@@ -1269,14 +1279,11 @@ export default class SDK implements ISDK {
       try {
         const response = await axiosInstance(options);
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SENDTYPINGINDICATORSUCCEEDED, "Send Typing Indicator Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method);
-
+        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SENDTYPINGINDICATORSUCCEEDED, "Send Typing Indicator Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
         resolve();
-
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SENDTYPINGINDICATORFAILED, "Send Typing Indicator Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error);
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SENDTYPINGINDICATORFAILED, "Send Typing Indicator Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
 
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           throwClientHTTPTimeoutError();
@@ -1300,7 +1307,7 @@ export default class SDK implements ISDK {
    * @param error Error
    * @param data Data
    */
-  private logWithLogger(logLevel: LogLevel, telemetryEventType: OCSDKTelemetryEvent, description: string, requestId?: string, response?: AxiosResponse<any>, elapsedTimeInMilliseconds?: number, requestPath?: string, method?: string, error?: unknown, requestPayload?: any): void { // eslint-disable-line @typescript-eslint/no-explicit-any
+  private logWithLogger(logLevel: LogLevel, telemetryEventType: OCSDKTelemetryEvent, description: string, requestId?: string, response?: AxiosResponse<any>, elapsedTimeInMilliseconds?: number, requestPath?: string, method?: string, error?: unknown, requestPayload?: any, requestHeaders?: any): void { // eslint-disable-line @typescript-eslint/no-explicit-any
     if (!this.logger) {
       return;
     }
@@ -1320,6 +1327,12 @@ export default class SDK implements ISDK {
       LoggingSanitizer.stripGeolocation(sanitizedRequestPayload);
     }
 
+    let sanitizedRequestHeaders = undefined;
+    if (requestHeaders) {
+      sanitizedRequestHeaders = { ...requestHeaders };
+      LoggingSanitizer.stripRequestHeadersSensitiveProperties(sanitizedRequestHeaders);
+    }
+
     const customData = {
       RequestId: requestId,
       Region: response?.data.Region,
@@ -1329,7 +1342,8 @@ export default class SDK implements ISDK {
       RequestMethod: method,
       ResponseStatusCode: response ? response.status : error ? (error as any).response?.status : undefined, // eslint-disable-line @typescript-eslint/no-explicit-any
       ExceptionDetails: error,
-      RequestPayload: sanitizedRequestPayload
+      RequestPayload: sanitizedRequestPayload,
+      RequestHeaders: sanitizedRequestHeaders
     };
     this.logger.log(logLevel, telemetryEventType, customData, description);
   }

@@ -4,9 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.5.1] - 2024-05-15
+
+### Fixed
+
+- Remove console logs from `LoggingSanitizer.stripRequestHeadersSensitiveProperties()`
+
+## [0.5.0] - 2024-05-14
+
 ### Added
 
 - Add `livechatconnector/v2/lcwfcsdetails` endpoint
+- Add `Ms-Oc-User-Agent` as default request headers
+- Log `RequestHeaders`
 
 - Added axios-retry library support
 
