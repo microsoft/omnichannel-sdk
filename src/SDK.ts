@@ -249,9 +249,10 @@ export default class SDK implements ISDK {
     addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
     this.setSessionIdHeader(this.sessionId, requestHeaders);
 
-    if (!this.configuration.useUnauthReconnectIdSigQueryParam) {
-      // Append reconnect id on the endpoint if vailable
-      if (reconnectId) {
+    // If should only be applicable on unauth chat & the flag enabled
+    const shouldUseSigQueryParam = !authenticatedUserToken && this.configuration.useUnauthReconnectIdSigQueryParam === true;
+    if (reconnectId) {
+      if (!shouldUseSigQueryParam) {
         requestPath += `/${reconnectId}`;
       }
     }
@@ -260,8 +261,8 @@ export default class SDK implements ISDK {
       channelId: this.omnichannelConfiguration.channelId
     };
 
-    if (this.configuration.useUnauthReconnectIdSigQueryParam) {
-      if (reconnectId) {
+    if (reconnectId) {
+      if (shouldUseSigQueryParam) {
         params.sig = reconnectId;
       }
     }
@@ -326,8 +327,10 @@ export default class SDK implements ISDK {
 
     let requestPath = `/${endpoint}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
 
-    if (!this.configuration.useUnauthReconnectIdSigQueryParam) {
-      if (reconnectId) {
+    // If should only be applicable on unauth chat & the flag enabled
+    const shouldUseSigQueryParam = !authenticatedUserToken && this.configuration.useUnauthReconnectIdSigQueryParam === true;
+    if (reconnectId) {
+      if (!shouldUseSigQueryParam) {
         requestPath += `/${reconnectId}`;
       }
     }
@@ -340,8 +343,8 @@ export default class SDK implements ISDK {
       params.refreshToken = 'true'
     }
 
-    if (this.configuration.useUnauthReconnectIdSigQueryParam) {
-      if (reconnectId) {
+    if (reconnectId) {
+      if (shouldUseSigQueryParam) {
         params.sig = reconnectId;
       }
     }
@@ -666,8 +669,10 @@ export default class SDK implements ISDK {
     this.setSessionIdHeader(this.sessionId, requestHeaders);
     addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
 
-    if (!this.configuration.useUnauthReconnectIdSigQueryParam) {
-      if (reconnectId) {
+    // If should only be applicable on unauth chat & the flag enabled
+    const shouldUseSigQueryParam = !authenticatedUserToken && this.configuration.useUnauthReconnectIdSigQueryParam === true;
+    if (reconnectId) {
+      if (!shouldUseSigQueryParam) {
         requestPath += `/${reconnectId}`;
       }
     }
@@ -676,9 +681,9 @@ export default class SDK implements ISDK {
       channelId: this.omnichannelConfiguration.channelId
     }
 
-    if (this.configuration.useUnauthReconnectIdSigQueryParam) {
-      if (reconnectId) {
-        params.sig = reconnectId
+    if (reconnectId) {
+      if (shouldUseSigQueryParam) {
+        params.sig = reconnectId;
       }
     }
 

@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix `Authenticated Chat Reconnect` APIs using `sig` as query paramater
+
 ## [0.5.1] - 2024-05-15
 
 ### Fixed
