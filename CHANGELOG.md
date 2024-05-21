@@ -4,11 +4,25 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- added axios-retry library support
+
+### Fixed
+
+- Fix `Authenticated Chat Reconnect` APIs using `sig` as query paramater
+
+## [0.5.1] - 2024-05-15
+
+### Fixed
+
+- Remove console logs from `LoggingSanitizer.stripRequestHeadersSensitiveProperties()`
+
+## [0.5.0] - 2024-05-14
+
 ### Added
 
 - Add `livechatconnector/v2/lcwfcsdetails` endpoint
-
-- Added axios-retry library support
+- Add `Ms-Oc-User-Agent` as default request headers
+- Log `RequestHeaders`
 
 ## [0.4.5] - 2024-03-18
 
