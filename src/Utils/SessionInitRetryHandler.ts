@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AxiosError } from "axios";
 import Constants from "../Common/Constants";
-import { isNetworkError, isRetryableError } from "axios-retry"
+import { isNetworkError } from "axios-retry"
+import { isRetryableError } from "../Utils/axiosRetryHandler";
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 const sessionInitRetryHandler = (error: AxiosError, retryOn429: boolean | undefined) => {

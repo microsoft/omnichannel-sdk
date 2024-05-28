@@ -1,5 +1,5 @@
 import { AxiosError, AxiosInstance, AxiosRequestConfig } from "axios";
-import axiosRetry, { isNetworkError, isRetryableError } from "axios-retry"
+import axiosRetry, { isNetworkError } from "axios-retry"
 import Constants from "../Common/Constants";
 import IAxiosRetryOptions from "../Interfaces/IAxiosRetryOptions";
 
@@ -64,11 +64,20 @@ const axiosRetryHandler = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryO
           }
         }
         return retryAfterTime;
-      } 
+      }
       return Math.pow(2, retryCount) * timeBetweenRetry;
     },
 
   });
 
+}
+
+export function isRetryableError(error: AxiosError): boolean {
+  return (
+    error.code !== 'ECONNABORTED' &&
+    (!error.response ||
+      error.response.status === 429 ||
+      (error.response.status >= 500 && error.response.status <= 599))
+  );
 }
 export default axiosRetryHandler;
