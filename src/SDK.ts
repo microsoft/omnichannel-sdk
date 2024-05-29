@@ -361,7 +361,7 @@ export default class SDK implements ISDK {
     axiosRetryHandler(axiosInstance, {
       headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce],
       retries: (currentRetryCount > this.configuration.maxRequestRetriesOnFailure) ? currentRetryCount : this.configuration.maxRequestRetriesOnFailure,
-      retryOn429: this.configuration.getChatTokenRetryOn429,
+      retryOn429: true,
       waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.getChatToken
     });
 
