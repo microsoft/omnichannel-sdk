@@ -13,7 +13,7 @@ export default interface IAxiosRetryOptions {
    * Function to handle logic and evaluate if retry should continue based on response results.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  shouldRetry? (response? : any, axiosRetryOptions?: IAxiosRetryOptions) : boolean
+  shouldRetry?(error?: any, retryOn429?: boolean): boolean
   /**
    * Overwrite request headers on demand based on response headers of the same name
    */

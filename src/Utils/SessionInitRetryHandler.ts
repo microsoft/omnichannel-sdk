@@ -1,25 +1,26 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { AxiosResponse } from "axios";
+import { AxiosError } from "axios";
 import Constants from "../Common/Constants";
-import IAxiosRetryOptions from "../Interfaces/IAxiosRetryOptions";
+import { isNetworkError } from "axios-retry"
+import { isRetryableError } from "../Utils/axiosRetryHandler";
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-const sessionInitRetryHandler = (response: AxiosResponse<any> | undefined, axiosRetryOptions: IAxiosRetryOptions) => {
-    if (response?.status) {
-        switch (response.status) {
+const sessionInitRetryHandler = (error: AxiosError, retryOn429: boolean | undefined) => {
+    if (error?.response?.status) {
+        switch (error.response.status) {
             case Constants.tooManyRequestsStatusCode:
-                if (axiosRetryOptions && axiosRetryOptions.retryOn429 === false) {
+                if (retryOn429 === false) {
                     return false;
                 }
                 break;
             case Constants.badRequestStatusCode:
-                if (parseInt(response.headers.errorcode) === Constants.outOfOfficeErrorCode) {
+                if (error.response?.headers?.errorcode && parseInt(error.response.headers.errorcode) === Constants.outOfOfficeErrorCode) {
                     return false;
                 }
                 break;
-            default: return true;
+            default: return isRetryableError(error) || isNetworkError(error) || error.response?.status == 0 || !error.response?.status;
         }
     }
-    return true;
+    return isRetryableError(error) || isNetworkError(error) || error.response?.status == 0 || !error.response?.status;
 }
 export default sessionInitRetryHandler;
