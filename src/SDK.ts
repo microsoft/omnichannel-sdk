@@ -72,7 +72,7 @@ export default class SDK implements ISDK {
     authCodeNonce: uuidv4().substring(0, 8),
     getChatTokenRetryCount: 10,
     getChatTokenTimeBetweenRetriesOnFailure: 10000,
-    getChatTokenRetryOn429: false,
+    getChatTokenRetryOn429: true,
     maxRequestRetriesOnFailure: 3,
     defaultRequestTimeout: undefined,
     requestTimeoutConfig: SDK.defaultRequestTimeoutConfig,
@@ -361,7 +361,7 @@ export default class SDK implements ISDK {
     axiosRetryHandler(axiosInstance, {
       headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce],
       retries: (currentRetryCount > this.configuration.maxRequestRetriesOnFailure) ? currentRetryCount : this.configuration.maxRequestRetriesOnFailure,
-      retryOn429: true,
+      retryOn429: this.configuration.getChatTokenRetryOn429,
       waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.getChatToken
     });
 
