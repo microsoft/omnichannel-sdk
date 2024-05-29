@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/ocsdk",
-  "version": "0.5.2-0-axiosRetryTestnik",
+  "version": "0.5.3-0",
   "description": "Microsoft Omnichannel SDK",
   "files": [
     "dist/**/*",
