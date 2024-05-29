@@ -14,7 +14,7 @@ const axiosRetryHandler = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryO
 
   // Default values
   if (axiosRetryOptions.retryOn429 === undefined || axiosRetryOptions.retryOn429 === null) {
-    axiosRetryOptions.retryOn429 = true;
+    axiosRetryOptions.retryOn429 = false;
   }
 
 
@@ -24,7 +24,6 @@ const axiosRetryHandler = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryO
       if (error.response?.status === Constants.tooManyRequestsStatusCode && axiosRetryOptions.retryOn429 === false) {
         return false;
       }
-
       return isRetryableError(error) || isNetworkError(error) || error.response?.status == 0 || !error.response?.status;
     }
 

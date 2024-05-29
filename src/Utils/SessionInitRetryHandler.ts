@@ -14,7 +14,7 @@ const sessionInitRetryHandler = (error: AxiosError, retryOn429: boolean | undefi
                 }
                 break;
             case Constants.badRequestStatusCode:
-                if (parseInt(error.response.headers.errorcode) === Constants.outOfOfficeErrorCode) {
+                if (error.response?.headers?.errorcode && parseInt(error.response.headers.errorcode) === Constants.outOfOfficeErrorCode) {
                     return false;
                 }
                 break;
