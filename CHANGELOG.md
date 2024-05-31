@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 - added axios-retry library support
+- Fix checking for 'global' object before accessing it
 
 ## [0.5.2] - 2024-05-20
 
