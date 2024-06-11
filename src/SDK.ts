@@ -72,7 +72,7 @@ export default class SDK implements ISDK {
     authCodeNonce: uuidv4().substring(0, 8),
     getChatTokenRetryCount: 10,
     getChatTokenTimeBetweenRetriesOnFailure: 10000,
-    getChatTokenRetryOn429: false,
+    getChatTokenRetryOn429: true,
     maxRequestRetriesOnFailure: 3,
     defaultRequestTimeout: undefined,
     requestTimeoutConfig: SDK.defaultRequestTimeoutConfig,
@@ -624,7 +624,7 @@ export default class SDK implements ISDK {
     const timer = Timer.TIMER();
     this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSTARTED, "Session Init Started", requestId);
     const axiosInstance = axios.create();
-    const retryOn429 = false;
+    const retryOn429 = true;
     axiosRetryHandler(axiosInstance, {
       retries: this.configuration.maxRequestRetriesOnFailure,
       waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.sessionInit,
