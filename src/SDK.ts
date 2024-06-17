@@ -73,7 +73,7 @@ export default class SDK implements ISDK {
     getChatTokenRetryCount: 10,
     getChatTokenTimeBetweenRetriesOnFailure: 10000,
     getChatTokenRetryOn429: true,
-    maxRequestRetriesOnFailure: 3,
+    maxRequestRetriesOnFailure: 5,
     defaultRequestTimeout: undefined,
     requestTimeoutConfig: SDK.defaultRequestTimeoutConfig,
     useUnauthReconnectIdSigQueryParam: false,

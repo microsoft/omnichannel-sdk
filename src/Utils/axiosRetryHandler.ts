@@ -66,7 +66,7 @@ const axiosRetryHandler = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryO
       }
       if(error.response?.status === Constants.tooManyRequestsStatusCode){
         // Retry after 5 seconds for 429 status code
-        return retryCount * 5000;
+        return 5000;
       }
       return Math.pow(2, retryCount) * timeBetweenRetry;
     },
