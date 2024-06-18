@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.5.3] - 2024-06-18
+
+### Added
+
 - added axios-retry library support
 
 ## [0.5.2] - 2024-05-20
