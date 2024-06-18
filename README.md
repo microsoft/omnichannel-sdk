@@ -64,7 +64,7 @@ const params = {
 const configuration = {
   getChatTokenRetryCount: 35,
   getChatTokenTimeBetweenRetriesOnFailure: 10000,
-  maxRequestRetriesOnFailure: 3
+  maxRequestRetriesOnFailure: 5
 };
 
 const ocsdk = Microsoft.CRM.Omnichannel.SDK.SDKProvider.getSDK(params, configuration);
@@ -243,7 +243,7 @@ These are the available config options with its default values for the SDK.
   /**
    * Maximum number of request retries before failing.
    */
-  maxRequestRetriesOnFailure: 3,
+  maxRequestRetriesOnFailure: 5,
 }
 ```
 
