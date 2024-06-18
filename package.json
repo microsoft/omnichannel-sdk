@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/ocsdk",
-  "version": "0.5.3",
+  "version": "0.5.4-0",
   "description": "Microsoft Omnichannel SDK",
   "files": [
     "dist/**/*",
