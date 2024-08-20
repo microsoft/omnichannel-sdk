@@ -6,8 +6,6 @@ on:
       - main
     tags:
       - 'v*'
-  workflow_dispatch:
-
 env:
   CACHE_CONTROL_HEADER: public, max-age=86400, s-maxage=259200, must-revalidate
   PUBLISH_TO_CDN : false
