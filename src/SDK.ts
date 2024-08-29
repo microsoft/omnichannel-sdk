@@ -45,7 +45,6 @@ import axiosRetryHandler from "./Utils/axiosRetryHandler";
 import { createGetChatTokenEndpoint } from "./Utils/endpointsCreators";
 import isExpectedAxiosError from "./Utils/isExpectedAxiosError";
 import sessionInitRetryHandler from "./Utils/SessionInitRetryHandler";
-import throwClientHTTPTimeoutError from "./Utils/throwClientHTTPError";
 import { uuidv4 } from "./Utils/uuid";
 import { waitTimeBetweenRetriesConfigs } from "./Utils/waitTimeBetweenRetriesConfigs";
 
@@ -208,6 +207,7 @@ export default class SDK implements ISDK {
 
       return data;
     } catch (error) {
+      console.debug("ELOPEZANAYA :: failing here for chat config");
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
       this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATCONFIGFAILED, "Get Chat config failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
       return Promise.reject(error);
