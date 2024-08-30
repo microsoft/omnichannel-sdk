@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.5.6]
+### Fixed
+- Fix error propagation when a call to an endpoint timesout
+- Fix unit tests
+
+### Added
+- Error propagation when getchattoken returns an empty dashboard
+
 ## [0.5.5]
 ### Security
 - Uptake [axios@1.7.4](https://www.npmjs.com/package/axios/v/1.7.4)
