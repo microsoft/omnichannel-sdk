@@ -407,7 +407,6 @@ describe("SDK unit tests", () => {
         const sessionInitOpt = {
             authenticatedUserToken: "asdas"
         };
-        const HTTPTimeOutErrorMessage = SDKError.ClientHTTPTimeoutErrorName + ": " + SDKError.ClientHTTPTimeoutErrorMessage;
 
         it("Should return promise", () => {
             spyOn<any>(axios, "create").and.returnValue(axiosInstMock);
@@ -741,7 +740,8 @@ describe("SDK unit tests", () => {
         it("sessionInit timeout test", async () => {
             try {
                 mock.onPost(/.*/).timeout();
-                sdk.sessionInit(requestId, defaultOpt as ISessionInitOptionalParams);
+
+                await sdk.sessionInit(requestId, defaultOpt as ISessionInitOptionalParams);
                 fail("Should throw an error");
             } catch (error: any) {
                 expect(error.message).toEqual(HTTPTimeOutErrorMessage);
@@ -750,9 +750,8 @@ describe("SDK unit tests", () => {
 
         it("getAgentAvailability timeout test", async () => {
             try {
-                mock.onGet(/.*/).timeout();
-
-                sdk.getAgentAvailability(requestId, defaultOpt as ISessionInitOptionalParams);
+                mock.onPost(/.*/).timeout();
+                await sdk.getAgentAvailability(requestId, defaultOpt as ISessionInitOptionalParams);
                 fail("Should throw an error");
             } catch (error: any) {
                 expect(error.message).toEqual(HTTPTimeOutErrorMessage);
@@ -763,7 +762,7 @@ describe("SDK unit tests", () => {
             try {
                 mock.onPost(/.*/).timeout();
 
-                sdk.sessionClose(requestId, defaultOpt as ISessionCloseOptionalParams);
+                await sdk.sessionClose(requestId, defaultOpt as ISessionCloseOptionalParams);
                 fail("Should throw an error");
             } catch (error: any) {
                 expect(error.code).toEqual("ECONNABORTED ");
@@ -776,7 +775,7 @@ describe("SDK unit tests", () => {
             try {
                 mock.onPost(/.*/).timeout();
 
-                sdk.submitPostChatResponse(requestId, defaultOpt as ISubmitPostChatResponseOptionalParams);
+                await sdk.submitPostChatResponse(requestId, defaultOpt as ISubmitPostChatResponseOptionalParams);
                 fail("Should throw an error");
             } catch (error: any) {
                 expect(error.message).toEqual(HTTPTimeOutErrorMessage);
@@ -787,8 +786,7 @@ describe("SDK unit tests", () => {
             
             try {
                 mock.onGet(/.*/).timeout();
-
-                sdk.getSurveyInviteLink(requestId, defaultOpt as IGetSurveyInviteLinkOptionalParams);
+                await sdk.getSurveyInviteLink(requestId, defaultOpt as IGetSurveyInviteLinkOptionalParams);
                 fail("Should throw an error");
             } catch (error: any) {
                 expect(error.message).toEqual(HTTPTimeOutErrorMessage);
@@ -798,7 +796,7 @@ describe("SDK unit tests", () => {
         it("getChatTranscripts timeout test", async () => {
             try {
                 mock.onGet(/.*/).timeout();
-                sdk.getChatTranscripts(requestId, "coolId", "coolId", defaultOpt as IGetChatTranscriptsOptionalParams);
+                await sdk.getChatTranscripts(requestId, "coolId", "coolId", defaultOpt as IGetChatTranscriptsOptionalParams);
                 fail("Should throw an error");
             } catch (error: any) {
                 expect(error.message).toEqual(HTTPTimeOutErrorMessage);
@@ -808,7 +806,7 @@ describe("SDK unit tests", () => {
         it("makeSecondaryChannelEventRequest timeout test", async () => {
             try {
                 mock.onPost(/.*/).timeout();
-                sdk.makeSecondaryChannelEventRequest(requestId, requestBody, defaultOpt as ISecondaryChannelEventOptionalParams);
+                await sdk.makeSecondaryChannelEventRequest(requestId, requestBody, defaultOpt as ISecondaryChannelEventOptionalParams);
                 fail("Should throw an error");
             } catch (error: any) {
                 expect(error.message).toEqual(HTTPTimeOutErrorMessage);
@@ -819,7 +817,7 @@ describe("SDK unit tests", () => {
             try {
                 mock.onPost(/.*/).timeout();
 
-                sdk.validateAuthChatRecord(requestId, defaultOpt as IValidateAuthChatRecordOptionalParams);
+                await sdk.validateAuthChatRecord(requestId, defaultOpt as IValidateAuthChatRecordOptionalParams);
                 fail("Should throw an error");
             } catch (error: any) {
                 expect(error.message).toEqual(HTTPTimeOutErrorMessage);
@@ -827,6 +825,8 @@ describe("SDK unit tests", () => {
         });
 
         afterEach(() => {
+            mock.restore();
+            mock.reset();
             jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout;   //remove environment variable 
         });
     });
