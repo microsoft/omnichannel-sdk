@@ -41,6 +41,7 @@ describe("SDK unit tests", () => {
     let dataMock: any;
     let uuidvSpy: any;
     let axiosInstMock: any;
+    let axiosInstEmptyMock:any;
     let axiosInstMockWithError: any;
     let ocsdkLogger: any;
     const logger = {
@@ -61,6 +62,7 @@ describe("SDK unit tests", () => {
         spyOn(axiosRetryHandler, "default").and.callFake(() => {});
         axiosInstMock = jasmine.createSpy("axiosInstance").and.returnValue(dataMock);
         axiosInstMockWithError = jasmine.createSpy("axiosInstance").and.throwError(AxiosError);
+        axiosInstEmptyMock = jasmine.createSpy("axiosInstance").and.returnValue({data: {}});
     });
 
     describe("Test constructor", () => {
@@ -223,8 +225,18 @@ describe("SDK unit tests", () => {
             expect(axios.create).toHaveBeenCalled();
             expect(axiosRetryHandler.default).toHaveBeenCalled();
         });
-    });
 
+        it("Should fail due to empty response", async () => {
+            spyOn<any>(axios, "create").and.returnValue(axiosInstEmptyMock);
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+            try {
+                await sdk.getChatToken(requestId, {}, 0);
+                fail("Should throw an error");
+            } catch (error:any) {
+                expect(error.message).toEqual("Empty data received from getChatToken");
+            }
+        });
+    });
 
     describe("Test getReconnectableChats method", () => {
 

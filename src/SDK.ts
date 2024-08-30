@@ -382,6 +382,13 @@ export default class SDK implements ISDK {
 
         // Resolves only if it contains chat token response which only happens on status 200
         if (data) {
+          
+          // check if data is empty, if so, then reject the promise
+          if (Object.keys(data).length === 0) {
+            reject(new Error("Empty data received from getChatToken"));
+            return;
+          }
+
           data.requestId = requestId;
           this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATTOKENSUCCEEDED, "Get Chat Token succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
           resolve(data);
