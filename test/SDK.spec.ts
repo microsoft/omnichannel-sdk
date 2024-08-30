@@ -785,7 +785,7 @@ describe("SDK unit tests", () => {
         it("getSurveyInviteLink timeout test", async () => {
             
             try {
-                mock.onGet(/.*/).timeout();
+                mock.onPost(/.*/).timeout();
                 await sdk.getSurveyInviteLink(requestId, defaultOpt as IGetSurveyInviteLinkOptionalParams);
                 fail("Should throw an error");
             } catch (error: any) {
