@@ -207,7 +207,6 @@ export default class SDK implements ISDK {
 
       return data;
     } catch (error) {
-      console.debug("ELOPEZANAYA :: failing here for chat config");
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
       this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATCONFIGFAILED, "Get Chat config failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
       return Promise.reject(error);
@@ -711,6 +710,7 @@ export default class SDK implements ISDK {
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SESSIONINITFAILED, "Session Init failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, data, requestHeaders);
+        
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           reject( new Error(this.HTTPTimeOutErrorMessage));
         }
@@ -1052,10 +1052,12 @@ export default class SDK implements ISDK {
         this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATTRANSCRIPTSUCCEEDED, "Get Chat Transcript succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
         resolve(data);
       } catch (error) {
+        
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETCHATTRANSCRIPTFAILED, "Get Chat Transcript failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
-          reject( new Error(this.HTTPTimeOutErrorMessage));
+          reject(new Error(this.HTTPTimeOutErrorMessage));
+
         }
         reject(error);
       }

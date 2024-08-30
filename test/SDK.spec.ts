@@ -765,8 +765,9 @@ describe("SDK unit tests", () => {
                 await sdk.sessionClose(requestId, defaultOpt as ISessionCloseOptionalParams);
                 fail("Should throw an error");
             } catch (error: any) {
-                expect(error.code).toEqual("ECONNABORTED ");
-                expect(error.message).toContain("timeout");
+                console.debug("ELOPEZ ERROR :", error);
+                expect(error.message).toEqual(HTTPTimeOutErrorMessage);
+
 
             }
         });
@@ -815,8 +816,7 @@ describe("SDK unit tests", () => {
 
         it("validateAuthChatRecord timeout test", async () => {
             try {
-                mock.onPost(/.*/).timeout();
-
+                mock.onGet(/.*/).timeout();
                 await sdk.validateAuthChatRecord(requestId, defaultOpt as IValidateAuthChatRecordOptionalParams);
                 fail("Should throw an error");
             } catch (error: any) {
@@ -826,7 +826,6 @@ describe("SDK unit tests", () => {
 
         afterEach(() => {
             mock.restore();
-            mock.reset();
             jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout;   //remove environment variable 
         });
     });
