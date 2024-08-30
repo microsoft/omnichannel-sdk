@@ -765,10 +765,7 @@ describe("SDK unit tests", () => {
                 await sdk.sessionClose(requestId, defaultOpt as ISessionCloseOptionalParams);
                 fail("Should throw an error");
             } catch (error: any) {
-                console.debug("ELOPEZ ERROR :", error);
                 expect(error.message).toEqual(HTTPTimeOutErrorMessage);
-
-
             }
         });
 
