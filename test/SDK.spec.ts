@@ -22,6 +22,7 @@ import ISubmitPostChatResponseOptionalParams from "../src/Interfaces/ISubmitPost
 import IValidateAuthChatRecordOptionalParams from "../src/Interfaces/IValidateAuthChatRecordOptionalParams";
 import { LocationInfo } from "../src/Utils/LocationInfo";
 import { LogLevel } from "../src/Model/LogLevel";
+import MockAdapter from 'axios-mock-adapter';
 import OCSDKLogger from "../src/Common/OCSDKLogger";
 import { OSInfo } from "../src/Utils/OSInfo";
 import SDK from "../src/SDK";
@@ -40,6 +41,7 @@ describe("SDK unit tests", () => {
     let dataMock: any;
     let uuidvSpy: any;
     let axiosInstMock: any;
+    let axiosInstEmptyMock:any;
     let axiosInstMockWithError: any;
     let ocsdkLogger: any;
     const logger = {
@@ -60,6 +62,7 @@ describe("SDK unit tests", () => {
         spyOn(axiosRetryHandler, "default").and.callFake(() => {});
         axiosInstMock = jasmine.createSpy("axiosInstance").and.returnValue(dataMock);
         axiosInstMockWithError = jasmine.createSpy("axiosInstance").and.throwError(AxiosError);
+        axiosInstEmptyMock = jasmine.createSpy("axiosInstance").and.returnValue({data: {}});
     });
 
     describe("Test constructor", () => {
@@ -206,7 +209,7 @@ describe("SDK unit tests", () => {
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
             try {
                 await sdk.getChatToken(requestId, {}, -1);
-                throw new Error("Should throw an error");
+                fail("Should throw an error");
             } catch (error: any) {
                 expect(error.message).toEqual("Invalid currentRetryCount");
                 expect(ocsdkLogger.log).toHaveBeenCalled();
@@ -222,8 +225,18 @@ describe("SDK unit tests", () => {
             expect(axios.create).toHaveBeenCalled();
             expect(axiosRetryHandler.default).toHaveBeenCalled();
         });
-    });
 
+        it("Should fail due to empty response", async () => {
+            spyOn<any>(axios, "create").and.returnValue(axiosInstEmptyMock);
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+            try {
+                await sdk.getChatToken(requestId, {}, 0);
+                fail("Should throw an error");
+            } catch (error:any) {
+                expect(error.message).toEqual("Empty data received from getChatToken");
+            }
+        });
+    });
 
     describe("Test getReconnectableChats method", () => {
 
@@ -278,6 +291,8 @@ describe("SDK unit tests", () => {
         let browserName: any;
         let deviceType: any;
         let osType: any;
+        const HTTPTimeOutErrorMessage = SDKError.ClientHTTPTimeoutErrorName + ": " + SDKError.ClientHTTPTimeoutErrorMessage;
+
 
         beforeEach(() => {
             locationInfo = { latitude: "1", longitude: "2" };
@@ -517,9 +532,7 @@ describe("SDK unit tests", () => {
   });
 
     describe("Test getChatTranscripts method", () => {
-
         const coolId = "coolId";
-
         const sessionInitOpt = {
             authenticatedUserToken: "asdas"
         };
@@ -630,7 +643,7 @@ describe("SDK unit tests", () => {
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
             const result = sdk.validateAuthChatRecord(requestId, validateAuthChatRecordOptionalParams as IValidateAuthChatRecordOptionalParams);
             result.then(() => {
-                throw Error("Promise should reject");
+                fail("Promise should reject");
             }).catch(() => {
                 expect(axiosInstMockInvalid).toHaveBeenCalled();
                 done();
@@ -679,7 +692,9 @@ describe("SDK unit tests", () => {
         let sdk: any;
         let requestBody: any;
         let originalTimeout:number;
-        
+        let mock: MockAdapter;
+        const HTTPTimeOutErrorMessage = `${SDKError.ClientHTTPTimeoutErrorName}: ${SDKError.ClientHTTPTimeoutErrorMessage}`;
+
         beforeEach(() => {
             originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
             jasmine.DEFAULT_TIMEOUT_INTERVAL = 60000;   //set the environment variable
@@ -690,120 +705,136 @@ describe("SDK unit tests", () => {
                 chatId: "chatId"
             };
             sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+            mock = new MockAdapter(axios);
             requestBody = { body: "dummy" }
         });
 
         it("getChatConfig timeout test", async () => {
-            spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; }});
             try {
+                mock.onGet(/.*/).timeout();
                 await sdk.getChatConfig("");
+                fail("Should throw an error");
             } catch (error: any) {
-                expect(error.code).toEqual("ECONNABORTED ");
-                expect(error.message).toContain("timeout");
-            }
+                expect(error.code).toEqual("ECONNABORTED");
+                expect(error.message).toContain("timeout");            }
         });
 
         it("getChatToken timeout test", async () => {
-            spyOn<any>(axios, "create").and.returnValue(axiosInstMock);
             try {
+                mock.onGet(/.*/).timeout();
                 await sdk.getChatToken(requestId, {}, 0);
+                fail("Should throw an error");
             } catch (error: any) {
-                expect(error.message).toEqual(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
+                expect(error.message).toEqual(HTTPTimeOutErrorMessage);
             }
         });
 
         it("getReconnectableChats timeout test", async () => {
-            spyOn<any>(axios, "create").and.returnValue(axiosInstMock);
             try {
+                mock.onGet(/.*/).timeout();
                 await sdk.getReconnectableChats({ authenticatedUserToken : "Token"} as IReconnectableChatsParams);
+                fail("Should throw an error");
             } catch (error: any) {
-                expect(error.message).toEqual(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
+                expect(error.message).toEqual(HTTPTimeOutErrorMessage);
             }
         });
 
         it("getReconnectAvailability timeout test", async () => {
-            spyOn<any>(axios, "create").and.returnValue(axiosInstMock);
             try {
+                mock.onGet(/.*/).timeout();
                 await sdk.getReconnectAvailability("reconnectId");
+                fail("Should throw an error");
             } catch (error: any) {
-                expect(error.message).toEqual(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
+                expect(error.message).toEqual(HTTPTimeOutErrorMessage);
             }
         });
 
         it("sessionInit timeout test", async () => {
-            spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; }});
             try {
-                sdk.sessionInit(requestId, defaultOpt as ISessionInitOptionalParams);
+                mock.onPost(/.*/).timeout();
+
+                await sdk.sessionInit(requestId, defaultOpt as ISessionInitOptionalParams);
+                fail("Should throw an error");
             } catch (error: any) {
-                expect(error.message).toEqual(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
+                expect(error.message).toEqual(HTTPTimeOutErrorMessage);
             }
         });
 
         it("getAgentAvailability timeout test", async () => {
-            spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; }});
             try {
-                sdk.getAgentAvailability(requestId, defaultOpt as ISessionInitOptionalParams);
+                mock.onPost(/.*/).timeout();
+                await sdk.getAgentAvailability(requestId, defaultOpt as ISessionInitOptionalParams);
+                fail("Should throw an error");
             } catch (error: any) {
-                expect(error.message).toEqual(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
+                expect(error.message).toEqual(HTTPTimeOutErrorMessage);
             }
         });
 
         it("sessionClose timeout test", async () => {
-            spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; }});
             try {
-                sdk.sessionClose(requestId, defaultOpt as ISessionCloseOptionalParams);
+                mock.onPost(/.*/).timeout();
+
+                await sdk.sessionClose(requestId, defaultOpt as ISessionCloseOptionalParams);
+                fail("Should throw an error");
             } catch (error: any) {
-                expect(error.code).toEqual("ECONNABORTED ");
-                expect(error.message).toContain("timeout");
+                expect(error.message).toEqual(HTTPTimeOutErrorMessage);
             }
         });
 
         it("submitPostChatResponse timeout test", async () => {
-            spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; }});
             try {
-                sdk.submitPostChatResponse(requestId, defaultOpt as ISubmitPostChatResponseOptionalParams);
+                mock.onPost(/.*/).timeout();
+
+                await sdk.submitPostChatResponse(requestId, defaultOpt as ISubmitPostChatResponseOptionalParams);
+                fail("Should throw an error");
             } catch (error: any) {
-                expect(error.message).toEqual(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
+                expect(error.message).toEqual(HTTPTimeOutErrorMessage);
             }
         });
 
         it("getSurveyInviteLink timeout test", async () => {
-            spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; }});
+            
             try {
-                sdk.getSurveyInviteLink(requestId, defaultOpt as IGetSurveyInviteLinkOptionalParams);
+                mock.onPost(/.*/).timeout();
+                await sdk.getSurveyInviteLink(requestId, defaultOpt as IGetSurveyInviteLinkOptionalParams);
+                fail("Should throw an error");
             } catch (error: any) {
-                expect(error.message).toEqual(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
+                expect(error.message).toEqual(HTTPTimeOutErrorMessage);
             }
         });
 
         it("getChatTranscripts timeout test", async () => {
-            spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; }});
             try {
-                sdk.getChatTranscripts(requestId, "coolId", "coolId", defaultOpt as IGetChatTranscriptsOptionalParams);
+                mock.onGet(/.*/).timeout();
+                await sdk.getChatTranscripts(requestId, "coolId", "coolId", defaultOpt as IGetChatTranscriptsOptionalParams);
+                fail("Should throw an error");
             } catch (error: any) {
-                expect(error.message).toEqual(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
+                expect(error.message).toEqual(HTTPTimeOutErrorMessage);
             }
         });
 
         it("makeSecondaryChannelEventRequest timeout test", async () => {
-            spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; }});
             try {
-                sdk.makeSecondaryChannelEventRequest(requestId, requestBody, defaultOpt as ISecondaryChannelEventOptionalParams);
+                mock.onPost(/.*/).timeout();
+                await sdk.makeSecondaryChannelEventRequest(requestId, requestBody, defaultOpt as ISecondaryChannelEventOptionalParams);
+                fail("Should throw an error");
             } catch (error: any) {
-                expect(error.message).toEqual(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
+                expect(error.message).toEqual(HTTPTimeOutErrorMessage);
             }
         });
 
         it("validateAuthChatRecord timeout test", async () => {
-            spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; }});
             try {
-                sdk.validateAuthChatRecord(requestId, defaultOpt as IValidateAuthChatRecordOptionalParams);
+                mock.onGet(/.*/).timeout();
+                await sdk.validateAuthChatRecord(requestId, defaultOpt as IValidateAuthChatRecordOptionalParams);
+                fail("Should throw an error");
             } catch (error: any) {
-                expect(error.message).toEqual(SDKError.ClientHTTPTimeoutErrorName + ":" + SDKError.ClientHTTPTimeoutErrorMessage);
+                expect(error.message).toEqual(HTTPTimeOutErrorMessage);
             }
         });
 
         afterEach(() => {
+            mock.restore();
             jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout;   //remove environment variable 
         });
     });

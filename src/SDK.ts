@@ -1,7 +1,8 @@
 import * as hash from "crypto";
 
-import { ChannelId, LiveChatVersion, OCSDKTelemetryEvent } from "./Common/Enums";
+import { ChannelId, LiveChatVersion, OCSDKTelemetryEvent, SDKError } from "./Common/Enums";
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
+
 import { BrowserInfo } from "./Utils/BrowserInfo";
 import Constants from "./Common/Constants";
 import { CustomContextData } from "./Utils/CustomContextData";
@@ -39,14 +40,13 @@ import ReconnectMappingRecord from "./Model/ReconnectMappingRecord";
 import { RequestTimeoutConfig } from "./Common/RequestTimeoutConfig";
 import { StringMap } from "./Common/Mappings";
 import { Timer } from "./Utils/Timer";
+import { addOcUserAgentHeader } from "./Utils/httpHeadersUtils";
 import axiosRetryHandler from "./Utils/axiosRetryHandler";
 import { createGetChatTokenEndpoint } from "./Utils/endpointsCreators";
 import isExpectedAxiosError from "./Utils/isExpectedAxiosError";
 import sessionInitRetryHandler from "./Utils/SessionInitRetryHandler";
-import throwClientHTTPTimeoutError from "./Utils/throwClientHTTPError";
 import { uuidv4 } from "./Utils/uuid";
 import { waitTimeBetweenRetriesConfigs } from "./Utils/waitTimeBetweenRetriesConfigs";
-import { addOcUserAgentHeader } from "./Utils/httpHeadersUtils";
 
 export default class SDK implements ISDK {
   private static defaultRequestTimeoutConfig: RequestTimeoutConfig = {
@@ -84,6 +84,8 @@ export default class SDK implements ISDK {
   liveChatVersion: number;
   sessionId?: string;
   ocUserAgent: string[];
+  HTTPTimeOutErrorMessage = `${SDKError.ClientHTTPTimeoutErrorName}: ${SDKError.ClientHTTPTimeoutErrorMessage}`;
+
 
   public constructor(private omnichannelConfiguration: IOmnichannelConfiguration, private configuration: ISDKConfiguration = SDK.defaultConfiguration, private logger?: OCSDKLogger) {
     // Sets to default configuration if passed configuration is empty or is not an object
@@ -289,7 +291,7 @@ export default class SDK implements ISDK {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETLWISTATUSFAILED, "Get LWI Details failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
-          throwClientHTTPTimeoutError();
+          reject( new Error(this.HTTPTimeOutErrorMessage));
         }
         reject(error);
       }
@@ -380,6 +382,13 @@ export default class SDK implements ISDK {
 
         // Resolves only if it contains chat token response which only happens on status 200
         if (data) {
+          
+          // check if data is empty, if so, then reject the promise
+          if (Object.keys(data).length === 0) {
+            reject(new Error("Empty data received from getChatToken"));
+            return;
+          }
+
           data.requestId = requestId;
           this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATTOKENSUCCEEDED, "Get Chat Token succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
           resolve(data);
@@ -396,7 +405,7 @@ export default class SDK implements ISDK {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETCHATTOKENFAILED, "Get Chat Token failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
-          throwClientHTTPTimeoutError();
+          reject( new Error(this.HTTPTimeOutErrorMessage));
         }
         reject(error);
       }
@@ -453,7 +462,7 @@ export default class SDK implements ISDK {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETRECONNECTABLECHATS, "Get Reconnectable Chats failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
-          throwClientHTTPTimeoutError();
+          reject( new Error(this.HTTPTimeOutErrorMessage));
         }
         reject(error);
         return;
@@ -505,7 +514,7 @@ export default class SDK implements ISDK {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITY, "Get Reconnect Availability failed", undefined, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
-          throwClientHTTPTimeoutError();
+          reject( new Error(this.HTTPTimeOutErrorMessage));
         }
         reject(error);
         return;
@@ -608,7 +617,7 @@ export default class SDK implements ISDK {
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETAGENTAVAILABILITYFAILED, "Get agent availability failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
 
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
-          throwClientHTTPTimeoutError();
+          reject( new Error(this.HTTPTimeOutErrorMessage));
         }
         reject(error);
       }
@@ -708,8 +717,9 @@ export default class SDK implements ISDK {
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SESSIONINITFAILED, "Session Init failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, data, requestHeaders);
+        
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
-          throwClientHTTPTimeoutError();
+          reject( new Error(this.HTTPTimeOutErrorMessage));
         }
         reject(error);
       }
@@ -781,7 +791,7 @@ export default class SDK implements ISDK {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SESSIONCLOSEFAILED, "Session close failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
         if (error.code === Constants.axiosTimeoutErrorCode) {
-          throwClientHTTPTimeoutError();
+          reject( new Error(this.HTTPTimeOutErrorMessage));
         }
         reject(error);
       }
@@ -848,7 +858,7 @@ export default class SDK implements ISDK {
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDFAILED, "Validate Auth Chat Record failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
 
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
-          throwClientHTTPTimeoutError();
+          reject( new Error(this.HTTPTimeOutErrorMessage));
         }
 
         if (error.toString() === "Error: Request failed with status code 404") { // backward compatibility
@@ -912,7 +922,7 @@ export default class SDK implements ISDK {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SUBMITPOSTCHATFAILED, "Submit Post Chat Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
-          throwClientHTTPTimeoutError();
+          reject( new Error(this.HTTPTimeOutErrorMessage));
         }
         reject(error);
       }
@@ -982,7 +992,7 @@ export default class SDK implements ISDK {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETSURVEYINVITELINKFAILED, "Get Survey Invite Link failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
-          throwClientHTTPTimeoutError();
+          reject( new Error(this.HTTPTimeOutErrorMessage));
         }
         reject(error);
       }
@@ -1049,10 +1059,12 @@ export default class SDK implements ISDK {
         this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATTRANSCRIPTSUCCEEDED, "Get Chat Transcript succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
         resolve(data);
       } catch (error) {
+        
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETCHATTRANSCRIPTFAILED, "Get Chat Transcript failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
-          throwClientHTTPTimeoutError();
+          reject(new Error(this.HTTPTimeOutErrorMessage));
+
         }
         reject(error);
       }
@@ -1116,7 +1128,7 @@ export default class SDK implements ISDK {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.EMAILTRANSCRIPTFAILED, "Email Transcript Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
-          throwClientHTTPTimeoutError();
+          reject( new Error(this.HTTPTimeOutErrorMessage));
         }
         reject(error);
       }
@@ -1168,7 +1180,7 @@ export default class SDK implements ISDK {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.FETCHDATAMASKINGFAILED, "Fetch Data Masking Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
-          throwClientHTTPTimeoutError();
+          reject( new Error(this.HTTPTimeOutErrorMessage));
         }
         reject(error);
       }
@@ -1231,7 +1243,7 @@ export default class SDK implements ISDK {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SECONDARYCHANNELEVENTREQUESTFAILED, "Secondary Channel Event Request Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
-          throwClientHTTPTimeoutError();
+          reject( new Error(this.HTTPTimeOutErrorMessage));
         }
         reject(error);
       }
@@ -1281,7 +1293,7 @@ export default class SDK implements ISDK {
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SENDTYPINGINDICATORFAILED, "Send Typing Indicator Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
 
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
-          throwClientHTTPTimeoutError();
+          reject( new Error(this.HTTPTimeOutErrorMessage));
         }
         reject(error);
       }
