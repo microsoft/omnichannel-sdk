@@ -1,15 +1,29 @@
 import { AxiosError, AxiosInstance, AxiosRequestConfig } from "axios";
-import axiosRetry, { isNetworkError } from "axios-retry"
+import axiosRetry, { isNetworkError } from "axios-retry";
 import Constants from "../Common/Constants";
 import IAxiosRetryOptions from "../Interfaces/IAxiosRetryOptions";
 
+/**
+ * Determines if the error is retryable.
+ *
+ * @param error The Axios error.
+ * @param retryOn429 Flag to indicate if retries should be attempted on 429 status code.
+ * @returns True if the error is retryable, otherwise false.
+ */
+const shouldRetry = (error: AxiosError, retryOn429: boolean | undefined): boolean => {
+  // Define default behavior for 429 retries in case the handler was not included by the caller.
+  if (error.response?.status === Constants.tooManyRequestsStatusCode && !retryOn429) {
+    return false;
+  }
+  return isRetryableError(error) || isNetworkError(error) || error.response?.status === 0 || !error.response?.status;
+};
 
 /**
-* Custom handler for HTTP calls with Axios. Handler allows to retry HTTP calls if failed.
-*
-* @param axios Axios instance.
-* @param axiosRetryOptions Options for axios retry.
-*/
+ * Custom handler for HTTP calls with Axios. Handler allows retrying HTTP calls if they fail.
+ *
+ * @param axios Axios instance.
+ * @param axiosRetryOptions Options for axios retry.
+ */
 const axiosRetryHandler = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryOptions) => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
 
   // Default values
@@ -18,17 +32,11 @@ const axiosRetryHandler = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryO
   }
 
 
-  // define default behaviour for 429 retries in case the handler was not included by the caller.
   if (!axiosRetryOptions.shouldRetry) {
-    axiosRetryOptions.shouldRetry = (error) => {
-      if (error.response?.status === Constants.tooManyRequestsStatusCode && axiosRetryOptions.retryOn429 === false) {
-        return false;
-      }
-      return isRetryableError(error) || isNetworkError(error) || error.response?.status == 0 || !error.response?.status;
-    }
-
+    axiosRetryOptions.shouldRetry = (error) => shouldRetry(error, axiosRetryOptions.retryOn429);
   }
-  // Method to intercepts responses outside range of 2xx
+
+  // Method to intercept responses outside the range of 2xx
   axiosRetry(axios, {
     retries: axiosRetryOptions.retries,
     retryCondition: axiosRetryOptions.shouldRetry,
@@ -43,7 +51,6 @@ const axiosRetryHandler = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryO
           }
         }
       }
-
     },
     retryDelay: (retryCount: number, error: AxiosError) => {
       const timeBetweenRetry = axiosRetryOptions.waitTimeInMsBetweenRetries;
@@ -64,16 +71,14 @@ const axiosRetryHandler = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryO
         }
         return retryAfterTime;
       }
-      if(error.response?.status === Constants.tooManyRequestsStatusCode){
+      if (error.response?.status === Constants.tooManyRequestsStatusCode) {
         // Retry after 5 seconds for 429 status code
         return 5000;
       }
       return Math.pow(2, retryCount) * timeBetweenRetry;
     },
-
   });
-
-}
+};
 
 export function isRetryableError(error: AxiosError): boolean {
   return (
@@ -83,4 +88,13 @@ export function isRetryableError(error: AxiosError): boolean {
       (error.response.status >= 500 && error.response.status <= 599))
   );
 }
+
+export function axiosRetryHandlerWithNotFound(axios: AxiosInstance, axiosRetryOptions: IAxiosRetryOptions): void {
+  axiosRetryHandler(axios, {
+    retries: axiosRetryOptions.retries,
+    waitTimeInMsBetweenRetries: axiosRetryOptions.waitTimeInMsBetweenRetries,
+    shouldRetry: (error) => shouldRetry(error, axiosRetryOptions.retryOn429) || error.response?.status === Constants.notFoundStatusCode,
+  });
+}
+
 export default axiosRetryHandler;

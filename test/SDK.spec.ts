@@ -60,6 +60,7 @@ describe("SDK unit tests", () => {
         dataMock = { data: { requestId: "someId" } };
         uuidvSpy = spyOn(uuidvModule, "uuidv4").and.returnValue("reqId");
         spyOn(axiosRetryHandler, "default").and.callFake(() => {});
+        spyOn(axiosRetryHandler, "axiosRetryHandlerWithNotFound").and.callFake(() => {});
         axiosInstMock = jasmine.createSpy("axiosInstance").and.returnValue(dataMock);
         axiosInstMockWithError = jasmine.createSpy("axiosInstance").and.throwError(AxiosError);
         axiosInstEmptyMock = jasmine.createSpy("axiosInstance").and.returnValue({data: {}});
@@ -165,7 +166,7 @@ describe("SDK unit tests", () => {
             sdk.getLWIDetails("");
             expect(uuidvSpy).toHaveBeenCalled();
             expect(axios.create).toHaveBeenCalled();
-            expect(axiosRetryHandler.default).toHaveBeenCalled();
+            expect(axiosRetryHandler.axiosRetryHandlerWithNotFound).toHaveBeenCalled();
             expect(ocsdkLogger.log).toHaveBeenCalled();
         });
 
@@ -176,7 +177,8 @@ describe("SDK unit tests", () => {
         sdk.getLWIDetails("");
         expect(uuidvSpy).toHaveBeenCalled();
         expect(axios.create).toHaveBeenCalled();
-        expect(axiosRetryHandler.default).toHaveBeenCalled();
+      
+        expect(axiosRetryHandler.axiosRetryHandlerWithNotFound).toHaveBeenCalled();
         expect(ocsdkLogger.log).not.toHaveBeenCalled();
         });
     });
