@@ -1350,7 +1350,8 @@ export default class SDK implements ISDK {
       ResponseStatusCode: response ? response.status : error ? (error as any).response?.status : undefined, // eslint-disable-line @typescript-eslint/no-explicit-any
       ExceptionDetails: error,
       RequestPayload: sanitizedRequestPayload,
-      RequestHeaders: sanitizedRequestHeaders
+      RequestHeaders: sanitizedRequestHeaders,
+      ResponseErrorcode: error ? (error as any).response?.headers?.errorcode : undefined // eslint-disable-line @typescript-eslint/no-explicit-any
     };
     this.logger.log(logLevel, telemetryEventType, customData, description);
   }
