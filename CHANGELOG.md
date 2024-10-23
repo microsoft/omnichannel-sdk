@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
-
+- logging response errorCode into telemetry logs
 - Improve telemetry to uniformly log all errors for reconnectable chat and reconnect availability
 
 ## [0.5.6]
