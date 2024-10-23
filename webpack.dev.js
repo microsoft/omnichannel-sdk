@@ -8,10 +8,7 @@ module.exports = {
     compress: true,
     port: 9000
   },
-  plugins: [new webpack.ProvidePlugin({
-    process: 'process/browser', // This ensures `process` is available in the browser
-    Buffer: ['buffer', 'Buffer'],
-  })],
+  plugins: [],
   module: {
     rules: [
       {

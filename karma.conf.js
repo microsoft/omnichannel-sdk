@@ -18,7 +18,7 @@ module.exports = function (config) {
 
 
     // list of files / patterns to load in the browser
-    files: ['test/index.ts'],
+    files: ['test/setup.js','test/index.ts'],
 
     plugins: [
       'karma-jasmine',
