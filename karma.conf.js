@@ -40,9 +40,8 @@ module.exports = function (config) {
       'test/index.ts': ['webpack']
     },
     webpack: {
-      module: webpackConfig.module,
-      resolve: webpackConfig.resolve,
-      mode
+      ...webpackConfig,
+      mode,
     },
 
     // test results reporter to use

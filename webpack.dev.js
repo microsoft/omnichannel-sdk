@@ -1,4 +1,5 @@
 const path = require('path');
+const webpack = require('webpack');
 
 console.log("webpack config: dev");
 module.exports = {
@@ -7,7 +8,10 @@ module.exports = {
     compress: true,
     port: 9000
   },
-  plugins: [],
+  plugins: [new webpack.ProvidePlugin({
+    process: 'process/browser', // This ensures `process` is available in the browser
+    Buffer: ['buffer', 'Buffer'],
+  })],
   module: {
     rules: [
       {

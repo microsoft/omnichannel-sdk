@@ -5,6 +5,7 @@ module.exports = {
   resolve: {
     extensions: ['.ts', '.js'],
     fallback: {
+      process: require.resolve('process/browser'),
       crypto: require.resolve('crypto-browserify'), // Add fallback for 'crypto'
       buffer: require.resolve('buffer/'), // Fallback for 'buffer'
       stream: require.resolve('stream-browserify'),
