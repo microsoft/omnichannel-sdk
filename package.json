@@ -15,7 +15,7 @@
     "build:tsc": "tsc --project tsconfig.json",
     "build:babel": "babel src --extensions .js,.ts --out-dir lib --verbose",
     "build:dev": "webpack --config webpack.config.js --mode development",
-    "build:prod": "npm run build:tsc && npm run build:babel && webpack --config webpack.config.js --mode production",
+    "build:prod": "set NODE_OPTIONS=--openssl-legacy-provider && npm run build:tsc && npm run build:babel && webpack --config webpack.config.js --mode production",
     "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
     "lint": "eslint src --ext .ts"
   },
