@@ -18,7 +18,7 @@ module.exports = function (config) {
 
 
     // list of files / patterns to load in the browser
-    files: ['test/index.ts'],
+    files: ['test/setup.js','test/index.ts'],
 
     plugins: [
       'karma-jasmine',
@@ -40,9 +40,8 @@ module.exports = function (config) {
       'test/index.ts': ['webpack']
     },
     webpack: {
-      module: webpackConfig.module,
-      resolve: webpackConfig.resolve,
-      mode
+      ...webpackConfig,
+      mode,
     },
 
     // test results reporter to use
