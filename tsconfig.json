@@ -1,16 +1,22 @@
 {
     "compilerOptions": {
-        "sourceMap": true,
-        "target": "es5",
-        "declaration": true,
-        "outDir": "./lib",
-        "strict": true,
-        "esModuleInterop": true,
+      "sourceMap": true,
+      "target": "ES2020",                  // Updated to a more modern target
+      "declaration": false,
+      "outDir": "./lib",
+      "strict": true,
+      "esModuleInterop": true,
+      "module": "ES2020",                  // Aligns with modern JS modules
+      "moduleResolution": "node",          // Uses node-style module resolution
+      "skipLibCheck": true,                // Speeds up build by skipping library type checks
+      "resolveJsonModule": true,           // Enables importing JSON files as modules
+      "isolatedModules": true              // Ensures compatibility with Babel transpiling
     },
     "include": [
       "src/**/*"
     ],
     "exclude": [
-        "node_modules"
+      "node_modules"
     ]
-}
+  }
+  

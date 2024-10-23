@@ -23,8 +23,7 @@ module.exports = {
         ],
         enforce: 'post',
         use: {
-          loader: 'istanbul-instrumenter-loader',
-          options: { esModules: true }
+          loader: 'babel-loader',
         }
       }
     ],
