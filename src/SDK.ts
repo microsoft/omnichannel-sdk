@@ -41,7 +41,7 @@ import { RequestTimeoutConfig } from "./Common/RequestTimeoutConfig";
 import { StringMap } from "./Common/Mappings";
 import { Timer } from "./Utils/Timer";
 import { addOcUserAgentHeader } from "./Utils/httpHeadersUtils";
-import axiosRetryHandler from "./Utils/axiosRetryHandler";
+import axiosRetryHandler, { axiosRetryHandlerWithNotFound } from "./Utils/axiosRetryHandler";
 import { createGetChatTokenEndpoint } from "./Utils/endpointsCreators";
 import isExpectedAxiosError from "./Utils/isExpectedAxiosError";
 import sessionInitRetryHandler from "./Utils/SessionInitRetryHandler";
@@ -229,10 +229,10 @@ export default class SDK implements ISDK {
     // construct a endpoint for anonymous chats to get LWI Details
     let requestPath = `/${OmnichannelEndpoints.LiveChatLiveWorkItemDetailsPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
     const axiosInstance = axios.create();
-    axiosRetryHandler(axiosInstance, {
+    axiosRetryHandlerWithNotFound(axiosInstance, {
       headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce],
       retries: this.configuration.maxRequestRetriesOnFailure,
-      waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.getLWIDetails
+      waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.getLWIDetails,
     });
 
     // Extract auth token and reconnect id from optional param
@@ -1350,7 +1350,8 @@ export default class SDK implements ISDK {
       ResponseStatusCode: response ? response.status : error ? (error as any).response?.status : undefined, // eslint-disable-line @typescript-eslint/no-explicit-any
       ExceptionDetails: error,
       RequestPayload: sanitizedRequestPayload,
-      RequestHeaders: sanitizedRequestHeaders
+      RequestHeaders: sanitizedRequestHeaders,
+      ResponseErrorcode: error ? (error as any).response?.headers?.errorcode : undefined // eslint-disable-line @typescript-eslint/no-explicit-any
     };
     this.logger.log(logLevel, telemetryEventType, customData, description);
   }
