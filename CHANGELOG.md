@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-## [0.5.7] - - 2024-10-25
+## [0.5.7] - 2024-10-25
 
 ### Added
 - set open ssl to legacy 
