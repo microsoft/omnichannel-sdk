@@ -50,7 +50,7 @@ import { waitTimeBetweenRetriesConfigs } from "./Utils/waitTimeBetweenRetriesCon
 
 export default class SDK implements ISDK {
   private static defaultRequestTimeoutConfig: RequestTimeoutConfig = {
-    getChatConfig: 30000,
+    getChatConfig: 120000,
     getLWIDetails: 15000,
     getChatToken: 15000,
     sessionInit: 15000,
