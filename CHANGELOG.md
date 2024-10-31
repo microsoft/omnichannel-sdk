@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.5.8]
 ### Changed
 - Increase of timeout limit time for GetChatConfig, from 30 secs to 120 secs.
 
