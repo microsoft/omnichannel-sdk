@@ -3,17 +3,23 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+
+## [0.5.8]
+
 ### Changed
+
 - Increase of timeout limit time for GetChatConfig, from 30 secs to 120 secs.
 
 ## [0.5.7] - 2024-10-25
 
 ### Added
-- set open ssl to legacy 
+
+- set open ssl to legacy
 - logging response errorCode into telemetry logs
 - Improve telemetry to uniformly log all errors for reconnectable chat and reconnect availability
 
 ### Fixed
+
 - Add `requestId` as optional parameters for `getReconnectableChats()`
 
 ## [0.5.6]
@@ -78,7 +84,6 @@ All notable changes to this project will be documented in this file.
 - Add `useUnauthReconnectIdSigQueryParam` configuration to use `sig` as query parameter to pass `reconnectId` for `Unauthenticated Chat Reconnect` APIs
 - Add `Oc-Sessionid` as part of request headers if exists
 - Add configurable wait time between retries componenets, and set to 3 secnds for getLWI, and 1 second for all other requests
-
 
 ## [0.4.2] - 2023-12-06
 
