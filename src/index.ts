@@ -24,7 +24,7 @@ export {
 (() => {
 
   // Declares window object for NodeJS environment
-  if (global.window === undefined) {
+  if (typeof global !== "undefined" && global.window === undefined) {
     global.window = global;
   }
 
