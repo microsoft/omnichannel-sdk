@@ -4,11 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.5.9] - 2024-12-05
+
 ### Fixed
 
 - Updating exception details telemetry with response data axios field
 
-## [0.5.8]
+## [0.5.8] - 2024-10-31
 
 ### Changed
 
