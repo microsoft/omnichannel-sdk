@@ -45,6 +45,11 @@ export class LoggingSanitizer {
       if (Object.keys(headers).includes(OmnichannelHTTPHeaders.authCodeNonce)) {
         headers[OmnichannelHTTPHeaders.authCodeNonce] = Constants.hiddenContentPlaceholder;
       }
+
+      if (Object.keys(headers).includes(OmnichannelHTTPHeaders.authorization)) {
+        headers[OmnichannelHTTPHeaders.authorization] = Constants.hiddenContentPlaceholder;
+      }
+
     }
   }
 
@@ -77,9 +82,10 @@ export class LoggingSanitizer {
         }
 
         LoggingSanitizer.stripGeolocation(data);
-        LoggingSanitizer.stripEmailDataFromError(data);
         
         configObject.data = JSON.stringify(data); // eslint-disable-line security/detect-object-injection
+        // at this point is better to pass the string to search via regex for specific PI.
+        configObject.data = LoggingSanitizer.stripEmailDataFromError(configObject.data);
       }
     }
   }

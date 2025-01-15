@@ -150,7 +150,8 @@ describe("LoggingSanitized unit tests", () => {
         headers: {
           Accept: "application/json, text/plain, */*",
           AuthenticatedUserToken: "authenticatedUserToken",
-          AuthCodeNonce: "authCodeNonce"
+          AuthCodeNonce: "authCodeNonce",
+          Authorization: "abc-1234"
         },
       };
 
@@ -167,9 +168,11 @@ describe("LoggingSanitized unit tests", () => {
       LoggingSanitizer.stripErrorSensitiveProperties(errorObject);
       expect(errorObject["config"]["headers"]["AuthenticatedUserToken"]).toEqual(Constants.hiddenContentPlaceholder);
       expect(errorObject["config"]["headers"]["AuthCodeNonce"]).toEqual(Constants.hiddenContentPlaceholder);
+      expect(errorObject["config"]["headers"]["Authorization"]).toEqual(Constants.hiddenContentPlaceholder);
 
       expect(errorObject["response"]["config"]["headers"]["AuthenticatedUserToken"]).toEqual(Constants.hiddenContentPlaceholder);
       expect(errorObject["response"]["config"]["headers"]["AuthCodeNonce"]).toEqual(Constants.hiddenContentPlaceholder);
+      expect(errorObject["response"]["config"]["headers"]["Authorization"]).toEqual(Constants.hiddenContentPlaceholder);
       done();
     });
   });
