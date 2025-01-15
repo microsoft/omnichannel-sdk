@@ -79,9 +79,11 @@ export class LoggingSanitizer {
         }
 
         LoggingSanitizer.stripGeolocation(data);
+        LoggingSanitizer.stripEmailDataFromError(data);
+        
         configObject.data = JSON.stringify(data); // eslint-disable-line security/detect-object-injection
       
-        LoggingSanitizer.stripEmailDataFromError(configObject.data);
+        
       }
     }
   }
