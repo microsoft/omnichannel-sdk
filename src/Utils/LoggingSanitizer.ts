@@ -2,7 +2,6 @@ import Constants from "../Common/Constants";
 import OmnichannelHTTPHeaders from "../Common/OmnichannelHTTPHeaders";
 
 export class LoggingSanitizer {
-
   private static emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
 
   public static stripCustomContextDataValues(customContextData: any): void { // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
@@ -68,7 +67,6 @@ export class LoggingSanitizer {
         }
       }
 
-
       if (data) {
         if (Object.keys(data).includes('preChatResponse')) {
           LoggingSanitizer.stripPreChatResponse(data.preChatResponse);
@@ -82,8 +80,6 @@ export class LoggingSanitizer {
         LoggingSanitizer.stripEmailDataFromError(data);
         
         configObject.data = JSON.stringify(data); // eslint-disable-line security/detect-object-injection
-      
-        
       }
     }
   }
