@@ -2,6 +2,8 @@ import Constants from "../Common/Constants";
 import OmnichannelHTTPHeaders from "../Common/OmnichannelHTTPHeaders";
 
 export class LoggingSanitizer {
+  private static emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+
   public static stripCustomContextDataValues(customContextData: any): void { // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
     if (customContextData) {
       Object.keys(customContextData)?.forEach((contextKey: string) => {
@@ -43,6 +45,11 @@ export class LoggingSanitizer {
       if (Object.keys(headers).includes(OmnichannelHTTPHeaders.authCodeNonce)) {
         headers[OmnichannelHTTPHeaders.authCodeNonce] = Constants.hiddenContentPlaceholder;
       }
+
+      if (Object.keys(headers).includes(OmnichannelHTTPHeaders.authorization)) {
+        headers[OmnichannelHTTPHeaders.authorization] = Constants.hiddenContentPlaceholder;
+      }
+
     }
   }
 
@@ -75,11 +82,19 @@ export class LoggingSanitizer {
         }
 
         LoggingSanitizer.stripGeolocation(data);
+        
         configObject.data = JSON.stringify(data); // eslint-disable-line security/detect-object-injection
+        // at this point is better to pass the string to search via regex for specific PI.
+        configObject.data = LoggingSanitizer.stripEmailDataFromError(configObject.data);
       }
     }
   }
 
+  public static stripEmailDataFromError(payload : string): string {
+    payload = payload.replace(this.emailRegex, Constants.hiddenContentPlaceholder);
+    return payload;
+  }
+  
   public static stripAxiosErrorSensitiveProperties(errorObject: any): void { // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
     if (errorObject.isAxiosError) {
       if (errorObject?.config?.headers) {

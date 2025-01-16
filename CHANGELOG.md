@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Adding validator to remove PI.
+
 ## [0.5.9] - 2024-12-05
 
 ### Fixed
