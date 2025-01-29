@@ -14,5 +14,4 @@ export default class InitContext {
   public isProactiveChat?: boolean;
   public platform?: string;
   public handle?: string;
-
 }
