@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.5.11] - 2025-01-29
+
 ### Added
 
 - Added new initContext property types for push notification
