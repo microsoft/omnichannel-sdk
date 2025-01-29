@@ -12,4 +12,6 @@ export default class InitContext {
   public customContextData?: { [key: string]: any }; // eslint-disable-line @typescript-eslint/no-explicit-any
   public portalcontactid?: string;
   public isProactiveChat?: boolean;
+  public platform?: string;
+  public handle?: string;
 }
