@@ -228,6 +228,27 @@ describe("SDK unit tests", () => {
             expect(axiosRetryHandler.default).toHaveBeenCalled();
         });
 
+        it("Should return promise with botId passed", async () => {
+
+           const  ochannelConfigBot = {
+                channelId: "lcw",
+                orgId: "678",
+                orgUrl: "SomeUrl",
+                widgetId: "456",
+            };
+            
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMock);
+            const sdk = new SDK(ochannelConfigBot as IOmnichannelConfiguration);
+            const result = await sdk.getChatToken("123", {
+                MsOcBotApplicationId: "botId"
+            }, 0);
+            expect(result).not.toBeUndefined();
+            expect(uuidvSpy).not.toHaveBeenCalled();
+            expect(axios.create).toHaveBeenCalled();
+            expect(axiosRetryHandler.default).toHaveBeenCalled();
+        });
+
+
         it("Should fail due to empty response", async () => {
             spyOn<any>(axios, "create").and.returnValue(axiosInstEmptyMock);
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
