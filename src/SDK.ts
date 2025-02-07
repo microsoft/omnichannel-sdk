@@ -305,6 +305,7 @@ export default class SDK implements ISDK {
   public async getChatToken(requestId: string, getChatTokenOptionalParams: IGetChatTokenOptionalParams = {}, currentRetryCount: number = 0): Promise<FetchChatTokenResponse> { // eslint-disable-line @typescript-eslint/no-inferrable-types
     const timer = Timer.TIMER();
     const { reconnectId, authenticatedUserToken, currentLiveChatVersion, refreshToken, MsOcBotApplicationId } = getChatTokenOptionalParams;
+    const multiBot = (MsOcBotApplicationId && MsOcBotApplicationId.length > 0)? true: false;
     this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATTOKENSTARTED, "Get Chat Token Started", requestId);
 
     if (currentRetryCount < 0) {
@@ -318,7 +319,7 @@ export default class SDK implements ISDK {
     const requestHeaders: StringMap = Constants.defaultHeaders;
     addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
 
-    const endpoint = createGetChatTokenEndpoint(currentLiveChatVersion as LiveChatVersion || this.liveChatVersion, authenticatedUserToken ? true : false);
+    const endpoint = createGetChatTokenEndpoint(currentLiveChatVersion as LiveChatVersion || this.liveChatVersion, authenticatedUserToken ? true : false, multiBot);
 
     if (authenticatedUserToken) {
       requestHeaders[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
