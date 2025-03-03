@@ -624,14 +624,14 @@ export default class SDK implements ISDK {
     });
   }
 
-  /**
+  /**'
    * Starts a session to omnichannel.
    * @param requestId: RequestId to use for session init.
    * @param sessionInitOptionalParams: Optional parameters for session init.
    */
-  public async sessionInit(requestId: string, sessionInitOptionalParams: ISessionInitOptionalParams = {}): Promise<void> {
+  public async sessionInit(requestId: string, sessionInitOptionalParams: ISessionInitOptionalParams = {}, apiVersion: String = "v1"): Promise<void | FetchChatTokenResponse> {
     const timer = Timer.TIMER();
-    this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSTARTED, "Session Init Started", requestId);
+    this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSTARTED, `Session Init ${apiVersion} Started`, requestId);
     const axiosInstance = axios.create();
     const retryOn429 = true;
     axiosRetryHandler(axiosInstance, {
@@ -642,21 +642,38 @@ export default class SDK implements ISDK {
     });
 
     const { reconnectId, authenticatedUserToken, initContext, getContext } = sessionInitOptionalParams;
-    const requestHeaders: StringMap = Constants.defaultHeaders;
-    let requestPath = `/${OmnichannelEndpoints.LiveChatSessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
-    if (authenticatedUserToken) {
-      requestPath = `/${OmnichannelEndpoints.LiveChatAuthSessionInitPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
-      requestHeaders[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
-      requestHeaders[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
+    const data: InitContext = initContext || {};
+    const requestHeaders: StringMap = { ...Constants.defaultHeaders };
+
+    const isV2 = apiVersion === "v2";
+    const basePath = authenticatedUserToken
+      ? isV2
+        ? OmnichannelEndpoints.LiveChatSessionInitAuthChatV2Path
+        : OmnichannelEndpoints.LiveChatAuthSessionInitPath
+      : isV2
+        ? OmnichannelEndpoints.LiveChatSessionInitV2Path
+        : OmnichannelEndpoints.LiveChatSessionInitPath;
+
+    let requestPath = isV2
+    ? `/${basePath}/${this.omnichannelConfiguration.orgId}/widgetApp/${this.omnichannelConfiguration.widgetId}/conversation`
+    :`/${basePath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
+    
+
+    if (authenticatedUserToken) {     
+      Object.assign(requestHeaders, {
+        [OmnichannelHTTPHeaders.authenticatedUserToken]: authenticatedUserToken,
+        [OmnichannelHTTPHeaders.authCodeNonce]: this.configuration.authCodeNonce,
+      });
     }
 
     this.setSessionIdHeader(this.sessionId, requestHeaders);
     addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
+    this.seRequestIdHeader(requestId, requestHeaders);
 
     // If should only be applicable on unauth chat & the flag enabled
     const shouldUseSigQueryParam = !authenticatedUserToken && this.configuration.useUnauthReconnectIdSigQueryParam === true;
     if (reconnectId) {
-      if (!shouldUseSigQueryParam) {
+      if (!shouldUseSigQueryParam && !isV2) {
         requestPath += `/${reconnectId}`;
       }
     }
@@ -666,12 +683,13 @@ export default class SDK implements ISDK {
     }
 
     if (reconnectId) {
-      if (shouldUseSigQueryParam) {
+      if (isV2) {
+        data.reconnectId = reconnectId;
+      } else if (shouldUseSigQueryParam) {
         params.sig = reconnectId;
       }
     }
-
-    const data: InitContext = initContext || {};
+    data.channelId = this.omnichannelConfiguration.channelId;
 
     if (getContext && !window.document) {
       return Promise.reject(new Error(`getContext is only supported on web browsers`));
@@ -709,14 +727,35 @@ export default class SDK implements ISDK {
       try {
         const response = await axiosInstance(options);
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        const { headers } = response;
+        const { data, headers } = response;
         this.setAuthCodeNonce(headers);
 
-        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSUCCEEDED, "Session Init Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, data, requestHeaders);
+        if (headers) {
+          if (headers[OmnichannelHTTPHeaders.ocSessionId.toLowerCase()]) {
+            this.sessionId = headers[OmnichannelHTTPHeaders.ocSessionId.toLowerCase()];
+          }
+        }
+
+        // Resolves only if it contains chat token response which only happens on status 200
+        if (data && isV2) {
+          
+          // check if data is empty, if so, then reject the promise
+          if (Object.keys(data).length === 0) {
+            reject(new Error("Empty data received from getChatToken"));
+            return;
+          }
+
+          data.requestId = requestId;
+          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSUCCEEDED, `Session Init v2 Succeeded`, requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
+          resolve(data);
+          return;
+        }
+
+        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSUCCEEDED, `Session Init Succeeded`, requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, data, requestHeaders);
         resolve();
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SESSIONINITFAILED, "Session Init failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, data, requestHeaders);
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SESSIONINITFAILED, `Session Init ${apiVersion} failed`, requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, data, requestHeaders);
         
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           reject( new Error(this.HTTPTimeOutErrorMessage));
@@ -1367,6 +1406,12 @@ export default class SDK implements ISDK {
   private setSessionIdHeader = (sessionId: string | undefined, headers: any) => {
     if (sessionId) {
       headers[OmnichannelHTTPHeaders.ocSessionId] = sessionId;
+    }
+  }
+
+  private seRequestIdHeader = (requestId: string | undefined, headers: any) => {
+    if (requestId) {
+      headers[OmnichannelHTTPHeaders.requestId] = requestId;
     }
   }
 }
