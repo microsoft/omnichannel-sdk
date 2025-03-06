@@ -629,9 +629,9 @@ export default class SDK implements ISDK {
    * @param requestId: RequestId to use for session init.
    * @param sessionInitOptionalParams: Optional parameters for session init.
    */
-  public async sessionInit(requestId: string, sessionInitOptionalParams: ISessionInitOptionalParams = {}, apiVersion: String = "v1"): Promise<void | FetchChatTokenResponse> {
+  public async sessionInit(requestId: string, sessionInitOptionalParams: ISessionInitOptionalParams = {}, useSessionInitV2 = false): Promise<void | FetchChatTokenResponse> {
     const timer = Timer.TIMER();
-    this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSTARTED, `Session Init ${apiVersion} Started`, requestId);
+    this.logWithLogger(LogLevel.INFO, useSessionInitV2 ? OCSDKTelemetryEvent.SESSIONINITV2STARTED : OCSDKTelemetryEvent.SESSIONINITSTARTED, "Session Init Started", requestId);
     const axiosInstance = axios.create();
     const retryOn429 = true;
     axiosRetryHandler(axiosInstance, {
@@ -645,7 +645,7 @@ export default class SDK implements ISDK {
     const data: InitContext = initContext || {};
     const requestHeaders: StringMap = { ...Constants.defaultHeaders };
 
-    const isV2 = apiVersion === "v2";
+    const isV2 = useSessionInitV2;
     const basePath = authenticatedUserToken
       ? isV2
         ? OmnichannelEndpoints.LiveChatSessionInitAuthChatV2Path
@@ -746,16 +746,16 @@ export default class SDK implements ISDK {
           }
 
           data.requestId = requestId;
-          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSUCCEEDED, `Session Init v2 Succeeded`, requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
+          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITV2SUCCEEDED, "Session Init v2 Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
           resolve(data);
           return;
         }
 
-        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSUCCEEDED, `Session Init Succeeded`, requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, data, requestHeaders);
+        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSUCCEEDED, "Session Init Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, data, requestHeaders);
         resolve();
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SESSIONINITFAILED, `Session Init ${apiVersion} failed`, requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, data, requestHeaders);
+        this.logWithLogger(LogLevel.ERROR, useSessionInitV2 ? OCSDKTelemetryEvent.SESSIONINITV2FAILED : OCSDKTelemetryEvent.SESSIONINITFAILED, "Session Init failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, data, requestHeaders);
         
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           reject( new Error(this.HTTPTimeOutErrorMessage));
