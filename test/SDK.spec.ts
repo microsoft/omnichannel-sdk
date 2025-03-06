@@ -352,6 +352,73 @@ describe("SDK unit tests", () => {
         });
     });
 
+
+    describe("Test sessionInitV2 method", () => {
+
+        let sessionInitOpt: any;
+        let locationInfo: any;
+        let browserName: any;
+        let deviceType: any;
+        let osType: any;
+        const HTTPTimeOutErrorMessage = SDKError.ClientHTTPTimeoutErrorName + ": " + SDKError.ClientHTTPTimeoutErrorMessage;
+
+
+        beforeEach(() => {
+            locationInfo = { latitude: "1", longitude: "2" };
+            browserName = "browser";
+            deviceType = "devicetype";
+            osType = "ostype";
+            sessionInitOpt = {
+                authenticatedUserToken: "token",
+                initContext: {},
+                getContext: true
+            };
+            spyOn<any>(LocationInfo, "getLocationInfo").and.returnValue(locationInfo);
+            spyOn<any>(BrowserInfo, "getBrowserName").and.returnValue(browserName);
+            spyOn<any>(DeviceInfo, "getDeviceType").and.returnValue(deviceType);
+            spyOn<any>(OSInfo, "getOsType").and.returnValue(osType);
+        });
+
+        it("Should reject when locale is not valid", (done) => {
+            sessionInitOpt.initContext = { locale: "asxasxsax" };
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMock);
+            spyOn(ocsdkLogger, "log").and.callFake(() => { });
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
+            const result = sdk.sessionInitV2(requestId, sessionInitOpt as ISessionInitOptionalParams);
+            expect(axios.create).toHaveBeenCalled();
+            result.then(() => {}, (error) => {
+                expect(OSInfo.getOsType).toHaveBeenCalled();
+                expect(DeviceInfo.getDeviceType).toHaveBeenCalled();
+                expect(axiosRetryHandler.default).toHaveBeenCalled();
+                expect(BrowserInfo.getBrowserName).toHaveBeenCalled();
+                expect(axiosRetryHandler.default).toHaveBeenCalled();
+                expect(ocsdkLogger.log).toHaveBeenCalled();
+                done();
+            });
+        });
+
+        it("Should return promise resolve", (done) => {
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMock);
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+            const result = sdk.sessionInitV2(requestId, sessionInitOpt as ISessionInitOptionalParams);
+            result.then(() => {
+                expect(axiosInstMock).toHaveBeenCalled();
+                done();
+            });
+        });
+
+        it("Should reject when axiosInstance throws an error", (done) => {
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockWithError);
+            spyOn(ocsdkLogger, "log").and.callFake(() => { });
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
+            const result = sdk.sessionInitV2(requestId, sessionInitOpt as ISessionInitOptionalParams);
+            result.then(() => {}, () => {
+                expect(ocsdkLogger.log).toHaveBeenCalled();
+                done();
+            });
+        });
+    });
+
     describe("Get Agent Availabilty method", ()=> {
 
         let getQueueAvailabilityOpt: any;
