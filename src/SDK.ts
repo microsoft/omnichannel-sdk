@@ -714,7 +714,7 @@ export default class SDK implements ISDK {
       try {
         const response = await axiosInstance(options);
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        const { data, headers } = response;
+        const { headers } = response;
         this.setAuthCodeNonce(headers);
 
         this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSUCCEEDED, "Session Init Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, data, requestHeaders);
@@ -733,7 +733,7 @@ export default class SDK implements ISDK {
 
   public async sessionInitV2(requestId: string, sessionInitOptionalParams: ISessionInitOptionalParams = {}): Promise<FetchChatTokenResponse> {
     const timer = Timer.TIMER();
-    this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITV2STARTED, "Session Init V2 Started", requestId);
+    this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSTARTED, "Session Init V2 Started", requestId);
     const axiosInstance = axios.create();
     const retryOn429 = true;
     axiosRetryHandler(axiosInstance, {
@@ -821,11 +821,11 @@ export default class SDK implements ISDK {
         }
 
         data.requestId = requestId;
-        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITV2SUCCEEDED, "Session Init V2 Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
+        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSUCCEEDED, "Session Init V2 Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
         resolve(data);
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SESSIONINITV2FAILED, "Session Init V2 failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, data, requestHeaders);
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SESSIONINITFAILED, "Session Init V2 failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, data, requestHeaders);
         
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           reject( new Error(this.HTTPTimeOutErrorMessage));
@@ -1479,7 +1479,7 @@ export default class SDK implements ISDK {
     }
   }
 
-  private seRequestIdHeader = (requestId: string | undefined, headers: any) => {
+  private seRequestIdHeader = (requestId: string | undefined, headers: StringMap) => {
     if (requestId) {
       headers[OmnichannelHTTPHeaders.requestId] = requestId;
     }
