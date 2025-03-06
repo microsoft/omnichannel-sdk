@@ -731,7 +731,7 @@ export default class SDK implements ISDK {
     });
   }
 
-  public async sessionInitV2(requestId: string, sessionInitOptionalParams: ISessionInitOptionalParams = {}): Promise<FetchChatTokenResponse> {
+  public async createConversation(requestId: string, sessionInitOptionalParams: ISessionInitOptionalParams = {}): Promise<FetchChatTokenResponse> {
     const timer = Timer.TIMER();
     this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSTARTED, "Session Init V2 Started", requestId);
     const axiosInstance = axios.create();
@@ -748,8 +748,8 @@ export default class SDK implements ISDK {
     const requestHeaders: StringMap = { ...Constants.defaultHeaders };
 
     const basePath = authenticatedUserToken
-      ? OmnichannelEndpoints.LiveChatSessionInitAuthChatV2Path
-      : OmnichannelEndpoints.LiveChatSessionInitV2Path;
+      ? OmnichannelEndpoints.LiveChatConnecterAuthPath
+      : OmnichannelEndpoints.LiveChatConnecterPath;
 
     const requestPath = `/${basePath}/${this.omnichannelConfiguration.orgId}/widgetApp/${this.omnichannelConfiguration.widgetId}/conversation`;
 
