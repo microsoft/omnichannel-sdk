@@ -384,7 +384,7 @@ describe("SDK unit tests", () => {
             spyOn<any>(axios, "create").and.returnValue(axiosInstMock);
             spyOn(ocsdkLogger, "log").and.callFake(() => { });
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
-            const result = sdk.sessionInitV2(requestId, sessionInitOpt as ISessionInitOptionalParams);
+            const result = sdk.createConversation(requestId, sessionInitOpt as ISessionInitOptionalParams);
             expect(axios.create).toHaveBeenCalled();
             result.then(() => {}, (error) => {
                 expect(OSInfo.getOsType).toHaveBeenCalled();
@@ -400,7 +400,7 @@ describe("SDK unit tests", () => {
         it("Should return promise resolve", (done) => {
             spyOn<any>(axios, "create").and.returnValue(axiosInstMock);
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
-            const result = sdk.sessionInitV2(requestId, sessionInitOpt as ISessionInitOptionalParams);
+            const result = sdk.createConversation(requestId, sessionInitOpt as ISessionInitOptionalParams);
             result.then(() => {
                 expect(axiosInstMock).toHaveBeenCalled();
                 done();
@@ -411,7 +411,7 @@ describe("SDK unit tests", () => {
             spyOn<any>(axios, "create").and.returnValue(axiosInstMockWithError);
             spyOn(ocsdkLogger, "log").and.callFake(() => { });
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
-            const result = sdk.sessionInitV2(requestId, sessionInitOpt as ISessionInitOptionalParams);
+            const result = sdk.createConversation(requestId, sessionInitOpt as ISessionInitOptionalParams);
             result.then(() => {}, () => {
                 expect(ocsdkLogger.log).toHaveBeenCalled();
                 done();
