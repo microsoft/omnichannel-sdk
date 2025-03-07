@@ -353,7 +353,7 @@ describe("SDK unit tests", () => {
     });
 
 
-    describe("Test sessionInitV2 method", () => {
+    describe("Test create conversation method", () => {
 
         let sessionInitOpt: any;
         let locationInfo: any;
