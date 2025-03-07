@@ -733,7 +733,7 @@ export default class SDK implements ISDK {
 
   public async createConversation(requestId: string, sessionInitOptionalParams: ISessionInitOptionalParams = {}): Promise<FetchChatTokenResponse> {
     const timer = Timer.TIMER();
-    this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.CREATESESSIONSTARTED, "Create session call Started", requestId);
+    this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.CREATESESSIONSTARTED, "Create conversation call Started", requestId);
     const axiosInstance = axios.create();
     const retryOn429 = true;
     axiosRetryHandler(axiosInstance, {
@@ -819,11 +819,11 @@ export default class SDK implements ISDK {
       }
 
       data.requestId = requestId;
-      this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.CREATESESSIONSUCCEEDED, "Create session call Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
+      this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.CREATESESSIONSUCCEEDED, "Create coversation call Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
       return data;
     } catch (error) {
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-      this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.CREATESESSIONFAILED, "Create session call failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, data, requestHeaders);
+      this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.CREATESESSIONFAILED, "Create conversation call failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, data, requestHeaders);
       
       if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
         throw new Error(this.HTTPTimeOutErrorMessage);
