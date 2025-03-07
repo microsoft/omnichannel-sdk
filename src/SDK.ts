@@ -660,7 +660,7 @@ export default class SDK implements ISDK {
 
     this.setSessionIdHeader(this.sessionId, requestHeaders);
     addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
-    this.seRequestIdHeader(requestId, requestHeaders);
+    this.setRequestIdHeader(requestId, requestHeaders);
 
     // If should only be applicable on unauth chat & the flag enabled
     const shouldUseSigQueryParam = !authenticatedUserToken && this.configuration.useUnauthReconnectIdSigQueryParam === true;
@@ -733,7 +733,7 @@ export default class SDK implements ISDK {
 
   public async createConversation(requestId: string, sessionInitOptionalParams: ISessionInitOptionalParams = {}): Promise<FetchChatTokenResponse> {
     const timer = Timer.TIMER();
-    this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSTARTED, "Session Init V2 Started", requestId);
+    this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.CREATESESSIONSTARTED, "Create session call Started", requestId);
     const axiosInstance = axios.create();
     const retryOn429 = true;
     axiosRetryHandler(axiosInstance, {
@@ -748,8 +748,8 @@ export default class SDK implements ISDK {
     const requestHeaders: StringMap = { ...Constants.defaultHeaders };
 
     const basePath = authenticatedUserToken
-      ? OmnichannelEndpoints.LiveChatConnecterAuthPath
-      : OmnichannelEndpoints.LiveChatConnecterPath;
+      ? OmnichannelEndpoints.LiveChatConnectorAuthPath
+      : OmnichannelEndpoints.LiveChatConnectorPath;
 
     const requestPath = `/${basePath}/${this.omnichannelConfiguration.orgId}/widgetApp/${this.omnichannelConfiguration.widgetId}/conversation`;
 
@@ -762,7 +762,7 @@ export default class SDK implements ISDK {
 
     this.setSessionIdHeader(this.sessionId, requestHeaders);
     addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
-    this.seRequestIdHeader(requestId, requestHeaders);
+    this.setRequestIdHeader(requestId, requestHeaders);
 
     if (reconnectId) {
       data.reconnectId = reconnectId;
@@ -801,38 +801,35 @@ export default class SDK implements ISDK {
       timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.sessionInit
     };
 
-    return new Promise(async (resolve, reject) => {
-      try {
-        const response = await axiosInstance(options);
-        const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        const { data, headers } = response;
-        this.setAuthCodeNonce(headers);
+    try {
+      const response = await axiosInstance(options);
+      const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+      const { data, headers } = response;
+      this.setAuthCodeNonce(headers);
 
-        if (headers) {
-          if (headers[OmnichannelHTTPHeaders.ocSessionId.toLowerCase()]) {
-            this.sessionId = headers[OmnichannelHTTPHeaders.ocSessionId.toLowerCase()];
-          }
+      if (headers) {
+        if (headers[OmnichannelHTTPHeaders.ocSessionId.toLowerCase()]) {
+          this.sessionId = headers[OmnichannelHTTPHeaders.ocSessionId.toLowerCase()];
         }
-        
-        // check if data is empty, if so, then reject the promise
-        if (Object.keys(data).length === 0) {
-          reject(new Error("Empty data received from getChatToken"));
-          return;
-        }
-
-        data.requestId = requestId;
-        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSUCCEEDED, "Session Init V2 Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
-        resolve(data);
-      } catch (error) {
-        const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SESSIONINITFAILED, "Session Init V2 failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, data, requestHeaders);
-        
-        if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
-          reject( new Error(this.HTTPTimeOutErrorMessage));
-        }
-        reject(error);
       }
-    });
+      
+      // check if data is empty, if so, then throw an error
+      if (Object.keys(data).length === 0) {
+        throw new Error("Empty data received from getChatToken");
+      }
+
+      data.requestId = requestId;
+      this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.CREATESESSIONSUCCEEDED, "Create session call Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
+      return data;
+    } catch (error) {
+      const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+      this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.CREATESESSIONFAILED, "Create session call failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, data, requestHeaders);
+      
+      if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
+        throw new Error(this.HTTPTimeOutErrorMessage);
+      }
+      throw error;
+    }
   }
 
   /**
@@ -1479,7 +1476,7 @@ export default class SDK implements ISDK {
     }
   }
 
-  private seRequestIdHeader = (requestId: string | undefined, headers: StringMap) => {
+  private setRequestIdHeader = (requestId: string | undefined, headers: StringMap) => {
     if (requestId) {
       headers[OmnichannelHTTPHeaders.requestId] = requestId;
     }
