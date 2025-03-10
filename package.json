@@ -59,7 +59,7 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.15.4",
-    "@types/node": "^12.20.26",
+    "@types/node": "^22.13.10",
     "axios": "^1.8.2",
     "axios-retry": "^3.9.1"
   }
