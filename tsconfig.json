@@ -6,13 +6,11 @@
         "outDir": "./lib",
         "strict": true,
         "esModuleInterop": true,
-        "types": ["node", "jest"]
+        "types": ["node"]
 
     },
     "include": [
       "src/**/*",
-      "src/webpack-env-override.d.ts" // Include the type declaration file for module augmentation
-
     ],
     "exclude": [
         "node_modules"
