@@ -25,7 +25,8 @@ export {
 
   // Declares window object for NodeJS environment
   if (global.window === undefined) {
-    global.window = global;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (global as any).window = global;
   }
 
   if (!window) {
