@@ -9,6 +9,7 @@ export default interface ISDK {
   getLWIDetails(requestId: string): Promise<object>;
   getChatToken(requestId: string): Promise<FetchChatTokenResponse>;
   sessionInit(requestId: string): Promise<void>;
+  createConversation(requestId: string): Promise<FetchChatTokenResponse>;
   sessionClose(requestId: string): Promise<void>;
   getReconnectableChats(reconnectableChatsParams: IReconnectableChatsParams): Promise<object | void>;
   getReconnectAvailability(reconnectId: string): Promise<object | void>;
