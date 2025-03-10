@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.5.12] - 2025-03-10
+
 ### Added
 
 - Uptake [axios@1.8.2](https://www.npmjs.com/package/axios/v/1.8.2)
