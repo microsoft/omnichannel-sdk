@@ -1,7 +1,8 @@
 // Entry point
+
+import EventManager from "./Utils/EventManager";
 import EventNames from "./Common/EventNames";
 import SDKProvider from "./SDKProvider";
-import EventManager from "./Utils/EventManager";
 import { uuidv4 } from "./Utils/uuid";
 
 declare global {
