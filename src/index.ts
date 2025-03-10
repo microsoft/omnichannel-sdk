@@ -1,7 +1,8 @@
 // Entry point
+
+import EventManager from "./Utils/EventManager";
 import EventNames from "./Common/EventNames";
 import SDKProvider from "./SDKProvider";
-import EventManager from "./Utils/EventManager";
 import { uuidv4 } from "./Utils/uuid";
 
 declare global {
@@ -25,7 +26,8 @@ export {
 
   // Declares window object for NodeJS environment
   if (global.window === undefined) {
-    global.window = global;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (global as any).window = global;
   }
 
   if (!window) {
