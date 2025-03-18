@@ -1441,9 +1441,34 @@ export default class SDK implements ISDK {
     }
 
     let sanitizedRequestHeaders = undefined;
+    let authTokenDetails: any = undefined;
     if (requestHeaders) {
       sanitizedRequestHeaders = { ...requestHeaders };
       LoggingSanitizer.stripRequestHeadersSensitiveProperties(sanitizedRequestHeaders);
+
+      if (requestHeaders[OmnichannelHTTPHeaders.authenticatedUserToken]) {
+        if (window.document && window.atob) {
+          try {
+            const token = requestHeaders[OmnichannelHTTPHeaders.authenticatedUserToken];
+            const payload = token.split(".")[1];
+            const data = window.atob(payload);
+            const jsonData = JSON.parse(data);
+            const lwiContexts = jsonData["lwicontexts"];
+            authTokenDetails = {
+              sub: jsonData["sub"],
+              exp: jsonData["exp"]
+            };
+
+            if (lwiContexts) {
+              const lwiContextsData = JSON.parse(lwiContexts);
+              LoggingSanitizer.stripCustomContextDataValues(lwiContextsData);
+              authTokenDetails.lwiContexts = lwiContextsData;
+            }
+          } catch {
+
+          }
+        }
+      }
     }
 
     const customData = {
