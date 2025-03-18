@@ -11,4 +11,5 @@ export default interface IOCSDKLogData {
   RequestMethod?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
   RequestHeaders?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
   ResponseErrorCode?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  AuthTokenDetails?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
