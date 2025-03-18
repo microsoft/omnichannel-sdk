@@ -1441,7 +1441,7 @@ export default class SDK implements ISDK {
     }
 
     let sanitizedRequestHeaders = undefined;
-    let authTokenDetails: any = undefined;
+    let authTokenDetails: any = undefined; // eslint-disable-line @typescript-eslint/no-explicit-any
     if (requestHeaders) {
       sanitizedRequestHeaders = { ...requestHeaders };
       LoggingSanitizer.stripRequestHeadersSensitiveProperties(sanitizedRequestHeaders);
@@ -1482,7 +1482,8 @@ export default class SDK implements ISDK {
       ExceptionDetails: error ? (error as any).response?.data || error : undefined, 
       RequestPayload: sanitizedRequestPayload,
       RequestHeaders: sanitizedRequestHeaders,
-      ResponseErrorcode: error ? (error as any).response?.headers?.errorcode : undefined // eslint-disable-line @typescript-eslint/no-explicit-any
+      ResponseErrorcode: error ? (error as any).response?.headers?.errorcode : undefined, // eslint-disable-line @typescript-eslint/no-explicit-any
+      AuthTokenDetails: authTokenDetails
     };
     this.logger.log(logLevel, telemetryEventType, customData, description);
   }
