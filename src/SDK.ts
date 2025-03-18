@@ -1465,7 +1465,7 @@ export default class SDK implements ISDK {
               authTokenDetails.lwiContexts = lwiContextsData;
             }
           } catch {
-
+            // eslint-disable-line no-empty
           }
         }
       }
