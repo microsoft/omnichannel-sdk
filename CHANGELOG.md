@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.5.13] - 2025-03-24
+
 ### Added
 
 - Add `AuthTokenDetails` as log data
