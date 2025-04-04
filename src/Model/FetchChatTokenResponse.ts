@@ -6,4 +6,7 @@ export default class FetchChatTokenResponse {
   public Region!: string;
   public RegionGtms!: string | object;
   public requestId!: string;
+  public AttachmentConfiguration!: { AttachmentServiceEndpoint:string };
+  public ACSEndpoint!: string;
+  public VoiceVideoCallToken!: object;
 }
