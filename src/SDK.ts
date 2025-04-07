@@ -328,10 +328,6 @@ export default class SDK implements ISDK {
 
     let requestPath = `/${endpoint}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
     
-    if (MsOcBotApplicationId && MsOcBotApplicationId.length > 0) {
-      requestPath += `?Ms-Oc-Bot-Application-Id=${MsOcBotApplicationId}`;
-    }
-
     // If should only be applicable on unauth chat & the flag enabled
     const shouldUseSigQueryParam = !authenticatedUserToken && this.configuration.useUnauthReconnectIdSigQueryParam === true;
     if (reconnectId) {
@@ -342,6 +338,9 @@ export default class SDK implements ISDK {
 
     const params: OmnichannelQueryParameter = {
       channelId: this.omnichannelConfiguration.channelId
+    }
+    if (MsOcBotApplicationId && MsOcBotApplicationId.length > 0) {
+      params['Ms-Oc-Bot-Application-Id'] = MsOcBotApplicationId;
     }
 
     if (refreshToken) {
