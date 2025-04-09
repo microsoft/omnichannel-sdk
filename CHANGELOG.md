@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.5.14] 2025-04-09
+
 ### Added
 
 - Extend getChatToken to include Ms-Oc-Bot-Application-Id as query parameter.
