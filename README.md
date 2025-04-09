@@ -6,47 +6,54 @@
 This repo contains the source code for getting up and running with the Omnichannel SDK on the web using standard web technologies and on mobile using React Native.
 
 # Getting Started
+
 ## Prerequisites
+
 - [Node v12.13.0](https://nodejs.org/en/) (or equivalent)
 - [npm](https://www.npmjs.com/)
 
 ## Installation
 
-```
+```console
 npm install
 ```
 
 ## Build
 
 ### Load SDK in memory and watches the changes for development
-```
+
+```console
 npm run watch
 ```
 
 ### Build SDK for development
-```
+
+```console
 npm run build:dev
 ```
 
 ### Build SDK for production
-```
+
+```console
 npm run build:prod
 ```
 
 ### Check lint rules
-```
+
+```console
 npm run lint
-```
+```console
 Lint checks is enabled by default in watch mode.
 
 # Examples
 
 ### Initialize SDK
+
 ```js
 const params = {
-	orgUrl: '',
-	orgId: '',
-	widgetId: '',
+ orgUrl: '',
+ orgId: '',
+ widgetId: '',
 }
 
 const ocsdk = Microsoft.CRM.Omnichannel.SDK.SDKProvider.getSDK(params);
@@ -54,11 +61,12 @@ window.ocsdk = ocsdk;
 ```
 
 ### Initialize SDK with custom configuration
+
 ```js
 const params = {
-	orgUrl: '',
-	orgId: '',
-	widgetId: '',
+ orgUrl: '',
+ orgId: '',
+ widgetId: '',
 }
 
 const configuration = {
@@ -72,34 +80,36 @@ window.ocsdk = ocsdk;
 ```
 
 ### Get Chat Config
+
 ```js
 // Manually generate request id
 const requestId = Microsoft.CRM.Omnichannel.SDK.Util.uuidv4();
 try {
-	const config = await window.ocsdk.getChatConfig(requestId);
-	// success
+ const config = await window.ocsdk.getChatConfig(requestId);
+ // success
 } catch {
-	// failure
+ // failure
 }
 
 // Auto generate request id
 try {
-	const config = await window.ocsdk.getChatConfig();
-	// success
+ const config = await window.ocsdk.getChatConfig();
+ // success
 } catch {
-	// failure
+ // failure
 }
 ```
 
 ### Get Chat Token
+
 ```js
 // Manually generate request id
 const requestId = Microsoft.CRM.Omnichannel.SDK.Util.uuidv4();
 try {
-	const chatToken = await window.ocsdk.getChatToken(requestId);
-	// success
+ const chatToken = await window.ocsdk.getChatToken(requestId);
+ // success
 } catch {
-	// failure
+ // failure
 }
 
 // Auto generate request id
@@ -114,6 +124,7 @@ try {
 ```
 
 ### Session Init
+
 ```js
 const requestId = Microsoft.CRM.Omnichannel.SDK.Util.uuidv4();
 const optionalParams = {
@@ -132,14 +143,15 @@ const optionalParams = {
 };
 
 try {
-	await window.ocsdk.sessionInit(requestId, optionalParams);
-	// success
+ await window.ocsdk.sessionInit(requestId, optionalParams);
+ // success
 } catch {
-	// failure
+ // failure
 }
 ```
 
 ### Session Close
+
 ```js
 const requestId = Microsoft.CRM.Omnichannel.SDK.Util.uuidv4();
 const optionalParams = {
@@ -147,14 +159,15 @@ const optionalParams = {
 };
 
 try {
-	await window.ocsdk.sessionClose(requestId, optionalParams);
-	// success
+ await window.ocsdk.sessionClose(requestId, optionalParams);
+ // success
 } catch {
-	// failure
+ // failure
 }
 ```
 
 ### Submit PostChat Response
+
 ```js
 const requestId = Microsoft.CRM.Omnichannel.SDK.Util.uuidv4();
 const postChatResponse = {};
@@ -163,14 +176,15 @@ const optionalParams = {
 };
 
 try {
-	await window.ocsdk.submitPostChatResponse(requestId, postChatResponse, optionalParams);
-	// success
+ await window.ocsdk.submitPostChatResponse(requestId, postChatResponse, optionalParams);
+ // success
 } catch {
-	// failure
+ // failure
 }
 ```
 
 ### Get Chat Transcripts
+
 ```js
 const requestId = Microsoft.CRM.Omnichannel.SDK.Util.uuidv4();
 const chatId = ''; // Chat thread ID
@@ -180,14 +194,15 @@ const optionalParams = {
 };
 
 try {
-	const response = await window.ocsdk.getChatTranscripts(requestId, chatId, token, optionalParams);
-	// success
+ const response = await window.ocsdk.getChatTranscripts(requestId, chatId, token, optionalParams);
+ // success
 } catch {
-	// failure
+ // failure
 }
 ```
 
 ### Email Transcript
+
 ```js
 const requestId = Microsoft.CRM.Omnichannel.SDK.Util.uuidv4();
 const token = ''; // Skype token
@@ -202,14 +217,15 @@ const optionalParams = {
 };
 
 try {
-	await window.ocsdk.emailTranscript(requestId, token, emailRequestBody, optionalParams);
-	// success
+ await window.ocsdk.emailTranscript(requestId, token, emailRequestBody, optionalParams);
+ // success
 } catch {
-	// failure
+ // failure
 }
 ```
 
 ### Fetch Data Masking Info
+
 ```js
 // Manually generate request id
 const requestId = Microsoft.CRM.Omnichannel.SDK.Util.uuidv4();
@@ -228,8 +244,11 @@ try {
   // failure
 }
 ```
+
 ## SDK Configuration
+
 These are the available config options with its default values for the SDK.
+
 ```js
 {
   /**
@@ -251,7 +270,7 @@ These are the available config options with its default values for the SDK.
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
 Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
-the rights to use your contribution. For details, visit https://cla.opensource.microsoft.com.
+the rights to use your contribution. For details, visit <https://cla.opensource.microsoft.com>.
 
 When you submit a pull request, a CLA bot will automatically determine whether you need to provide
 a CLA and decorate the PR appropriately (e.g., status check, comment). Simply follow the instructions

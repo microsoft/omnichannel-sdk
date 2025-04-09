@@ -16,4 +16,9 @@ export default interface IGetChatTokenOptionalParams {
    * Whether to refresh chat token
    */
   refreshToken?: boolean;
+
+  /**
+   * Specifies the bot application id to engage.
+   */
+  MsOcBotApplicationId?: string;
 }

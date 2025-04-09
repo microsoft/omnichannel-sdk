@@ -2,6 +2,7 @@ import * as hash from "crypto";
 
 import { ChannelId, LiveChatVersion, OCSDKTelemetryEvent, SDKError } from "./Common/Enums";
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
+import axiosRetryHandler, { axiosRetryHandlerWithNotFound } from "./Utils/axiosRetryHandler";
 
 import { BrowserInfo } from "./Utils/BrowserInfo";
 import Constants from "./Common/Constants";
@@ -41,7 +42,6 @@ import { RequestTimeoutConfig } from "./Common/RequestTimeoutConfig";
 import { StringMap } from "./Common/Mappings";
 import { Timer } from "./Utils/Timer";
 import { addOcUserAgentHeader } from "./Utils/httpHeadersUtils";
-import axiosRetryHandler, { axiosRetryHandlerWithNotFound } from "./Utils/axiosRetryHandler";
 import { createGetChatTokenEndpoint } from "./Utils/endpointsCreators";
 import isExpectedAxiosError from "./Utils/isExpectedAxiosError";
 import sessionInitRetryHandler from "./Utils/SessionInitRetryHandler";
@@ -304,7 +304,8 @@ export default class SDK implements ISDK {
    */
   public async getChatToken(requestId: string, getChatTokenOptionalParams: IGetChatTokenOptionalParams = {}, currentRetryCount: number = 0): Promise<FetchChatTokenResponse> { // eslint-disable-line @typescript-eslint/no-inferrable-types
     const timer = Timer.TIMER();
-    const { reconnectId, authenticatedUserToken, currentLiveChatVersion, refreshToken } = getChatTokenOptionalParams;
+    const { reconnectId, authenticatedUserToken, currentLiveChatVersion, refreshToken, MsOcBotApplicationId } = getChatTokenOptionalParams;
+    const multiBot = (MsOcBotApplicationId && MsOcBotApplicationId.length > 0)? true: false;
     this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATTOKENSTARTED, "Get Chat Token Started", requestId);
 
     if (currentRetryCount < 0) {
@@ -318,7 +319,7 @@ export default class SDK implements ISDK {
     const requestHeaders: StringMap = Constants.defaultHeaders;
     addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
 
-    const endpoint = createGetChatTokenEndpoint(currentLiveChatVersion as LiveChatVersion || this.liveChatVersion, authenticatedUserToken ? true : false);
+    const endpoint = createGetChatTokenEndpoint(currentLiveChatVersion as LiveChatVersion || this.liveChatVersion, authenticatedUserToken ? true : false, multiBot);
 
     if (authenticatedUserToken) {
       requestHeaders[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
@@ -326,7 +327,7 @@ export default class SDK implements ISDK {
     }
 
     let requestPath = `/${endpoint}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
-
+    
     // If should only be applicable on unauth chat & the flag enabled
     const shouldUseSigQueryParam = !authenticatedUserToken && this.configuration.useUnauthReconnectIdSigQueryParam === true;
     if (reconnectId) {
@@ -337,6 +338,9 @@ export default class SDK implements ISDK {
 
     const params: OmnichannelQueryParameter = {
       channelId: this.omnichannelConfiguration.channelId
+    }
+    if (MsOcBotApplicationId && MsOcBotApplicationId.length > 0) {
+      params['Ms-Oc-Bot-Application-Id'] = MsOcBotApplicationId;
     }
 
     if (refreshToken) {

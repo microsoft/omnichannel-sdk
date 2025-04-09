@@ -3,4 +3,5 @@ export default interface OmnichannelQueryParameter {
     sig?: string;
     refreshToken?: string; 
     reconnectId?: string;
+    "Ms-Oc-Bot-Application-Id"?: string;
 }
