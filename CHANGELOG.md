@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Added correlationId in the header for all oc request
+
 ## [0.5.14] 2025-04-09
 
 ### Added
