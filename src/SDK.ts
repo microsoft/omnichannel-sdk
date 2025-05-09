@@ -47,6 +47,7 @@ import isExpectedAxiosError from "./Utils/isExpectedAxiosError";
 import sessionInitRetryHandler from "./Utils/SessionInitRetryHandler";
 import { uuidv4 } from "./Utils/uuid";
 import { waitTimeBetweenRetriesConfigs } from "./Utils/waitTimeBetweenRetriesConfigs";
+import IReconnectAvailabilityOptionalParams from "./Interfaces/IReconnectAvailabilityOptionalParams";
 
 export default class SDK implements ISDK {
   private static defaultRequestTimeoutConfig: RequestTimeoutConfig = {
@@ -317,8 +318,7 @@ export default class SDK implements ISDK {
     }
 
     const requestHeaders: StringMap = Constants.defaultHeaders;
-    addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
-    this.setCorrelationIdInHeader(requestId, requestHeaders);
+    this.addDefaultHeaders(requestId, requestHeaders);
 
     const endpoint = createGetChatTokenEndpoint(currentLiveChatVersion as LiveChatVersion || this.liveChatVersion, authenticatedUserToken ? true : false, multiBot);
 
@@ -478,14 +478,14 @@ export default class SDK implements ISDK {
  * Fetches the reconnectable chats from omnichannel from the given user information in JWT token(claim name: sub).
  * @param reconnectableChatsParams Mandate parameters for get reconnectable chats.
  */
-  public async getReconnectAvailability(reconnectId: string, requestId: string): Promise<ReconnectAvailability | void> {
+  public async getReconnectAvailability(reconnectId: string, optionalParam: IReconnectAvailabilityOptionalParams = {}): Promise<ReconnectAvailability | void> {
     const timer = Timer.TIMER();
     this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITYSTARTED, "Get Reconnectable availability Started");
 
     const requestPath = `/${OmnichannelEndpoints.LiveChatReconnectAvailabilityPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${reconnectId}`;
     const requestHeaders: StringMap = Constants.defaultHeaders;
 
-    this.addDefaultHeaders(requestId, requestHeaders);
+    this.addDefaultHeaders(optionalParam?.requestId, requestHeaders);
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
@@ -503,19 +503,19 @@ export default class SDK implements ISDK {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         const { data } = response;
         if (data) {
-          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITYSUCCEEDED, "Get Reconnect availability succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
+          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITYSUCCEEDED, "Get Reconnect availability succeeded", optionalParam?.requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
 
           resolve(data);
           return;
         }
         // No data found so returning null
-        this.logWithLogger(LogLevel.WARN, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITYSUCCEEDED, "Get Reconnect availability didn't send any valid data", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
+        this.logWithLogger(LogLevel.WARN, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITYSUCCEEDED, "Get Reconnect availability didn't send any valid data", optionalParam?.requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
 
         resolve();
         return;
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITYFAILED, "Get Reconnect Availability failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITYFAILED, "Get Reconnect Availability failed", optionalParam?.requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           reject( new Error(this.HTTPTimeOutErrorMessage));
         }
@@ -995,7 +995,7 @@ export default class SDK implements ISDK {
 
     const { authenticatedUserToken } = submitPostChatResponseOptionalParams;
     const requestHeaders: StringMap = Constants.defaultHeaders;
-    this.setCorrelationIdInHeader(requestId, requestHeaders);
+    this.addDefaultHeaders(requestId, requestHeaders);
 
     if (authenticatedUserToken) {
       requestPath = `/${OmnichannelEndpoints.LiveChatAuthSubmitPostChatPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;

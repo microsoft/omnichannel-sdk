@@ -2,6 +2,7 @@ import FetchChatTokenResponse from "../Model/FetchChatTokenResponse";
 import IDataMaskingInfo from "../Interfaces/IDataMaskingInfo";
 import IGetQueueAvailabilityOptionalParams from "./IGetQueueAvailabilityOptionalParams";
 import IReconnectableChatsParams from "../Interfaces/IReconnectableChatsParams";
+import IReconnectAvailabilityOptionalParams from "./IReconnectAvailabilityOptionalParams";
 
 export default interface ISDK {
   getLcwFcsDetails(): Promise<object | void>;
@@ -12,7 +13,7 @@ export default interface ISDK {
   createConversation(requestId: string): Promise<FetchChatTokenResponse>;
   sessionClose(requestId: string): Promise<void>;
   getReconnectableChats(reconnectableChatsParams: IReconnectableChatsParams): Promise<object | void>;
-  getReconnectAvailability(reconnectId: string, requestId: string): Promise<object | void>;
+  getReconnectAvailability(reconnectId: string, optionalParams: IReconnectAvailabilityOptionalParams): Promise<object | void>;
   submitPostChatResponse(requestId: string, postChatResponse: object): Promise<void>;
   getSurveyInviteLink(surveyOwnerId: string, surveyInviteAPIRequestBody: object): Promise<object>;
   getChatTranscripts(requestId: string, chatId: string, token: string): Promise<string>;
