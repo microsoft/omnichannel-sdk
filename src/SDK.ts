@@ -47,6 +47,7 @@ import isExpectedAxiosError from "./Utils/isExpectedAxiosError";
 import sessionInitRetryHandler from "./Utils/SessionInitRetryHandler";
 import { uuidv4 } from "./Utils/uuid";
 import { waitTimeBetweenRetriesConfigs } from "./Utils/waitTimeBetweenRetriesConfigs";
+import IReconnectAvailabilityOptionalParams from "./Interfaces/IReconnectAvailabilityOptionalParams";
 
 export default class SDK implements ISDK {
   private static defaultRequestTimeoutConfig: RequestTimeoutConfig = {
@@ -181,7 +182,7 @@ export default class SDK implements ISDK {
     });
 
     let requestHeaders = {};
-    addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
+    this.addDefaultHeaders(requestId, requestHeaders);
 
     if (bypassCache) {
       requestHeaders = { ...Constants.bypassCacheHeaders, ...requestHeaders };
@@ -246,8 +247,7 @@ export default class SDK implements ISDK {
       requestHeaders[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
     }
 
-    addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
-    this.setSessionIdHeader(this.sessionId, requestHeaders);
+    this.addDefaultHeaders(requestId, requestHeaders);
 
     // If should only be applicable on unauth chat & the flag enabled
     const shouldUseSigQueryParam = !authenticatedUserToken && this.configuration.useUnauthReconnectIdSigQueryParam === true;
@@ -317,7 +317,7 @@ export default class SDK implements ISDK {
     }
 
     const requestHeaders: StringMap = Constants.defaultHeaders;
-    addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
+    this.addDefaultHeaders(requestId, requestHeaders);
 
     const endpoint = createGetChatTokenEndpoint(currentLiveChatVersion as LiveChatVersion || this.liveChatVersion, authenticatedUserToken ? true : false, multiBot);
 
@@ -430,8 +430,7 @@ export default class SDK implements ISDK {
     requestHeaders[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
     requestHeaders[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
 
-    this.setSessionIdHeader(this.sessionId, requestHeaders);
-    addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
+    this.addDefaultHeaders(reconnectableChatsParams?.requestId, requestHeaders);
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
@@ -478,15 +477,14 @@ export default class SDK implements ISDK {
  * Fetches the reconnectable chats from omnichannel from the given user information in JWT token(claim name: sub).
  * @param reconnectableChatsParams Mandate parameters for get reconnectable chats.
  */
-  public async getReconnectAvailability(reconnectId: string): Promise<ReconnectAvailability | void> {
+  public async getReconnectAvailability(reconnectId: string, optionalParams: IReconnectAvailabilityOptionalParams = {}): Promise<ReconnectAvailability | void> {
     const timer = Timer.TIMER();
     this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITYSTARTED, "Get Reconnectable availability Started");
 
     const requestPath = `/${OmnichannelEndpoints.LiveChatReconnectAvailabilityPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${reconnectId}`;
     const requestHeaders: StringMap = Constants.defaultHeaders;
 
-    this.setSessionIdHeader(this.sessionId, requestHeaders);
-    addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
+    this.addDefaultHeaders(optionalParams?.requestId, requestHeaders);
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
@@ -504,19 +502,19 @@ export default class SDK implements ISDK {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         const { data } = response;
         if (data) {
-          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITYSUCCEEDED, "Get Reconnect availability succeeded", undefined, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
+          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITYSUCCEEDED, "Get Reconnect availability succeeded", optionalParams?.requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
 
           resolve(data);
           return;
         }
         // No data found so returning null
-        this.logWithLogger(LogLevel.WARN, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITYSUCCEEDED, "Get Reconnect availability didn't send any valid data", undefined, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
+        this.logWithLogger(LogLevel.WARN, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITYSUCCEEDED, "Get Reconnect availability didn't send any valid data", optionalParams?.requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
 
         resolve();
         return;
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITYFAILED, "Get Reconnect Availability failed", undefined, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITYFAILED, "Get Reconnect Availability failed", optionalParams?.requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           reject( new Error(this.HTTPTimeOutErrorMessage));
         }
@@ -552,8 +550,7 @@ export default class SDK implements ISDK {
       requestHeaders[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
     }
 
-    this.setSessionIdHeader(this.sessionId, requestHeaders);
-    addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
+    this.addDefaultHeaders(requestId, requestHeaders);
 
     const data: InitContext = initContext || {};
 
@@ -662,9 +659,9 @@ export default class SDK implements ISDK {
       });
     }
 
-    this.setSessionIdHeader(this.sessionId, requestHeaders);
-    addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
+    this.addDefaultHeaders(requestId, requestHeaders);
     this.setRequestIdHeader(requestId, requestHeaders);
+
 
     // If should only be applicable on unauth chat & the flag enabled
     const shouldUseSigQueryParam = !authenticatedUserToken && this.configuration.useUnauthReconnectIdSigQueryParam === true;
@@ -764,8 +761,7 @@ export default class SDK implements ISDK {
       });
     }
 
-    this.setSessionIdHeader(this.sessionId, requestHeaders);
-    addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
+    this.addDefaultHeaders(requestId, requestHeaders);
     this.setRequestIdHeader(requestId, requestHeaders);
 
     if (reconnectId) {
@@ -865,8 +861,7 @@ export default class SDK implements ISDK {
       requestHeaders[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
     }
 
-    this.setSessionIdHeader(this.sessionId, requestHeaders);
-    addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
+    this.addDefaultHeaders(requestId, requestHeaders);
 
     if (isReconnectChat) {
       requestPath += `&isReconnectChat=true`;
@@ -932,8 +927,7 @@ export default class SDK implements ISDK {
       requestHeaders[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
     }
 
-    this.setSessionIdHeader(this.sessionId, requestHeaders);
-    addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
+    this.addDefaultHeaders(requestId, requestHeaders);
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
@@ -1000,6 +994,7 @@ export default class SDK implements ISDK {
 
     const { authenticatedUserToken } = submitPostChatResponseOptionalParams;
     const requestHeaders: StringMap = Constants.defaultHeaders;
+    this.addDefaultHeaders(requestId, requestHeaders);
 
     if (authenticatedUserToken) {
       requestPath = `/${OmnichannelEndpoints.LiveChatAuthSubmitPostChatPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
@@ -1072,8 +1067,7 @@ export default class SDK implements ISDK {
       requestHeaders[OmnichannelHTTPHeaders.widgetAppId] = this.omnichannelConfiguration.widgetId;
     }
 
-    this.setSessionIdHeader(this.sessionId, requestHeaders);
-    addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
+    this.addDefaultHeaders(requestId, requestHeaders);
 
     if (requestId) {
       requestHeaders[OmnichannelHTTPHeaders.requestId] = requestId;
@@ -1148,8 +1142,7 @@ export default class SDK implements ISDK {
       requestPath = `/${OmnichannelEndpoints.LiveChatAuthGetChatTranscriptPath}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
     }
 
-    this.setSessionIdHeader(this.sessionId, requestHeaders);
-    addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
+    this.addDefaultHeaders(requestId, requestHeaders);
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
@@ -1212,8 +1205,7 @@ export default class SDK implements ISDK {
       requestPath = `/${OmnichannelEndpoints.LiveChatAuthTranscriptEmailRequestPath}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
     }
 
-    this.setSessionIdHeader(this.sessionId, requestHeaders);
-    addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
+    this.addDefaultHeaders(requestId, requestHeaders);
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "POST";
@@ -1267,8 +1259,7 @@ export default class SDK implements ISDK {
     requestHeaders[OmnichannelHTTPHeaders.organizationId] = this.omnichannelConfiguration.orgId;
     requestHeaders[OmnichannelHTTPHeaders.requestId] = requestId;
 
-    this.setSessionIdHeader(this.sessionId, requestHeaders);
-    addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
+    this.addDefaultHeaders(requestId, requestHeaders);
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
@@ -1325,8 +1316,7 @@ export default class SDK implements ISDK {
       requestPath = `/${OmnichannelEndpoints.LiveChatAuthSecondaryChannelEventPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
     }
 
-    this.setSessionIdHeader(this.sessionId, requestHeaders);
-    addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
+    this.addDefaultHeaders(requestId, requestHeaders);
 
     requestPath += "?channelId=" + Constants.defaultChannelId;
 
@@ -1380,8 +1370,7 @@ export default class SDK implements ISDK {
       requestHeaders[Constants.customerDisplayName] = customerDisplayName;
     }
 
-    this.setSessionIdHeader(this.sessionId, requestHeaders);
-    addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
+    this.addDefaultHeaders(requestId, requestHeaders);
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "POST";
@@ -1499,6 +1488,12 @@ export default class SDK implements ISDK {
     }
   }
 
+  private addDefaultHeaders(requestId: string | undefined, requestHeaders: StringMap): void {
+    this.setSessionIdHeader(this.sessionId, requestHeaders);
+    addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
+    this.setCorrelationIdInHeader(requestId, requestHeaders);
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private setSessionIdHeader = (sessionId: string | undefined, headers: any) => {
     if (sessionId) {
@@ -1509,6 +1504,12 @@ export default class SDK implements ISDK {
   private setRequestIdHeader = (requestId: string | undefined, headers: StringMap) => {
     if (requestId) {
       headers[OmnichannelHTTPHeaders.requestId] = requestId;
+    }
+  }
+
+  private setCorrelationIdInHeader = (correlationId: string | undefined, headers: StringMap) => {
+    if (correlationId) {
+      headers[OmnichannelHTTPHeaders.correlationId] = correlationId;
     }
   }
 }
