@@ -182,8 +182,7 @@ export default class SDK implements ISDK {
     });
 
     let requestHeaders = {};
-    addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
-    this.setCorrelationIdInHeader(requestId, requestHeaders);
+    this.addDefaultHeaders(requestId, requestHeaders);
 
     if (bypassCache) {
       requestHeaders = { ...Constants.bypassCacheHeaders, ...requestHeaders };
