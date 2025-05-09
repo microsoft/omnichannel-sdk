@@ -12,7 +12,7 @@ export default interface ISDK {
   createConversation(requestId: string): Promise<FetchChatTokenResponse>;
   sessionClose(requestId: string): Promise<void>;
   getReconnectableChats(reconnectableChatsParams: IReconnectableChatsParams): Promise<object | void>;
-  getReconnectAvailability(reconnectId: string): Promise<object | void>;
+  getReconnectAvailability(reconnectId: string, requestId: string): Promise<object | void>;
   submitPostChatResponse(requestId: string, postChatResponse: object): Promise<void>;
   getSurveyInviteLink(surveyOwnerId: string, surveyInviteAPIRequestBody: object): Promise<object>;
   getChatTranscripts(requestId: string, chatId: string, token: string): Promise<string>;
