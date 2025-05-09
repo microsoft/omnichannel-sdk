@@ -477,14 +477,14 @@ export default class SDK implements ISDK {
  * Fetches the reconnectable chats from omnichannel from the given user information in JWT token(claim name: sub).
  * @param reconnectableChatsParams Mandate parameters for get reconnectable chats.
  */
-  public async getReconnectAvailability(reconnectId: string, optionalParam: IReconnectAvailabilityOptionalParams = {}): Promise<ReconnectAvailability | void> {
+  public async getReconnectAvailability(reconnectId: string, optionalParams: IReconnectAvailabilityOptionalParams = {}): Promise<ReconnectAvailability | void> {
     const timer = Timer.TIMER();
     this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITYSTARTED, "Get Reconnectable availability Started");
 
     const requestPath = `/${OmnichannelEndpoints.LiveChatReconnectAvailabilityPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${reconnectId}`;
     const requestHeaders: StringMap = Constants.defaultHeaders;
 
-    this.addDefaultHeaders(optionalParam?.requestId, requestHeaders);
+    this.addDefaultHeaders(optionalParams?.requestId, requestHeaders);
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
@@ -502,19 +502,19 @@ export default class SDK implements ISDK {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         const { data } = response;
         if (data) {
-          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITYSUCCEEDED, "Get Reconnect availability succeeded", optionalParam?.requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
+          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITYSUCCEEDED, "Get Reconnect availability succeeded", optionalParams?.requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
 
           resolve(data);
           return;
         }
         // No data found so returning null
-        this.logWithLogger(LogLevel.WARN, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITYSUCCEEDED, "Get Reconnect availability didn't send any valid data", optionalParam?.requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
+        this.logWithLogger(LogLevel.WARN, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITYSUCCEEDED, "Get Reconnect availability didn't send any valid data", optionalParams?.requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
 
         resolve();
         return;
       } catch (error) {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITYFAILED, "Get Reconnect Availability failed", optionalParam?.requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITYFAILED, "Get Reconnect Availability failed", optionalParams?.requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           reject( new Error(this.HTTPTimeOutErrorMessage));
         }
