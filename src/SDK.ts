@@ -424,13 +424,14 @@ export default class SDK implements ISDK {
     const timer = Timer.TIMER();
     const { authenticatedUserToken } = reconnectableChatsParams;
     this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETRECONNECTABLECHATSSTARTED, "Get Reconnectable chat Started");
+    const requestId = reconnectableChatsParams?.requestId;
 
-    const requestPath = `/${OmnichannelEndpoints.LiveChatGetReconnectableChatsPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${reconnectableChatsParams?.requestId || this.omnichannelConfiguration.orgId}?channelId=${this.omnichannelConfiguration.channelId}`;
+    const requestPath = `/${OmnichannelEndpoints.LiveChatGetReconnectableChatsPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
     const requestHeaders: StringMap = Constants.defaultHeaders;
     requestHeaders[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
     requestHeaders[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
 
-    this.addDefaultHeaders(reconnectableChatsParams?.requestId, requestHeaders);
+    this.addDefaultHeaders(requestId, requestHeaders);
 
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
@@ -442,8 +443,6 @@ export default class SDK implements ISDK {
     };
 
     const axiosInstance = axios.create();
-
-    const requestId = this.omnichannelConfiguration.orgId;
 
     return new Promise(async (resolve, reject) => {
       try {
