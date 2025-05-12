@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- Updated request id path parameter in getReconnectable Api to standardize the use
+
 ## [0.5.15] 2025-05-09
 
 ### Added
