@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - Updated request id path parameter in getReconnectable Api to standardize the use
+- Removed Timeout from telemetry logger
 
 ## [0.5.15] 2025-05-09
 
