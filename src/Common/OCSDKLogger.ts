@@ -21,7 +21,7 @@ export default class OCSDKLogger implements IOCSDKLogger {
 
   public logEvent(logLevel: LogLevel, logData: IOCSDKLogData): number | void {
     if (this.isLoggingEnabled()) {
-        setTimeout(this.logger.logClientSdkTelemetryEvent.bind(this.logger), 0, logLevel, logData);
+        this.logger.logClientSdkTelemetryEvent(logLevel, logData);
     }
   }
 
