@@ -22,9 +22,21 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
+      - name: Fetch Base Branch
+        run: |
+          git fetch origin main
+      - name: Run Danger JS
+        working-directory: ./
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npx danger ci --dangerfile dangerfile.js --base main
+          if [ $? -ne 0 ]; then exit $?; fi
+        shell: bash
+        
       - name: Install packages
         run: npm install
-      
+
       - name: Compile 
         run: npm run build:tsc
 

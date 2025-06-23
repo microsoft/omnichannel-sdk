@@ -1,5 +1,3 @@
-import * as hash from "crypto";
-
 import { ChannelId, LiveChatVersion, OCSDKTelemetryEvent, SDKError } from "./Common/Enums";
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import axiosRetryHandler, { axiosRetryHandlerWithNotFound } from "./Utils/axiosRetryHandler";
@@ -9,6 +7,7 @@ import Constants from "./Common/Constants";
 import { CustomContextData } from "./Utils/CustomContextData";
 import { DeviceInfo } from "./Utils/DeviceInfo";
 import FetchChatTokenResponse from "./Model/FetchChatTokenResponse";
+import Hex from "crypto-js/enc-hex";
 import IDataMaskingInfo from "./Interfaces/IDataMaskingInfo";
 import IEmailTranscriptOptionalParams from "./Interfaces/IEmailTranscriptOptionalParams";
 import IGetChatTokenOptionalParams from "./Interfaces/IGetChatTokenOptionalParams";
@@ -17,6 +16,7 @@ import IGetLWIDetailsOptionalParams from "./Interfaces/IGetLWIDetailsOptionalPar
 import IGetQueueAvailabilityOptionalParams from "./Interfaces/IGetQueueAvailabilityOptionalParams";
 import IGetSurveyInviteLinkOptionalParams from "./Interfaces/IGetSurveyInviteLinkOptionalParams";
 import IOmnichannelConfiguration from "./Interfaces/IOmnichannelConfiguration";
+import IReconnectAvailabilityOptionalParams from "./Interfaces/IReconnectAvailabilityOptionalParams";
 import IReconnectableChatsParams from "./Interfaces/IReconnectableChatsParams";
 import ISDK from "./Interfaces/ISDK";
 import ISDKConfiguration from "./Interfaces/ISDKConfiguration";
@@ -39,6 +39,7 @@ import QueueAvailability from "./Model/QueueAvailability";
 import ReconnectAvailability from "./Model/ReconnectAvailability";
 import ReconnectMappingRecord from "./Model/ReconnectMappingRecord";
 import { RequestTimeoutConfig } from "./Common/RequestTimeoutConfig";
+import SHA256 from "crypto-js/sha256";
 import { StringMap } from "./Common/Mappings";
 import { Timer } from "./Utils/Timer";
 import { addOcUserAgentHeader } from "./Utils/httpHeadersUtils";
@@ -47,7 +48,6 @@ import isExpectedAxiosError from "./Utils/isExpectedAxiosError";
 import sessionInitRetryHandler from "./Utils/SessionInitRetryHandler";
 import { uuidv4 } from "./Utils/uuid";
 import { waitTimeBetweenRetriesConfigs } from "./Utils/waitTimeBetweenRetriesConfigs";
-import IReconnectAvailabilityOptionalParams from "./Interfaces/IReconnectAvailabilityOptionalParams";
 
 export default class SDK implements ISDK {
   private static defaultRequestTimeoutConfig: RequestTimeoutConfig = {
@@ -567,7 +567,8 @@ export default class SDK implements ISDK {
       Object.assign(cachObj, { "portalcontactid": data.portalcontactid });
     }
 
-    data.cacheKey = hash.createHash('sha256').update(JSON.stringify(cachObj)).digest('hex').toString();
+    //data.cacheKey = hash.createHash('sha256').update(JSON.stringify(cachObj)).digest('hex').toString();
+    data.cacheKey = SHA256(JSON.stringify(cachObj)).toString(Hex);
 
     if (getContext && !window.document) {
       return Promise.reject(new Error(`getContext is only supported on web browsers`));
