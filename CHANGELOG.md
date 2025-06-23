@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ### [Unreleased]
 
+### Changed
+
+- Replace `crypto` with `crypto-js` for browser compatibility
 
 ## [0.5.16] 2025-05-12
 
