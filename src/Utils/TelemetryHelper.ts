@@ -8,6 +8,7 @@ export default class TelemetryHelper {
     const logData = {
       Description: description,
       ElapsedTimeInMilliseconds: customData.ElapsedTimeInMilliseconds,
+      BackendElapsedTimeInMilliseconds: customData.BackendElapsedTimeInMilliseconds,
       Event: telemetryEvent,
       ExceptionDetails: customData.ExceptionDetails,
       Region: customData.Region,
