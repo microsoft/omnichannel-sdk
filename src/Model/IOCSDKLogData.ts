@@ -1,7 +1,7 @@
 export default interface IOCSDKLogData {
   RequestId: string;
   ElapsedTimeInMilliseconds?: number;
-  BackendElapsedTimeInMilliseconds?: number;
+  HttpRequestResponseTime?: number;
   Event?: string;
   Region?: string;
   TransactionId?: string;

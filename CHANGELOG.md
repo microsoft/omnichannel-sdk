@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Added logging for backendElapsedTimeInMilliseconds
+- Added logging for httpRequestResponseTime
 
 ## [0.5.17] - 2025-06-24
 
