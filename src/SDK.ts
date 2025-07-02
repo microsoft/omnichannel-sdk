@@ -159,7 +159,7 @@ export default class SDK implements ISDK {
     } catch (error) {
       const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-      this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETLCWFCSDETAILSFAILED, "Get LCW FCS details failed", "", undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders, httpRequestResponseTime);
+      this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETLCWFCSDETAILSFAILED, "Get LCW FCS details failed", "", undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders, httpRequestResponseTime);
       throw error;
     }
   }
@@ -215,7 +215,7 @@ export default class SDK implements ISDK {
     } catch (error) {
       const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-      this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATCONFIGFAILED, "Get Chat config failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders, httpRequestResponseTime);
+      this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETCHATCONFIGFAILED, "Get Chat config failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders, httpRequestResponseTime);
       return Promise.reject(error);
     }
   }
