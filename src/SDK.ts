@@ -145,18 +145,21 @@ export default class SDK implements ISDK {
     const requestHeaders = {};
     addOcUserAgentHeader(this.ocUserAgent, requestHeaders);
 
+    const backendTimer = Timer.TIMER();
     try {
       const response = await axiosInstance.get(url, {
         headers: requestHeaders,
         timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.getChatConfig
       });
+      const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
       const { data } = response;
-      this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETLCWFCSDETAILSSUCCEEDED, "Get LCW FCS details succeeded", "", response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
+      this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETLCWFCSDETAILSSUCCEEDED, "Get LCW FCS details succeeded", "", response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders, httpRequestResponseTime);
       return data;
     } catch (error) {
+      const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-      this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETLCWFCSDETAILSFAILED, "Get LCW FCS details failed", "", undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
+      this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETLCWFCSDETAILSFAILED, "Get LCW FCS details failed", "", undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders, httpRequestResponseTime);
       throw error;
     }
   }
@@ -188,11 +191,13 @@ export default class SDK implements ISDK {
       requestHeaders = { ...Constants.bypassCacheHeaders, ...requestHeaders };
     }
 
+    const backendTimer = Timer.TIMER();
     try {
       const response = await axiosInstance.get(url, {
         headers: requestHeaders,
         timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.getChatConfig
       });
+      const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
       const { data } = response;
 
@@ -204,12 +209,13 @@ export default class SDK implements ISDK {
       if (response.headers && response.headers["date"]) {
         data.headers["date"] = response.headers["date"];
       }
-      this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATCONFIGSUCCEEDED, "Get Chat config succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
+      this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATCONFIGSUCCEEDED, "Get Chat config succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders, httpRequestResponseTime);
 
       return data;
     } catch (error) {
+      const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-      this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATCONFIGFAILED, "Get Chat config failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
+      this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETCHATCONFIGFAILED, "Get Chat config failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders, httpRequestResponseTime);
       return Promise.reject(error);
     }
   }
@@ -278,18 +284,21 @@ export default class SDK implements ISDK {
     };
 
     return new Promise(async (resolve, reject) => {
+      const backendTimer = Timer.TIMER();
       try {
         const response = await axiosInstance(options);
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         const { data, headers } = response;
         this.setAuthCodeNonce(headers);
 
-        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETLWISTATUSSUCCEEDED, "Get LWI Details succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
+        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETLWISTATUSSUCCEEDED, "Get LWI Details succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders, httpRequestResponseTime);
         resolve(data);
 
       } catch (error) {
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETLWISTATUSFAILED, "Get LWI Details failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETLWISTATUSFAILED, "Get LWI Details failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders, httpRequestResponseTime);
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           reject( new Error(this.HTTPTimeOutErrorMessage));
         }
@@ -372,8 +381,10 @@ export default class SDK implements ISDK {
     });
 
     return new Promise(async (resolve, reject) => {
+      const backendTimer = Timer.TIMER();
       try {
         const response = await axiosInstance(options);
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         const { data, headers } = response;
         this.setAuthCodeNonce(headers);
@@ -394,7 +405,7 @@ export default class SDK implements ISDK {
           }
 
           data.requestId = requestId;
-          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATTOKENSUCCEEDED, "Get Chat Token succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
+          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATTOKENSUCCEEDED, "Get Chat Token succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders, httpRequestResponseTime);
           resolve(data);
           return;
         }
@@ -406,8 +417,9 @@ export default class SDK implements ISDK {
         }
 
       } catch (error) {
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETCHATTOKENFAILED, "Get Chat Token failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETCHATTOKENFAILED, "Get Chat Token failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders, httpRequestResponseTime);
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           reject( new Error(this.HTTPTimeOutErrorMessage));
         }
@@ -445,15 +457,17 @@ export default class SDK implements ISDK {
     const axiosInstance = axios.create();
 
     return new Promise(async (resolve, reject) => {
+      const backendTimer = Timer.TIMER();
       try {
         const response = await axiosInstance(options);
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         const { data, headers } = response;
         this.setAuthCodeNonce(headers);
 
         // Resolves only if it contains reconnectable chats response which only happens on status 200
         if (data) {
-          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETRECONNECTABLECHATSSUCCEEDED, "Get Reconnectable Chats Succeeded and old session returned", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
+          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETRECONNECTABLECHATSSUCCEEDED, "Get Reconnectable Chats Succeeded and old session returned", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders, httpRequestResponseTime);
           resolve(data);
           return;
         }
@@ -461,8 +475,9 @@ export default class SDK implements ISDK {
         resolve();
         return;
       } catch (error) {
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETRECONNECTABLECHATSFAILED, "Get Reconnectable Chats failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETRECONNECTABLECHATSFAILED, "Get Reconnectable Chats failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders, httpRequestResponseTime);
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           reject( new Error(this.HTTPTimeOutErrorMessage));
         }
@@ -496,24 +511,27 @@ export default class SDK implements ISDK {
 
     const axiosInstance = axios.create();
     return new Promise(async (resolve, reject) => {
+      const backendTimer = Timer.TIMER();
       try {
         const response = await axiosInstance(options);
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         const { data } = response;
         if (data) {
-          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITYSUCCEEDED, "Get Reconnect availability succeeded", optionalParams?.requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
+          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITYSUCCEEDED, "Get Reconnect availability succeeded", optionalParams?.requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders, httpRequestResponseTime);
 
           resolve(data);
           return;
         }
         // No data found so returning null
-        this.logWithLogger(LogLevel.WARN, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITYSUCCEEDED, "Get Reconnect availability didn't send any valid data", optionalParams?.requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
+        this.logWithLogger(LogLevel.WARN, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITYSUCCEEDED, "Get Reconnect availability didn't send any valid data", optionalParams?.requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders, httpRequestResponseTime);
 
         resolve();
         return;
       } catch (error) {
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITYFAILED, "Get Reconnect Availability failed", optionalParams?.requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITYFAILED, "Get Reconnect Availability failed", optionalParams?.requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders, httpRequestResponseTime);
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           reject( new Error(this.HTTPTimeOutErrorMessage));
         }
@@ -602,23 +620,27 @@ export default class SDK implements ISDK {
     };
 
     return new Promise(async (resolve, reject) => {
+      const backendTimer = Timer.TIMER();
       try {
         const response = await axiosInstance(options);
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         const { data, headers } = response;
         this.setAuthCodeNonce(headers);
 
         if (data) {
-          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETAGENTAVAILABILITYSUCCEEDED, "Get agent availability succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
+          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETAGENTAVAILABILITYSUCCEEDED, "Get agent availability succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders, httpRequestResponseTime);
 
           resolve(data);
         }
       } catch (error) {
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETAGENTAVAILABILITYFAILED, "Get agent availability failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETAGENTAVAILABILITYFAILED, "Get agent availability failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders, httpRequestResponseTime);
 
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           reject( new Error(this.HTTPTimeOutErrorMessage));
+          return;
         }
         reject(error);
       }
@@ -712,20 +734,24 @@ export default class SDK implements ISDK {
     };
 
     return new Promise(async (resolve, reject) => {
+      const backendTimer = Timer.TIMER();
       try {
         const response = await axiosInstance(options);
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         const { headers } = response;
         this.setAuthCodeNonce(headers);
 
-        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSUCCEEDED, "Session Init Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, data, requestHeaders);
+        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONINITSUCCEEDED, "Session Init Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, data, requestHeaders, httpRequestResponseTime);
         resolve();
       } catch (error) {
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SESSIONINITFAILED, "Session Init failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, data, requestHeaders);
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SESSIONINITFAILED, "Session Init failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, data, requestHeaders, httpRequestResponseTime);
         
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           reject( new Error(this.HTTPTimeOutErrorMessage));
+          return;
         }
         reject(error);
       }
@@ -801,8 +827,10 @@ export default class SDK implements ISDK {
       timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.sessionInit
     };
 
+    const backendTimer = Timer.TIMER();
     try {
       const response = await axiosInstance(options);
+      const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
       const { data, headers } = response;
       this.setAuthCodeNonce(headers);
@@ -819,11 +847,12 @@ export default class SDK implements ISDK {
       }
 
       data.requestId = requestId;
-      this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.CREATESESSIONSUCCEEDED, "Create coversation call Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
+      this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.CREATESESSIONSUCCEEDED, "Create coversation call Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders, httpRequestResponseTime);
       return data;
     } catch (error) {
+      const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-      this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.CREATESESSIONFAILED, "Create conversation call failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, data, requestHeaders);
+      this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.CREATESESSIONFAILED, "Create conversation call failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, data, requestHeaders, httpRequestResponseTime);
       
       if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
         throw new Error(this.HTTPTimeOutErrorMessage);
@@ -882,19 +911,22 @@ export default class SDK implements ISDK {
     };
 
     return new Promise(async (resolve, reject) => {
+      const backendTimer = Timer.TIMER();
       try {
         const response = await axiosInstance(options);
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
         const { headers } = response;
         this.setAuthCodeNonce(headers);
 
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONCLOSESUCCEEDED, "Session Close succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
+        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SESSIONCLOSESUCCEEDED, "Session Close succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders, httpRequestResponseTime);
 
         resolve();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SESSIONCLOSEFAILED, "Session close failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SESSIONCLOSEFAILED, "Session close failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders, httpRequestResponseTime);
         if (error.code === Constants.axiosTimeoutErrorCode) {
           reject( new Error(this.HTTPTimeOutErrorMessage));
         }
@@ -939,27 +971,30 @@ export default class SDK implements ISDK {
     };
 
     return new Promise(async (resolve, reject) => {
+      const backendTimer = Timer.TIMER();
       try {
         const response = await axiosInstance(options);
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
         const { headers } = response;
         this.setAuthCodeNonce(headers);
 
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         if (response.data?.authChatExist === true) {
-          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDSUCCEEDED, "Validate Auth Chat Record succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
+          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDSUCCEEDED, "Validate Auth Chat Record succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders, httpRequestResponseTime);
 
           resolve(response.data);
         } else {
-          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDFAILED, "Validate Auth Chat Record Failed. Record is not found or request is not authorized", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
+          this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDFAILED, "Validate Auth Chat Record Failed. Record is not found or request is not authorized", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders, httpRequestResponseTime);
 
           reject(new Error("Validate Auth Chat Record Failed. Record is not found or request is not authorized"));
         }
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
 
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDFAILED, "Validate Auth Chat Record failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.VALIDATEAUTHCHATRECORDFAILED, "Validate Auth Chat Record failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders, httpRequestResponseTime);
 
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           reject( new Error(this.HTTPTimeOutErrorMessage));
@@ -1013,19 +1048,22 @@ export default class SDK implements ISDK {
     };
 
     return new Promise(async (resolve, reject) => {
+      const backendTimer = Timer.TIMER();
       try {
         const response = await axiosInstance(options);
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
         const { headers } = response;
         this.setAuthCodeNonce(headers);
 
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SUBMITPOSTCHATSUCCEEDED, "Submit Post Chat succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
+        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SUBMITPOSTCHATSUCCEEDED, "Submit Post Chat succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders, httpRequestResponseTime);
 
         resolve();
 
       } catch (error) {
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SUBMITPOSTCHATFAILED, "Submit Post Chat Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SUBMITPOSTCHATFAILED, "Submit Post Chat Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders, httpRequestResponseTime);
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           reject( new Error(this.HTTPTimeOutErrorMessage));
         }
@@ -1084,17 +1122,20 @@ export default class SDK implements ISDK {
     };
 
     return new Promise(async (resolve, reject) => {
+      const backendTimer = Timer.TIMER();
       try {
         const response = await axiosInstance(options);
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
         const { data, headers } = response;
         this.setAuthCodeNonce(headers);
 
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETSURVEYINVITELINKSUCCEEDED, "Get Survey Invite Link Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
+        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETSURVEYINVITELINKSUCCEEDED, "Get Survey Invite Link Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders, httpRequestResponseTime);
         resolve(data);
       } catch (error) {
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETSURVEYINVITELINKFAILED, "Get Survey Invite Link failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETSURVEYINVITELINKFAILED, "Get Survey Invite Link failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders, httpRequestResponseTime);
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           reject( new Error(this.HTTPTimeOutErrorMessage));
         }
@@ -1154,17 +1195,20 @@ export default class SDK implements ISDK {
     };
 
     return new Promise(async (resolve, reject) => {
+      const backendTimer = Timer.TIMER();
       try {
         const response = await axiosInstance(options);
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         const { data, headers } = response;
         this.setAuthCodeNonce(headers);
-        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATTRANSCRIPTSUCCEEDED, "Get Chat Transcript succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
+        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATTRANSCRIPTSUCCEEDED, "Get Chat Transcript succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders, httpRequestResponseTime);
         resolve(data);
       } catch (error) {
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
         
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETCHATTRANSCRIPTFAILED, "Get Chat Transcript failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETCHATTRANSCRIPTFAILED, "Get Chat Transcript failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders, httpRequestResponseTime);
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           reject(new Error(this.HTTPTimeOutErrorMessage));
 
@@ -1218,17 +1262,20 @@ export default class SDK implements ISDK {
     };
 
     return new Promise(async (resolve, reject) => {
+      const backendTimer = Timer.TIMER();
       try {
         const response = await axiosInstance(options);
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
         const { headers } = response;
         this.setAuthCodeNonce(headers);
 
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.EMAILTRANSCRIPTSUCCEEDED, "Email Transcript succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
+        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.EMAILTRANSCRIPTSUCCEEDED, "Email Transcript succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders, httpRequestResponseTime);
         resolve();
       } catch (error) {
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.EMAILTRANSCRIPTFAILED, "Email Transcript Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.EMAILTRANSCRIPTFAILED, "Email Transcript Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders, httpRequestResponseTime);
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           reject( new Error(this.HTTPTimeOutErrorMessage));
         }
@@ -1271,15 +1318,18 @@ export default class SDK implements ISDK {
     };
 
     return new Promise(async (resolve, reject) => {
+      const backendTimer = Timer.TIMER();
       try {
         const response = await axiosInstance(options);
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         const { data } = response;
-        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.FETCHDATAMASKINGSUCCEEDED, "Fetch Data Masking succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
+        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.FETCHDATAMASKINGSUCCEEDED, "Fetch Data Masking succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders, httpRequestResponseTime);
         resolve(data);
       } catch (error) {
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.FETCHDATAMASKINGFAILED, "Fetch Data Masking Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.FETCHDATAMASKINGFAILED, "Fetch Data Masking Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders, httpRequestResponseTime);
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           reject( new Error(this.HTTPTimeOutErrorMessage));
         }
@@ -1331,17 +1381,20 @@ export default class SDK implements ISDK {
     };
 
     return new Promise(async (resolve, reject) => {
+      const backendTimer = Timer.TIMER();
       try {
         const response = await axiosInstance(options);
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
         const { headers } = response;
         this.setAuthCodeNonce(headers);
 
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SECONDARYCHANNELEVENTREQUESTSUCCEEDED, "Secondary Channel Event Request Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
+        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SECONDARYCHANNELEVENTREQUESTSUCCEEDED, "Secondary Channel Event Request Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders, httpRequestResponseTime);
         resolve();
       } catch (error) {
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SECONDARYCHANNELEVENTREQUESTFAILED, "Secondary Channel Event Request Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SECONDARYCHANNELEVENTREQUESTFAILED, "Secondary Channel Event Request Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders, httpRequestResponseTime);
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           reject( new Error(this.HTTPTimeOutErrorMessage));
         }
@@ -1382,14 +1435,17 @@ export default class SDK implements ISDK {
     };
 
     return new Promise(async (resolve, reject) => {
+      const backendTimer = Timer.TIMER();
       try {
         const response = await axiosInstance(options);
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SENDTYPINGINDICATORSUCCEEDED, "Send Typing Indicator Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders);
+        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SENDTYPINGINDICATORSUCCEEDED, "Send Typing Indicator Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders, httpRequestResponseTime);
         resolve();
       } catch (error) {
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SENDTYPINGINDICATORFAILED, "Send Typing Indicator Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders);
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SENDTYPINGINDICATORFAILED, "Send Typing Indicator Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders, httpRequestResponseTime);
 
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           reject( new Error(this.HTTPTimeOutErrorMessage));
@@ -1413,7 +1469,7 @@ export default class SDK implements ISDK {
    * @param error Error
    * @param data Data
    */
-  private logWithLogger(logLevel: LogLevel, telemetryEventType: OCSDKTelemetryEvent, description: string, requestId?: string, response?: AxiosResponse<any>, elapsedTimeInMilliseconds?: number, requestPath?: string, method?: string, error?: unknown, requestPayload?: any, requestHeaders?: any): void { // eslint-disable-line @typescript-eslint/no-explicit-any
+  private logWithLogger(logLevel: LogLevel, telemetryEventType: OCSDKTelemetryEvent, description: string, requestId?: string, response?: AxiosResponse<any>, elapsedTimeInMilliseconds?: number, requestPath?: string, method?: string, error?: unknown, requestPayload?: any, requestHeaders?: any, httpRequestResponseTime?: number): void { // eslint-disable-line @typescript-eslint/no-explicit-any
     if (!this.logger) {
       return;
     }
@@ -1468,6 +1524,7 @@ export default class SDK implements ISDK {
       RequestId: requestId,
       Region: response?.data.Region,
       ElapsedTimeInMilliseconds: elapsedTimeInMilliseconds,
+      HttpRequestResponseTime: httpRequestResponseTime,
       TransactionId: response?.headers[Constants.transactionid],
       RequestPath: requestPath,
       RequestMethod: method,
