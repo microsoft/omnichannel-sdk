@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.5.18] - 2025-07-08
+
 ### Changed
 
 - Added logging for httpRequestResponseTime
