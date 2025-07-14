@@ -254,5 +254,35 @@ describe("LoggingSanitized unit tests", () => {
       expect(resp).toEqual(expected);
       done();
     });
+
+    it("Test regex performance with ReDoS-resistant pattern", (done) => {
+      // Test that the regex doesn't suffer from polynomial time complexity
+      // with strings containing many repetitive characters that could cause backtracking
+      const data = "%" + "%".repeat(100) + "not-an-email-pattern";
+      const startTime = Date.now();
+      const resp = LoggingSanitizer.stripEmailDataFromError(data);
+      const endTime = Date.now();
+      const executionTime = endTime - startTime;
+      
+      // The execution should be fast (under 100ms) and return the original string unchanged
+      expect(executionTime).toBeLessThan(100);
+      expect(resp).toEqual(data);
+      done();
+    });
+
+    it("Test valid emails still get replaced correctly", (done) => {
+      const testCases = [
+        { input: "user@domain.com", expected: "*content hidden*" },
+        { input: "test.email+tag@example.org", expected: "*content hidden*" },
+        { input: "user123@sub.domain.co.uk", expected: "*content hidden*" },
+        { input: "first.last@company-name.info", expected: "*content hidden*" }
+      ];
+
+      testCases.forEach(testCase => {
+        const result = LoggingSanitizer.stripEmailDataFromError(testCase.input);
+        expect(result).toEqual(testCase.expected);
+      });
+      done();
+    });
   });
 });
