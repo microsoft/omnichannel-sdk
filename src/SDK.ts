@@ -13,6 +13,7 @@ import IEmailTranscriptOptionalParams from "./Interfaces/IEmailTranscriptOptiona
 import IGetChatTokenOptionalParams from "./Interfaces/IGetChatTokenOptionalParams";
 import IGetChatTranscriptsOptionalParams from "./Interfaces/IGetChatTranscriptsOptionalParams";
 import IGetLWIDetailsOptionalParams from "./Interfaces/IGetLWIDetailsOptionalParams";
+import IGetPersistentChatHistoryOptionalParams from "./Interfaces/IGetPersistentChatHistoryOptionalParams";
 import IGetQueueAvailabilityOptionalParams from "./Interfaces/IGetQueueAvailabilityOptionalParams";
 import IGetSurveyInviteLinkOptionalParams from "./Interfaces/IGetSurveyInviteLinkOptionalParams";
 import IOmnichannelConfiguration from "./Interfaces/IOmnichannelConfiguration";
@@ -66,7 +67,8 @@ export default class SDK implements ISDK {
     makeSecondaryChannelEventRequest: 15000,
     getAgentAvailability: 15000,
     sendTypingIndicator: 5000,
-    validateAuthChatRecordTimeout: 15000
+    validateAuthChatRecordTimeout: 15000,
+    getPersistentChatHistory: 15000
   };
 
   private static defaultConfiguration: ISDKConfiguration = {
@@ -125,6 +127,7 @@ export default class SDK implements ISDK {
     this.ocUserAgent = this.configuration.ocUserAgent;
     this.liveChatVersion = LiveChatVersion.V2;
   }
+
 
   /**
    * Fetches LCW FCS Details of the Org.
@@ -1212,6 +1215,85 @@ export default class SDK implements ISDK {
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           reject(new Error(this.HTTPTimeOutErrorMessage));
 
+        }
+        reject(error);
+      }
+    });
+  }
+
+  /**
+   * Get persistent chat history for authenticated users.
+   * @param requestId RequestId of the omnichannel session (Optional).
+   * @param getPersistentChatHistoryOptionalParams Optional parameters for get persistent chat history.
+   */
+  public async getPersistentChatHistory(requestId?: string, getPersistentChatHistoryOptionalParams: IGetPersistentChatHistoryOptionalParams = {}): Promise<object> {
+    const timer = Timer.TIMER();
+    this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETPERSISTENTCHATHISTORYSTARTED, "Get Persistent Chat History Started", requestId);
+    
+    if (!requestId) {
+      requestId = uuidv4();
+    }
+
+    const { authenticatedUserToken, pageSize, pageToken } = getPersistentChatHistoryOptionalParams;
+
+    if (!authenticatedUserToken) {
+      const errorMessage = "Authenticated user token is required for persistent chat history";
+      this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETPERSISTENTCHATHISTORYFAILED, "Get Persistent Chat History failed - Missing authenticated user token", requestId);
+      return Promise.reject(new Error(errorMessage));
+    }
+
+    const requestPath = `/${OmnichannelEndpoints.LiveChatAuthGetPersistentChatHistoryPath}/${this.omnichannelConfiguration.orgId}/widgetapp/${this.omnichannelConfiguration.widgetId}/conversation/history`;
+    const axiosInstance = axios.create();
+    axiosRetryHandler(axiosInstance, {
+      headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce],
+      retries: this.configuration.maxRequestRetriesOnFailure,
+      waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.getPersistentChatHistory
+    });
+
+    const requestHeaders: StringMap = Constants.defaultHeaders;
+    requestHeaders[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+    requestHeaders[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
+
+    if (pageToken) {
+      requestHeaders[OmnichannelHTTPHeaders.pageToken] = pageToken;
+    }
+
+    this.addDefaultHeaders(requestId, requestHeaders);
+
+    const params: OmnichannelQueryParameter = {};
+    
+    if (pageSize) {
+      params.pageSize = pageSize.toString();
+    }
+
+    const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
+    const method = "GET";
+    const options: AxiosRequestConfig = {
+      headers: requestHeaders,
+      method,
+      url,
+      params,
+      timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.getPersistentChatHistory
+    };
+
+    return new Promise(async (resolve, reject) => {
+      const backendTimer = Timer.TIMER();
+      try {
+        const response = await axiosInstance(options);
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
+        const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+        const { data, headers } = response;
+        this.setAuthCodeNonce(headers);
+
+        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETPERSISTENTCHATHISTORYSUCCEEDED, "Get Persistent Chat History succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders, httpRequestResponseTime);
+        resolve(data);
+      } catch (error) {
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
+        const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETPERSISTENTCHATHISTORYFAILED, "Get Persistent Chat History failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders, httpRequestResponseTime);
+        
+        if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
+          reject(new Error(this.HTTPTimeOutErrorMessage));
         }
         reject(error);
       }

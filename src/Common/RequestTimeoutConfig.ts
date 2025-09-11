@@ -17,4 +17,5 @@ export type RequestTimeoutConfig = {
     getAgentAvailability: number;
     sendTypingIndicator: number;
     validateAuthChatRecordTimeout: number;
+    getPersistentChatHistory: number;
 }

@@ -8,6 +8,7 @@ import * as uuidvModule from "../src/Utils/uuid";
 import { BrowserInfo } from "../src/Utils/BrowserInfo";
 import { DeviceInfo } from "../src/Utils/DeviceInfo";
 import IGetChatTranscriptsOptionalParams from "../src/Interfaces/IGetChatTranscriptsOptionalParams";
+import IGetPersistentChatHistoryOptionalParams from "../src/Interfaces/IGetPersistentChatHistoryOptionalParams";
 import IGetQueueAvailabilityOptionalParams from "../src/Interfaces/IGetQueueAvailabilityOptionalParams";
 import IGetSurveyInviteLinkOptionalParams from "../src/Interfaces/IGetSurveyInviteLinkOptionalParams";
 import ILogger from "../src/Model/ILogger";
@@ -777,6 +778,148 @@ describe("SDK unit tests", () => {
         });
     });
 
+    describe("Test getPersistentChatHistory method", () => {
+
+        const getPersistentChatHistoryOptionalParams = {
+            authenticatedUserToken: "validToken",
+            pageSize: 10,
+            pageToken: "nextPageToken"
+        };
+
+        it("Should return promise with chat history data", (done) => {
+            const mockHistoryData = {
+                conversations: [
+                    { id: "conv1", messages: ["msg1", "msg2"] },
+                    { id: "conv2", messages: ["msg3", "msg4"] }
+                ],
+                nextPageToken: "nextToken"
+            };
+            const dataMockValid = { 
+                data: mockHistoryData, 
+                headers: { "transaction-id": "tid" } 
+            };
+            const axiosInstMockValid = jasmine.createSpy("axiosInstance").and.returnValue(dataMockValid);
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockValid);
+            spyOn(ocsdkLogger, "log").and.callFake(() => { });
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
+            
+            const result = sdk.getPersistentChatHistory(requestId, getPersistentChatHistoryOptionalParams);
+            result.then((data) => {
+                expect(axiosInstMockValid).toHaveBeenCalled();
+                expect(data).toEqual(mockHistoryData);
+                expect(ocsdkLogger.log).toHaveBeenCalled();
+                done();
+            }).catch(() => {
+                fail("Promise should resolve");
+            });
+        });
+
+        it("Should auto-generate requestId when not provided", (done) => {
+            const dataMockValid = { 
+                data: { conversations: [] }, 
+                headers: { "transaction-id": "tid" } 
+            };
+            const axiosInstMockValid = jasmine.createSpy("axiosInstance").and.returnValue(dataMockValid);
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockValid);
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+            
+            const result = sdk.getPersistentChatHistory(undefined, getPersistentChatHistoryOptionalParams);
+            result.then(() => {
+                expect(uuidvSpy).toHaveBeenCalled();
+                expect(axiosInstMockValid).toHaveBeenCalled();
+                done();
+            });
+        });
+
+        it("Should reject when authenticatedUserToken is missing", (done) => {
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+            
+            const result = sdk.getPersistentChatHistory(requestId, {});
+            result.then(() => {
+                fail("Promise should reject");
+            }).catch((error) => {
+                expect(error.message).toContain("Authenticated user token is required");
+                done();
+            });
+        });
+
+        it("Should include pageSize in query parameters when provided", (done) => {
+            const dataMockValid = { 
+                data: { conversations: [] }, 
+                headers: { "transaction-id": "tid" } 
+            };
+            const axiosInstMockValid = jasmine.createSpy("axiosInstance").and.returnValue(dataMockValid);
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockValid);
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+            
+            const result = sdk.getPersistentChatHistory(requestId, {
+                authenticatedUserToken: "token",
+                pageSize: 25
+            });
+            
+            result.then(() => {
+                expect(axiosInstMockValid).toHaveBeenCalled();
+                const callArgs = axiosInstMockValid.calls.mostRecent().args[0];
+                expect(callArgs.params).toEqual({ pageSize: "25" });
+                done();
+            });
+        });
+
+        it("Should include PageToken in headers when provided", (done) => {
+            const dataMockValid = { 
+                data: { conversations: [] }, 
+                headers: { "transaction-id": "tid" } 
+            };
+            const axiosInstMockValid = jasmine.createSpy("axiosInstance").and.returnValue(dataMockValid);
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockValid);
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+            
+            const result = sdk.getPersistentChatHistory(requestId, {
+                authenticatedUserToken: "token",
+                pageToken: "myPageToken"
+            });
+            
+            result.then(() => {
+                expect(axiosInstMockValid).toHaveBeenCalled();
+                const callArgs = axiosInstMockValid.calls.mostRecent().args[0];
+                expect(callArgs.headers["PageToken"]).toBe("myPageToken");
+                done();
+            });
+        });
+
+        it("Should reject when axiosInstance throws an error", (done) => {
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockWithError);
+            spyOn(ocsdkLogger, "log").and.callFake(() => { });
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
+            
+            const result = sdk.getPersistentChatHistory(requestId, getPersistentChatHistoryOptionalParams);
+            result.then(() => {
+                fail("Promise should reject");
+            }, () => {
+                expect(ocsdkLogger.log).toHaveBeenCalled();
+                done();
+            });
+        });
+
+        it("Should use correct endpoint path", (done) => {
+            const dataMockValid = { 
+                data: { conversations: [] }, 
+                headers: { "transaction-id": "tid" } 
+            };
+            const axiosInstMockValid = jasmine.createSpy("axiosInstance").and.returnValue(dataMockValid);
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockValid);
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+            
+            const result = sdk.getPersistentChatHistory(requestId, getPersistentChatHistoryOptionalParams);
+            result.then(() => {
+                expect(axiosInstMockValid).toHaveBeenCalled();
+                const callArgs = axiosInstMockValid.calls.mostRecent().args[0];
+                expect(callArgs.url).toContain("/livechatconnector/auth/organization/NotBadId/widgetapp/IdId/conversation/history");
+                done();
+            });
+        });
+    });
+
     describe("Test timeout for all requests", () => {
         let defaultOpt: any;
         let sdk: any;
@@ -917,6 +1060,16 @@ describe("SDK unit tests", () => {
             try {
                 mock.onGet(/.*/).timeout();
                 await sdk.validateAuthChatRecord(requestId, defaultOpt as IValidateAuthChatRecordOptionalParams);
+                fail("Should throw an error");
+            } catch (error: any) {
+                expect(error.message).toEqual(HTTPTimeOutErrorMessage);
+            }
+        });
+
+        it("getPersistentChatHistory timeout test", async () => {
+            try {
+                mock.onGet(/.*/).timeout();
+                await sdk.getPersistentChatHistory(requestId, defaultOpt as IGetPersistentChatHistoryOptionalParams);
                 fail("Should throw an error");
             } catch (error: any) {
                 expect(error.message).toEqual(HTTPTimeOutErrorMessage);
