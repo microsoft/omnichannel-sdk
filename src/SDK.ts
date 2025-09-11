@@ -1611,6 +1611,7 @@ export default class SDK implements ISDK {
       RequestPath: requestPath,
       RequestMethod: method,
       ResponseStatusCode: response ? response.status : error ? (error as any).response?.status : undefined, // eslint-disable-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ExceptionDetails: error ? (error as any).response?.data || error : undefined, 
       RequestPayload: sanitizedRequestPayload,
       RequestHeaders: sanitizedRequestHeaders,
