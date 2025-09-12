@@ -4,8 +4,16 @@ on:
   push:
     branches:
       - main
+      - '**'  # Allow any branch
     tags:
       - 'v*'
+  workflow_dispatch:  # Enable manual triggering
+    inputs:
+      dry_run:
+        description: 'Run in dry-run mode (test without publishing)'
+        required: false
+        default: 'true'
+        type: boolean
 env:
   CACHE_CONTROL_HEADER: public, max-age=86400, s-maxage=259200, must-revalidate
   PUBLISH_TO_CDN : false
@@ -84,7 +92,8 @@ jobs:
   publish:
     needs: build
     runs-on: ubuntu-latest
-    if: ${{ startsWith(github.ref, 'refs/heads/') || startsWith(github.ref, 'refs/tags/') }}
+    # Always run the publish job for testing purposes
+    if: ${{ always() && needs.build.result == 'success' }}
 
     steps:
       - uses: actions/download-artifact@v4.1.8
@@ -101,6 +110,46 @@ jobs:
 
       - name: Run npm publish ${{ steps.read-package-json.outputs.name }}@${{ steps.read-package-json.outputs.version }}
         run: |
+          # Determine if this is a dry run
+          DRY_RUN_FLAG=""
+          if [[ "${{ github.event.inputs.dry_run }}" == "true" ]] || [[ "${{ github.ref }}" != "refs/heads/main" && "${{ github.ref }}" != refs/tags/* ]]; then
+            DRY_RUN_FLAG="--dry-run"
+            echo "🧪 Running in DRY-RUN mode - no actual publishing will occur"
+          else
+            echo "🚀 Running in LIVE mode - will actually publish to npm"
+          fi
+          
+          # Set up npm authentication
           npm config set "//registry.npmjs.org/:_authToken" "${{ secrets.NPM_TOKEN }}"
-          npm publish *.tgz --tag master --access public
-          npm dist-tag add ${{ steps.read-package-json.outputs.name }}@${{ steps.read-package-json.outputs.version }} latest        
+          npm config set registry "https://registry.npmjs.org/"
+          
+          # Debug information
+          echo "📦 Package name: ${{ steps.read-package-json.outputs.name }}"
+          echo "🏷️  Package version: ${{ steps.read-package-json.outputs.version }}"
+          echo "🔧 NPM version: $(npm --version)"
+          echo "🔧 Node version: $(node --version)"
+          echo "🌿 Git ref: ${{ github.ref }}"
+          echo "🏃 Dry run input: ${{ github.event.inputs.dry_run }}"
+          
+          # Show tarball contents
+          echo "📋 Tarball contents:"
+          tar -tzf *.tgz | head -10
+          
+          # Show package.json from tarball
+          echo "📄 Package.json from tarball:"
+          tar -xOf *.tgz package/package.json | jq '.'
+          
+          # Publish using extracted directory method to avoid URL encoding issues
+          echo "🚀 Publishing..."
+          tar -xzf *.tgz
+          cd package
+          npm publish --tag master --access public --verbose $DRY_RUN_FLAG
+          cd ..
+          
+          # Only add dist-tag if not dry run
+          if [[ -z "$DRY_RUN_FLAG" ]]; then
+            npm dist-tag add "${{ steps.read-package-json.outputs.name }}@${{ steps.read-package-json.outputs.version }}" latest
+            echo "✅ Published and tagged successfully!"
+          else
+            echo "✅ Dry run completed successfully!"
+          fi        
