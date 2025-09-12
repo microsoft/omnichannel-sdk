@@ -1294,6 +1294,7 @@ export default class SDK implements ISDK {
         
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           reject(new Error(this.HTTPTimeOutErrorMessage));
+          return;
         }
         reject(error);
       }
