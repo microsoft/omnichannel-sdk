@@ -1,4 +1,5 @@
 export default interface OmnichannelQueryParameter {
+    pageSize?: string;
     channelId?: string;
     sig?: string;
     refreshToken?: string; 

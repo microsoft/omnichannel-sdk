@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Implemented new function to obtain persistent chat history messages
+- Added logging for httpRequestResponseTime
+
 ## [0.5.18] - 2025-07-08
 
 ### Changed

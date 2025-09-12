@@ -1,5 +1,6 @@
 import FetchChatTokenResponse from "../Model/FetchChatTokenResponse";
 import IDataMaskingInfo from "../Interfaces/IDataMaskingInfo";
+import IGetPersistentChatHistoryOptionalParams from "./IGetPersistentChatHistoryOptionalParams";
 import IGetQueueAvailabilityOptionalParams from "./IGetQueueAvailabilityOptionalParams";
 import IReconnectableChatsParams from "../Interfaces/IReconnectableChatsParams";
 import IReconnectAvailabilityOptionalParams from "./IReconnectAvailabilityOptionalParams";
@@ -17,6 +18,7 @@ export default interface ISDK {
   submitPostChatResponse(requestId: string, postChatResponse: object): Promise<void>;
   getSurveyInviteLink(surveyOwnerId: string, surveyInviteAPIRequestBody: object): Promise<object>;
   getChatTranscripts(requestId: string, chatId: string, token: string): Promise<string>;
+  getPersistentChatHistory(requestId?: string, getPersistentChatHistoryOptionalParams?: IGetPersistentChatHistoryOptionalParams): Promise<object>;
   emailTranscript(requestId: string, token: string, emailRequestBody: object): Promise<void>;
   fetchDataMaskingInfo(requestId: string): Promise<IDataMaskingInfo>;
   makeSecondaryChannelEventRequest(requestId: string, secondaryChannelEventRequestBody: object): Promise<void>;

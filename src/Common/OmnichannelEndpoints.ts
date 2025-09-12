@@ -33,6 +33,7 @@ export default class OmnichannelEndpoints {
   public static readonly LiveChatGetReconnectableChatsPath = "livechatconnector/auth/reconnectablechats";
   public static readonly LiveChatReconnectAvailabilityPath = "livechatconnector/reconnect";
   public static readonly LiveChatValidateAuthChatMapRecordPath = "livechatconnector/auth/validateauthchatmaprecord";
-  public static readonly GetAgentAvailabilityPath = "livechatconnector/auth/getagentavailability"
+  public static readonly GetAgentAvailabilityPath = "livechatconnector/auth/getagentavailability";
   public static readonly SendTypingIndicatorPath = "inbound/typingindicator/livechat/sendtypingindicator";
+  public static readonly LiveChatAuthGetPersistentChatHistoryPath = "livechatconnector/auth/organization";
 }

@@ -8,4 +8,5 @@ export default class OmnichannelHTTPHeaders {
   public static readonly ocSessionId = `Oc-Sessionid`;
   public static readonly ocUserAgent = `Ms-Oc-User-Agent`;
   public static readonly correlationId = `x-ms-client-request-id`;
+  public static readonly pageToken = `PageToken`;
 }

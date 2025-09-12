@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SDK Load Test</title>
+</head>
+<body>
+    <h1>SDK Load Test</h1>
+    <div id="status">Loading...</div>
+    
+    <script src="../../../dist/SDK.js"></script>
+    <script>
+        console.log('Script tag loaded');
+        console.log('window.Microsoft:', typeof window.Microsoft);
+        
+        if (typeof window.Microsoft !== 'undefined') {
+            console.log('Microsoft namespace found');
+            console.log('window.Microsoft.CRM:', typeof window.Microsoft.CRM);
+            
+            if (typeof window.Microsoft.CRM !== 'undefined') {
+                console.log('CRM namespace found');
+                console.log('window.Microsoft.CRM.Omnichannel:', typeof window.Microsoft.CRM.Omnichannel);
+                
+                if (typeof window.Microsoft.CRM.Omnichannel !== 'undefined') {
+                    console.log('Omnichannel namespace found');
+                    console.log('window.Microsoft.CRM.Omnichannel.SDK:', typeof window.Microsoft.CRM.Omnichannel.SDK);
+                    
+                    if (typeof window.Microsoft.CRM.Omnichannel.SDK !== 'undefined') {
+                        document.getElementById('status').innerHTML = '✅ SDK Loaded Successfully!';
+                        document.getElementById('status').style.color = 'green';
+                        console.log('✅ SDK fully loaded and available');
+                    } else {
+                        document.getElementById('status').innerHTML = '❌ SDK namespace not found';
+                        document.getElementById('status').style.color = 'red';
+                    }
+                } else {
+                    document.getElementById('status').innerHTML = '❌ Omnichannel namespace not found';
+                    document.getElementById('status').style.color = 'red';
+                }
+            } else {
+                document.getElementById('status').innerHTML = '❌ CRM namespace not found';
+                document.getElementById('status').style.color = 'red';
+            }
+        } else {
+            document.getElementById('status').innerHTML = '❌ Microsoft namespace not found';
+            document.getElementById('status').style.color = 'red';
+        }
+    </script>
+</body>
+</html>
