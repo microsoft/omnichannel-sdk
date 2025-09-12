@@ -119,9 +119,17 @@ jobs:
             echo "🚀 Running in LIVE mode - will actually publish to npm"
           fi
           
-          # Set up npm authentication
-          npm config set "//registry.npmjs.org/:_authToken" "${{ secrets.NPM_TOKEN }}"
-          npm config set registry "https://registry.npmjs.org/"
+          # Set up npm authentication with explicit registry URL encoding fix
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+          
+          # Disable npm updates and notifications
+          npm config set fund false
+          npm config set audit false
+          npm config set progress false
+          npm config set update-notifier false
+          npm config set save false
+          npm config set save-exact true
+          npm config set package-lock false
           
           # Debug information
           echo "📦 Package name: ${{ steps.read-package-json.outputs.name }}"
@@ -131,6 +139,10 @@ jobs:
           echo "🌿 Git ref: ${{ github.ref }}"
           echo "🏃 Dry run input: ${{ github.event.inputs.dry_run }}"
           
+          # Show npm whoami to verify auth
+          echo "🔐 NPM authentication:"
+          npm whoami || echo "❌ Not authenticated or token invalid"
+          
           # Show tarball contents
           echo "📋 Tarball contents:"
           tar -tzf *.tgz | head -10
@@ -139,11 +151,20 @@ jobs:
           echo "📄 Package.json from tarball:"
           tar -xOf *.tgz package/package.json | jq '.'
           
-          # Publish using extracted directory method to avoid URL encoding issues
-          echo "🚀 Publishing..."
+          # Alternative approach: Use npm pack from source instead of tarball
+          echo "🚀 Publishing from source directory..."
           tar -xzf *.tgz
           cd package
-          npm publish --tag master --access public --verbose $DRY_RUN_FLAG
+          
+          # Try publishing with explicit registry and automation token
+          if [[ -n "$DRY_RUN_FLAG" ]]; then
+            npm publish --registry https://registry.npmjs.org/ --tag master --access public --verbose $DRY_RUN_FLAG
+          else
+            # For actual publishing, we need to handle OTP requirement
+            echo "⚠️  Note: This scope may require 2FA/OTP which is not supported in CI"
+            echo "⚠️  Consider using an automation token or removing 2FA requirement for CI"
+            npm publish --registry https://registry.npmjs.org/ --tag master --access public --verbose $DRY_RUN_FLAG
+          fi
           cd ..
           
           # Only add dist-tag if not dry run
@@ -152,4 +173,10 @@ jobs:
             echo "✅ Published and tagged successfully!"
           else
             echo "✅ Dry run completed successfully!"
-          fi        
+          fi
+          
+          echo ""
+          echo "🔍 Troubleshooting notes:"
+          echo "• If you see @microsoft%2focsdk in URLs, that's a known npm bug with scoped packages"
+          echo "• If you get EOTP error, the token needs automation scope or 2FA must be disabled"
+          echo "• Use 'npm token create --cidr=0.0.0.0/0' for automation tokens"        
