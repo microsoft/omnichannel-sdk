@@ -12,7 +12,7 @@ on:
       dry_run:
         description: 'Run in dry-run mode (test without publishing)'
         required: false
-        default: 'true'
+        default: true
         type: boolean
 env:
   CACHE_CONTROL_HEADER: public, max-age=86400, s-maxage=259200, must-revalidate
@@ -103,12 +103,12 @@ jobs:
       - name: Read package.json
         id: read-package-json
         run: |
-          echo "::set-output name=name::$(tar xOf *.tgz package/package.json | jq -r '.name')"
+          echo "::set-output name=name::\"@microsoft/ocsdk\""
           echo "::set-output name=version::$(tar xOf *.tgz package/package.json | jq -r '.version')"
           echo "::set-output name=tarball::$(ls *.tgz)"
           echo "::set-output name=date::$(date +%Y-%m-%d)"
 
-      - name: Run npm publish ${{ steps.read-package-json.outputs.name }}@${{ steps.read-package-json.outputs.version }}
+      - name: Run npm publish "@microsoft/ocsdk"@${{ steps.read-package-json.outputs.version }}
         run: |
           # Determine if this is a dry run
           DRY_RUN_FLAG=""
@@ -119,115 +119,13 @@ jobs:
             echo "🚀 Running in LIVE mode - will actually publish to npm"
           fi
           
-          # Set up npm authentication with scope-specific configuration
-          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
-          echo "@microsoft:registry=https://registry.npmjs.org/" >> ~/.npmrc
-          echo "registry=https://registry.npmjs.org/" >> ~/.npmrc
-          
-          # Disable npm updates and notifications
-          npm config set fund false
-          npm config set audit false
-          npm config set progress false
-          npm config set update-notifier false
-          npm config set save false
-          npm config set save-exact true
-          npm config set package-lock false
-          
-          # Force npm to use the correct registry for the scope
-          npm config set @microsoft:registry https://registry.npmjs.org/
-          
-          # Debug information
-          echo "📦 Package name: ${{ steps.read-package-json.outputs.name }}"
-          echo "🏷️  Package version: ${{ steps.read-package-json.outputs.version }}"
-          echo "🔧 NPM version: $(npm --version)"
-          echo "🔧 Node version: $(node --version)"
-          echo "🌿 Git ref: ${{ github.ref }}"
-          echo "🏃 Dry run input: ${{ github.event.inputs.dry_run }}"
-          
-          # Show npm whoami to verify auth
-          echo "🔐 NPM authentication:"
-          npm whoami || echo "❌ Not authenticated or token invalid"
-          
-          # Show npm configuration
-          echo "⚙️  NPM configuration:"
-          npm config list
-          echo "📁 NPM .npmrc content:"
-          cat ~/.npmrc
-          
-          # Check if package exists on npm
-          echo "🔍 Checking if package exists on npm:"
-          npm view "@microsoft/ocsdk" version || echo "Package does not exist on npm registry"
-          
-          # Show tarball contents
-          echo "📋 Tarball contents:"
-          tar -tzf *.tgz | head -10
-          
-          # Show package.json from tarball
-          echo "📄 Package.json from tarball:"
-          tar -xOf *.tgz package/package.json | jq '.'
-          
-          # Alternative approach: Use npm pack from source instead of tarball
-          echo "🚀 Publishing from source directory..."
-          tar -xzf *.tgz
-          
-          # Try multiple approaches to avoid URL encoding
-          if [[ -n "$DRY_RUN_FLAG" ]]; then
-            echo "🧪 Attempting dry-run publish with different methods..."
-            
-            # Method 1: Direct tarball publish with explicit name
-            echo "📦 Method 1: Direct tarball publish"
-            npm publish *.tgz --tag master --access public --verbose $DRY_RUN_FLAG || echo "Method 1 failed"
-            
-            # Method 2: From extracted directory  
-            echo "📦 Method 2: From extracted directory"
-            cd package
-            npm publish --tag master --access public --verbose $DRY_RUN_FLAG || echo "Method 2 failed"
-            cd ..
-            
-            # Method 3: Recreate package with npm pack from source
-            echo "📦 Method 3: Fresh npm pack from extracted source"
-            cd package
-            PACKAGE_NAME=$(jq -r '.name' package.json)
-            echo "Using package name: $PACKAGE_NAME"
-            # Remove any existing tarball and create fresh one
-            rm -f ../*.tgz
-            npm pack --verbose
-            npm publish *.tgz --tag master --access public --verbose $DRY_RUN_FLAG || echo "Method 3 failed"
-            cd ..
-            
-            # Method 4: Use npm-registry-fetch directly to bypass URL encoding
-            echo "📦 Method 4: Manual registry upload simulation"
-            cd package
-            echo "Would upload to: https://registry.npmjs.org/@microsoft/ocsdk (no URL encoding)"
-            cd ..
-            
-          else
-            # For actual publishing, use the most reliable method
-            echo "🚀 Live publishing - using fresh pack method"
-            cd package
-            
-            # Show final package.json to confirm name
-            echo "📄 Final package.json:"
-            cat package.json | jq '.name, .version'
-            
-            # Create fresh pack and publish
-            npm pack --verbose
-            npm publish *.tgz --tag master --access public --verbose $DRY_RUN_FLAG
-            cd ..
-          fi
+          npm config set "//registry.npmjs.org/:_authToken" "${{ secrets.NPM_TOKEN }}"
+          npm publish *.tgz --tag master --access public --verbose $DRY_RUN_FLAG
           
           # Only add dist-tag if not dry run
           if [[ -z "$DRY_RUN_FLAG" ]]; then
-            npm dist-tag add "${{ steps.read-package-json.outputs.name }}@${{ steps.read-package-json.outputs.version }}" latest
+            npm dist-tag add "@microsoft/ocsdk"@${{ steps.read-package-json.outputs.version }} latest
             echo "✅ Published and tagged successfully!"
           else
             echo "✅ Dry run completed successfully!"
-          fi
-          
-          echo ""
-          echo "🔍 Troubleshooting notes:"
-          echo "• If you see @microsoft%2focsdk in URLs, that's a known npm bug with scoped packages"
-          echo "• If you get EOTP error, the token needs automation scope or 2FA must be disabled"
-          echo "• If you get 404 error, the package may not exist or URL encoding is breaking the request"
-          echo "• Use 'npm token create --cidr=0.0.0.0/0' for automation tokens"
-          echo "• Check if the @microsoft scope exists and you have publish permissions"        
+          fi        
