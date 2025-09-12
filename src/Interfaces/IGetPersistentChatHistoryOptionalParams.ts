@@ -4,10 +4,6 @@ export default interface IGetPersistentChatHistoryOptionalParams {
      */
     authenticatedUserToken?: string;
 
-    /**
-     * Request ID for the operation (Optional).
-     */
-    requestId?: string;
 
     /**
      * Number of messages to retrieve per page (Optional).
