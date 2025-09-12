@@ -143,6 +143,10 @@ jobs:
           echo "🔐 NPM authentication:"
           npm whoami || echo "❌ Not authenticated or token invalid"
           
+          # Check if package exists on npm
+          echo "🔍 Checking if package exists on npm:"
+          npm view "@microsoft/ocsdk" version || echo "Package does not exist on npm registry"
+          
           # Show tarball contents
           echo "📋 Tarball contents:"
           tar -tzf *.tgz | head -10
@@ -154,18 +158,41 @@ jobs:
           # Alternative approach: Use npm pack from source instead of tarball
           echo "🚀 Publishing from source directory..."
           tar -xzf *.tgz
-          cd package
           
-          # Try publishing with explicit registry and automation token
+          # Try multiple approaches to avoid URL encoding
           if [[ -n "$DRY_RUN_FLAG" ]]; then
-            npm publish --registry https://registry.npmjs.org/ --tag master --access public --verbose $DRY_RUN_FLAG
+            echo "🧪 Attempting dry-run publish with different methods..."
+            
+            # Method 1: Direct tarball publish with explicit name
+            echo "📦 Method 1: Direct tarball publish"
+            npm publish *.tgz --registry https://registry.npmjs.org/ --tag master --access public --verbose $DRY_RUN_FLAG || echo "Method 1 failed"
+            
+            # Method 2: From extracted directory
+            echo "📦 Method 2: From extracted directory"
+            cd package
+            npm publish --registry https://registry.npmjs.org/ --tag master --access public --verbose $DRY_RUN_FLAG || echo "Method 2 failed"
+            cd ..
+            
+            # Method 3: Force name in publish command
+            echo "📦 Method 3: With explicit package name"
+            cd package
+            PACKAGE_NAME=$(jq -r '.name' package.json)
+            echo "Using package name: $PACKAGE_NAME"
+            npm publish --registry https://registry.npmjs.org/ --tag master --access public --verbose $DRY_RUN_FLAG || echo "Method 3 failed"
+            cd ..
+            
           else
-            # For actual publishing, we need to handle OTP requirement
-            echo "⚠️  Note: This scope may require 2FA/OTP which is not supported in CI"
-            echo "⚠️  Consider using an automation token or removing 2FA requirement for CI"
+            # For actual publishing, use the most reliable method
+            echo "🚀 Live publishing - using directory method"
+            cd package
+            
+            # Show final package.json to confirm name
+            echo "📄 Final package.json:"
+            cat package.json | jq '.name, .version'
+            
             npm publish --registry https://registry.npmjs.org/ --tag master --access public --verbose $DRY_RUN_FLAG
+            cd ..
           fi
-          cd ..
           
           # Only add dist-tag if not dry run
           if [[ -z "$DRY_RUN_FLAG" ]]; then
@@ -179,4 +206,6 @@ jobs:
           echo "🔍 Troubleshooting notes:"
           echo "• If you see @microsoft%2focsdk in URLs, that's a known npm bug with scoped packages"
           echo "• If you get EOTP error, the token needs automation scope or 2FA must be disabled"
-          echo "• Use 'npm token create --cidr=0.0.0.0/0' for automation tokens"        
+          echo "• If you get 404 error, the package may not exist or URL encoding is breaking the request"
+          echo "• Use 'npm token create --cidr=0.0.0.0/0' for automation tokens"
+          echo "• Check if the @microsoft scope exists and you have publish permissions"        
