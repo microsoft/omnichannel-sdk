@@ -1,131 +1,69 @@
-name: Release CI
-
-on:
-  push:
-    branches:
-      - main
-      - '**'  # Allow any branch
-    tags:
-      - 'v*'
-  workflow_dispatch:  # Enable manual triggering
-    inputs:
-      dry_run:
-        description: 'Run in dry-run mode (test without publishing)'
-        required: false
-        default: true
-        type: boolean
-env:
-  CACHE_CONTROL_HEADER: public, max-age=86400, s-maxage=259200, must-revalidate
-  PUBLISH_TO_CDN : false
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Install az
-        run: |
-          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-          az
-
-      - name: Checking out for ${{ github.ref }}
-        uses: actions/checkout@v4
-
-      - name: Use Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20.X
-
-      - name: Update package version
-        run: npx version-from-git --no-git-tag-version
-        if: ${{ startsWith(github.ref, 'refs/heads/') }}
-
-      - name: Read package.json
-        id: read-package-json
-        run: |
-          echo "::set-output name=name::$(cat package.json | jq -r '.name')"
-          echo "::set-output name=version::$(cat package.json | jq -r '.version')"
-
-      - name: Install packages
-        run: npm install
-
-      - name: Build CDN & NPM packages
-        run: |
-          npm run build:dev
-          npm run build:prod
-
-      - name: Prepare CDN packages
-        run: |
-          mkdir ${{ steps.read-package-json.outputs.version }}
-          cp dist/SDK.js ${{ steps.read-package-json.outputs.version }}
-          cp dist/SDK.min.js ${{ steps.read-package-json.outputs.version }}
-
-      - name: Publish CDN package to versioned blob (dev)
-        if: ${{ env.PUBLISH_TO_CDN == 'true' }}
-        run: |
-          az storage blob upload-batch --connection-string "${{ secrets.BLOBCONNECTIONSTRINGDEV }}" --source "${{ steps.read-package-json.outputs.version }}" --destination "prerelease/${{ steps.read-package-json.outputs.version }}" --content-cache-control "${{ env.CACHE_CONTROL_HEADER }}"
-
-      - name: Publish CDN package to latest blob (dev)
-        if: ${{ env.PUBLISH_TO_CDN == 'true' }}
-        run: |
-          az storage blob upload-batch --connection-string "${{ secrets.BLOBCONNECTIONSTRINGDEV }}" --source "${{ steps.read-package-json.outputs.version }}" --destination "prerelease/latest" --content-cache-control "${{ env.CACHE_CONTROL_HEADER }}"
-
-      - name: Publish CDN package to versioned blob (prod)
-        if: ${{ env.PUBLISH_TO_CDN == 'true' }}
-        run: |
-          az storage blob upload-batch --connection-string "${{ secrets.BLOBCONNECTIONSTRINGPROD }}" --source "${{ steps.read-package-json.outputs.version }}" --destination "release/${{ steps.read-package-json.outputs.version }}" --content-cache-control "${{ env.CACHE_CONTROL_HEADER }}"
-
-      - name: Publish CDN package to latest blob (prod)
-        if: ${{ env.PUBLISH_TO_CDN == 'true' }}
-        run: |
-          az storage blob upload-batch --connection-string "${{ secrets.BLOBCONNECTIONSTRINGPROD }}" --source "${{ steps.read-package-json.outputs.version }}" --destination "release/latest" --content-cache-control "${{ env.CACHE_CONTROL_HEADER }}"
-
-      - name: Npm packaging
-        run: npm pack
-
-      - name: Upload a Build Artifact
-        uses: actions/upload-artifact@v4.4.0
-        with:
-          name: npm-tarball
-          path: '*.tgz'
-
-  publish:
-    needs: build
-    runs-on: ubuntu-latest
-    # Always run the publish job for testing purposes
-    if: ${{ always() && needs.build.result == 'success' }}
-
-    steps:
-      - uses: actions/download-artifact@v4.1.8
-        with:
-          name: npm-tarball
-
-      - name: Read package.json
-        id: read-package-json
-        run: |
-          echo "::set-output name=name::\"@microsoft/ocsdk\""
-          echo "::set-output name=version::$(tar xOf *.tgz package/package.json | jq -r '.version')"
-          echo "::set-output name=tarball::$(ls *.tgz)"
-          echo "::set-output name=date::$(date +%Y-%m-%d)"
-
-      - name: Run npm publish "@microsoft/ocsdk"@${{ steps.read-package-json.outputs.version }}
-        run: |
-          # Determine if this is a dry run
-          DRY_RUN_FLAG=""
-          if [[ "${{ github.event.inputs.dry_run }}" == "true" ]] || [[ "${{ github.ref }}" != "refs/heads/main" && "${{ github.ref }}" != refs/tags/* ]]; then
-            DRY_RUN_FLAG="--dry-run"
-            echo "🧪 Running in DRY-RUN mode - no actual publishing will occur"
-          else
-            echo "🚀 Running in LIVE mode - will actually publish to npm"
-          fi
-          
-          npm config set "//registry.npmjs.org/:_authToken" "${{ secrets.NPM_TOKEN }}"
-          npm publish *.tgz --tag master --access public --verbose $DRY_RUN_FLAG
-          
-          # Only add dist-tag if not dry run
-          if [[ -z "$DRY_RUN_FLAG" ]]; then
-            npm dist-tag add "@microsoft/ocsdk"@${{ steps.read-package-json.outputs.version }} latest
-            echo "✅ Published and tagged successfully!"
-          else
-            echo "✅ Dry run completed successfully!"
-          fi        
+{
+  "name": "@microsoft/ocsdk",
+  "version": "0.5.19-0",
+  "description": "Microsoft Omnichannel SDK",
+  "files": [
+    "dist/**/*",
+    "lib/**/*"
+  ],
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "test": "karma start karma.conf.js",
+    "start": "webpack-dev-server",
+    "watch": "webpack --watch --config webpack.config.js --mode development",
+    "build:tsc": "tsc --project tsconfig.json",
+    "build:babel": "babel src --extensions .js,.ts --out-dir lib --verbose",
+    "build:dev": "webpack --config webpack.config.js --mode development",
+    "build:prod": "export NODE_OPTIONS=--openssl-legacy-provider && npm run build:tsc && npm run build:babel && webpack --config webpack.config.js --mode production",
+    "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
+    "lint": "eslint src --ext .ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microsoft/omnichannel-sdk.git"
+  },
+  "keywords": [],
+  "author": "Microsoft Corporation",
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/cli": "^7.15.7",
+    "@babel/core": "^7.15.5",
+    "@babel/plugin-proposal-class-properties": "^7.14.5",
+    "@babel/plugin-transform-runtime": "^7.15.0",
+    "@babel/preset-env": "^7.15.6",
+    "@babel/preset-typescript": "^7.15.0",
+    "@dhigroup/karma-vsts-reporter": "^1.3.0",
+    "@types/crypto-js": "^4.2.2",
+    "@types/jasmine": "^3.9.1",
+    "@typescript-eslint/eslint-plugin": "^3.10.1",
+    "@typescript-eslint/parser": "^3.10.1",
+    "axios-mock-adapter": "^2.0.0",
+    "danger": "^13.0.4",
+    "eslint": "^7.32.0",
+    "eslint-plugin-security": "^1.4.0",
+    "istanbul-instrumenter-loader": "^3.0.1",
+    "jasmine": "^3.9.0",
+    "karma": "^6.3.16",
+    "karma-chrome-launcher": "^3.1.0",
+    "karma-cli": "^2.0.0",
+    "karma-coverage-istanbul-reporter": "^2.1.1",
+    "karma-jasmine": "^2.0.1",
+    "karma-spec-reporter": "0.0.32",
+    "karma-webpack": "^4.0.2",
+    "prettier": "^1.19.1",
+    "ts-loader": "^8.4.0",
+    "typescript": "^4.9.5",
+    "webpack": "^4.47.0",
+    "webpack-cli": "^3.3.12",
+    "webpack-dev-server": "^3.11.2",
+    "webpack-merge": "^4.2.2"
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.15.4",
+    "@types/node": "^22.13.10",
+    "axios": "^1.8.2",
+    "axios-retry": "^3.9.1",
+    "crypto-js": "^4.2.0"
+  }
+}
