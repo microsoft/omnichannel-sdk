@@ -1,106 +1,47 @@
-name: Release CI
+name: Pull Request Build
 
 on:
-  push:
+  pull_request:
     branches:
-      - main
-    tags:
-      - 'v*'
-env:
-  CACHE_CONTROL_HEADER: public, max-age=86400, s-maxage=259200, must-revalidate
-  PUBLISH_TO_CDN : false
+      - '*'
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
-    steps:
-      - name: Install az
-        run: |
-          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-          az
+    strategy:
+      matrix:
+        node-version: [20.x]
 
+    steps:
       - name: Checking out for ${{ github.ref }}
         uses: actions/checkout@v4
 
-      - name: Use Node.js
+      - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
-          node-version: 20.X
+          node-version: ${{ matrix.node-version }}
 
-      - name: Update package version
-        run: npx version-from-git --no-git-tag-version
-        if: ${{ startsWith(github.ref, 'refs/heads/') }}
-
-      - name: Read package.json
-        id: read-package-json
+      - name: Fetch Base Branch
         run: |
-          echo "::set-output name=name::$(cat package.json | jq -r '.name')"
-          echo "::set-output name=version::$(cat package.json | jq -r '.version')"
-
+          git fetch origin main
+      - name: Run Danger JS
+        working-directory: ./
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npx danger ci --dangerfile dangerfile.js --base main
+          if [ $? -ne 0 ]; then exit $?; fi
+        shell: bash
+        
       - name: Install packages
         run: npm install
 
-      - name: Build CDN & NPM packages
-        run: |
-          npm run build:dev
-          npm run build:prod
+      - name: Compile 
+        run: npm run build:tsc
 
-      - name: Prepare CDN packages
-        run: |
-          mkdir ${{ steps.read-package-json.outputs.version }}
-          cp dist/SDK.js ${{ steps.read-package-json.outputs.version }}
-          cp dist/SDK.min.js ${{ steps.read-package-json.outputs.version }}
+      - name: Run tests
+        run: npm run test
 
-      - name: Publish CDN package to versioned blob (dev)
-        if: ${{ env.PUBLISH_TO_CDN == 'true' }}
-        run: |
-          az storage blob upload-batch --connection-string "${{ secrets.BLOBCONNECTIONSTRINGDEV }}" --source "${{ steps.read-package-json.outputs.version }}" --destination "prerelease/${{ steps.read-package-json.outputs.version }}" --content-cache-control "${{ env.CACHE_CONTROL_HEADER }}"
-
-      - name: Publish CDN package to latest blob (dev)
-        if: ${{ env.PUBLISH_TO_CDN == 'true' }}
-        run: |
-          az storage blob upload-batch --connection-string "${{ secrets.BLOBCONNECTIONSTRINGDEV }}" --source "${{ steps.read-package-json.outputs.version }}" --destination "prerelease/latest" --content-cache-control "${{ env.CACHE_CONTROL_HEADER }}"
-
-      - name: Publish CDN package to versioned blob (prod)
-        if: ${{ env.PUBLISH_TO_CDN == 'true' }}
-        run: |
-          az storage blob upload-batch --connection-string "${{ secrets.BLOBCONNECTIONSTRINGPROD }}" --source "${{ steps.read-package-json.outputs.version }}" --destination "release/${{ steps.read-package-json.outputs.version }}" --content-cache-control "${{ env.CACHE_CONTROL_HEADER }}"
-
-      - name: Publish CDN package to latest blob (prod)
-        if: ${{ env.PUBLISH_TO_CDN == 'true' }}
-        run: |
-          az storage blob upload-batch --connection-string "${{ secrets.BLOBCONNECTIONSTRINGPROD }}" --source "${{ steps.read-package-json.outputs.version }}" --destination "release/latest" --content-cache-control "${{ env.CACHE_CONTROL_HEADER }}"
-
-      - name: Npm packaging
-        run: npm pack
-
-      - name: Upload a Build Artifact
-        uses: actions/upload-artifact@v4.4.0
-        with:
-          name: npm-tarball
-          path: '*.tgz'
-
-  publish:
-    needs: build
-    runs-on: ubuntu-latest
-    if: ${{ startsWith(github.ref, 'refs/heads/') || startsWith(github.ref, 'refs/tags/') }}
-
-    steps:
-      - uses: actions/download-artifact@v4.1.8
-        with:
-          name: npm-tarball
-
-      - name: Read package.json
-        id: read-package-json
-        run: |
-          echo "::set-output name=name::$(tar xOf *.tgz package/package.json | jq -r '.name')"
-          echo "::set-output name=version::$(tar xOf *.tgz package/package.json | jq -r '.version')"
-          echo "::set-output name=tarball::$(ls *.tgz)"
-          echo "::set-output name=date::$(date +%Y-%m-%d)"
-
-      - name: Run npm publish ${{ steps.read-package-json.outputs.name }}@${{ steps.read-package-json.outputs.version }}
-        run: |
-          npm config set "//registry.npmjs.org/:_authToken" "${{ secrets.NPM_TOKEN }}"
-          npm publish *.tgz --tag master --access public
-          npm dist-tag add ${{ steps.read-package-json.outputs.name }}@${{ steps.read-package-json.outputs.version }} latest        
+      - name: Run ESLint
+        run: npm run lint
