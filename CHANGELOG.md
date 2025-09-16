@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.5.21]
+
+### Changed
+
+- Uptake axios@^1.12.0
+
 ## [0.5.19] 2025-09-14
 
 ### Added
