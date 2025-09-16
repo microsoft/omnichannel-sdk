@@ -8,7 +8,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Update axios version from ^1.8.0 to ^1.12.0
+- Update axios version from ^1.8.2 to ^1.12.0
 
 ## [0.5.19] 2025-09-14
 
