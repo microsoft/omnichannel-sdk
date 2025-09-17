@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,48 +13,57 @@
             padding: 20px;
             background-color: #f5f5f5;
         }
+
         .container {
             background: white;
             border-radius: 8px;
             padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
+
         h1 {
             color: #333;
             text-align: center;
             margin-bottom: 30px;
         }
+
         .alert {
             padding: 15px;
             border-radius: 5px;
             margin-bottom: 20px;
         }
+
         .alert.info {
             background-color: #d1ecf1;
             border: 1px solid #bee5eb;
             color: #0c5460;
         }
+
         .alert.warning {
             background-color: #fff3cd;
             border: 1px solid #ffeaa7;
             color: #856404;
         }
+
         .test-controls {
             background: #f8f9fa;
             padding: 15px;
             border-radius: 5px;
             margin-bottom: 20px;
         }
+
         .config-section {
             background: #e9ecef;
             padding: 15px;
             border-radius: 5px;
             margin-bottom: 20px;
         }
+
         .config-section h3 {
             margin-top: 0;
             color: #495057;
         }
+
         button {
             background-color: #007bff;
             color: white;
@@ -64,33 +74,40 @@
             font-size: 16px;
             margin: 5px;
         }
+
         button:hover {
             background-color: #0056b3;
         }
+
         button:disabled {
             background-color: #6c757d;
             cursor: not-allowed;
         }
+
         .status {
             padding: 10px;
             border-radius: 5px;
             margin: 10px 0;
         }
+
         .status.loading {
             background-color: #fff3cd;
             border: 1px solid #ffeaa7;
             color: #856404;
         }
+
         .status.success {
             background-color: #d4edda;
             border: 1px solid #c3e6cb;
             color: #155724;
         }
+
         .status.error {
             background-color: #f8d7da;
             border: 1px solid #f5c6cb;
             color: #721c24;
         }
+
         #console {
             background: #1e1e1e;
             color: #d4d4d4;
@@ -103,37 +120,45 @@
             white-space: pre-wrap;
             margin-top: 20px;
         }
+
         .network-info {
             background: #e7f3ff;
             padding: 15px;
             border-radius: 5px;
             margin-bottom: 20px;
         }
+
         .input-group {
             margin: 10px 0;
         }
+
         .input-group label {
             display: block;
             margin-bottom: 5px;
             font-weight: bold;
         }
-        .input-group input, .input-group textarea {
+
+        .input-group input,
+        .input-group textarea {
             width: 100%;
             padding: 8px;
             border: 1px solid #ddd;
             border-radius: 4px;
             box-sizing: border-box;
         }
+
         .input-group textarea {
             height: 80px;
             resize: vertical;
         }
+
         code {
             background-color: #f8f9fa;
             padding: 2px 4px;
             border-radius: 3px;
             font-family: 'Courier New', monospace;
         }
+
         .setup-section {
             background: #fff3cd;
             padding: 15px;
@@ -143,13 +168,15 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>🔍 getPersistentChatHistory - Browser Integration Test</h1>
-        
+
         <div class="alert info">
             <h3>📋 Purpose</h3>
-            <p>This test helps developers verify that the <code>getPersistentChatHistory</code> API works correctly in a browser environment with real network calls. Use this for:</p>
+            <p>This test helps developers verify that the <code>getPersistentChatHistory</code> API works correctly in a
+                browser environment with real network calls. Use this for:</p>
             <ul>
                 <li>Testing with real authentication tokens</li>
                 <li>Debugging network issues</li>
@@ -190,15 +217,18 @@
             <h3>🔧 Configuration</h3>
             <div class="input-group">
                 <label for="orgId">Organization ID:</label>
-                <input type="text" id="orgId" value="YOUR_ORG_ID" placeholder="e.g., caf979e3-887e-f011-b4c0-000d3a340b7a">
+                <input type="text" id="orgId" value="YOUR_ORG_ID"
+                    placeholder="e.g., caf979e3-887e-f011-b4c0-000d3a340b7a">
             </div>
             <div class="input-group">
                 <label for="orgUrl">Organization URL:</label>
-                <input type="text" id="orgUrl" value="https://YOUR_ORG.crm.dynamics.com" placeholder="e.g., https://yourorg.crm.dynamics.com">
+                <input type="text" id="orgUrl" value="https://YOUR_ORG.crm.dynamics.com"
+                    placeholder="e.g., https://yourorg.crm.dynamics.com">
             </div>
             <div class="input-group">
                 <label for="widgetId">Widget ID:</label>
-                <input type="text" id="widgetId" value="YOUR_WIDGET_ID" placeholder="e.g., aa93b293-99e2-4f5e-a98b-159123b5a12a">
+                <input type="text" id="widgetId" value="YOUR_WIDGET_ID"
+                    placeholder="e.g., aa93b293-99e2-4f5e-a98b-159123b5a12a">
             </div>
             <div class="input-group">
                 <label for="authToken">Authenticated User Token:</label>
@@ -212,10 +242,15 @@
                 <label for="requestId">Request ID (auto-generated if empty):</label>
                 <input type="text" id="requestId" placeholder="Leave empty for auto-generation">
             </div>
+            <div class="input-group">
+                <label for="PageToken"></label>
+                <input type="text" id="pageToken" placeholder="PageToken">
+            </div>
         </div>
 
         <div class="test-controls">
             <h3>🧪 Test Controls</h3>
+            <button onclick="runSingleCallTest()">Run Single Call Test</button>
             <button id="runTestBtn" onclick="runTest()">Run Test</button>
             <button onclick="clearConsole()">Clear Console</button>
             <button onclick="copyConsoleOutput()">Copy Console Output</button>
@@ -240,20 +275,20 @@
         function logToConsole(message, type = 'info') {
             const console_div = document.getElementById('console');
             const timestamp = new Date().toLocaleTimeString();
-            
+
             let colorCode = '';
-            switch(type) {
+            switch (type) {
                 case 'error': colorCode = '#ff6b6b'; break;
                 case 'success': colorCode = '#51cf66'; break;
                 case 'warning': colorCode = '#ffd43b'; break;
                 case 'info': colorCode = '#74c0fc'; break;
                 default: colorCode = '#d4d4d4'; break;
             }
-            
+
             const logEntry = `[${timestamp}] ${message}\n`;
             console_div.innerHTML += `<span style="color: ${colorCode}">${logEntry}</span>`;
             console_div.scrollTop = console_div.scrollHeight;
-            
+
             // Also log to browser console
             console.log(message);
         }
@@ -288,7 +323,7 @@
             a.download = `getPersistentChatHistory-test-results-${Date.now()}.json`;
             a.click();
             URL.revokeObjectURL(url);
-            
+
             showStatus('Test results exported successfully!', 'success');
         }
 
@@ -296,7 +331,7 @@
             const statusDiv = document.getElementById('status');
             statusDiv.className = `status ${type}`;
             statusDiv.textContent = message;
-            
+
             if (type !== 'loading') {
                 setTimeout(() => {
                     statusDiv.className = '';
@@ -332,17 +367,15 @@
             return errors;
         }
 
-        async function runTest() {
+        async function runSingleCallTest() {
             const runButton = document.getElementById('runTestBtn');
             runButton.disabled = true;
-            lastTestResults = null;
-            
             try {
-                showStatus('🚀 Starting test...', 'loading');
+                showStatus('🚀 Running single call test...', 'loading');
                 clearConsole();
-                
-                logToConsole('Starting real call test for getPersistentChatHistory...', 'info');
-                
+
+                logToConsole('Starting single call test for getPersistentChatHistory...', 'info');
+
                 // Validate configuration
                 const configErrors = validateConfiguration();
                 if (configErrors.length > 0) {
@@ -350,7 +383,7 @@
                     showStatus('❌ Configuration errors found. Check console for details.', 'error');
                     return;
                 }
-                
+
                 // Get values from inputs
                 const omnichannelConfig = {
                     orgId: document.getElementById('orgId').value.trim(),
@@ -363,7 +396,73 @@
                 const pageSize = parseInt(document.getElementById('pageSize').value) || 5;
                 const requestIdInput = document.getElementById('requestId').value.trim();
                 const requestId = requestIdInput || 'test-request-' + Date.now();
-                
+
+                const pageToken = document.getElementById("pageToken").value.trim() || "";
+                const sdk = window.Microsoft.CRM.Omnichannel.SDK.SDKProvider.getSDK(omnichannelConfig);
+
+                const params = {
+                    authenticatedUserToken: authToken,
+                    pageSize: pageSize,
+                    pageToken: pageToken
+        };
+
+                logToConsole('Making single API call with params:', 'info');
+                logToConsole(`   Request ID: ${requestId}`, 'info');
+                logToConsole(`   Page Size: ${params.pageSize}`, 'info');
+                logToConsole(`   Has Auth Token: ${!!params.authenticatedUserToken}`, 'info');
+
+                const startTime = Date.now();
+                const result = await sdk.getPersistentChatHistory(requestId, params);
+                const endTime = Date.now();
+                const duration = endTime - startTime;
+
+                logToConsole(`✅ Success! Response time: ${duration}ms`, 'success');
+                logToConsole('Result:', 'info');
+                logToConsole(JSON.stringify(result, null, 2), 'info');
+
+                showStatus('✅ Single call test completed successfully!', 'success');
+            } catch (error) {
+                logToConsole('❌ Error during single call test: ' + error.message, 'error');
+                logToConsole('Full error:', 'error');
+                logToConsole(JSON.stringify(error, null, 2), 'error');
+                showStatus('❌ Single call test failed. Check console for details.', 'error');
+            } finally {
+                runButton.disabled = false;
+            }
+        }
+
+        async function runTest() {
+            const runButton = document.getElementById('runTestBtn');
+            runButton.disabled = true;
+            lastTestResults = null;
+
+            try {
+                showStatus('🚀 Starting test...', 'loading');
+                clearConsole();
+
+                logToConsole('Starting real call test for getPersistentChatHistory...', 'info');
+
+                // Validate configuration
+                const configErrors = validateConfiguration();
+                if (configErrors.length > 0) {
+                    configErrors.forEach(error => logToConsole(`❌ Configuration Error: ${error}`, 'error'));
+                    showStatus('❌ Configuration errors found. Check console for details.', 'error');
+                    return;
+                }
+
+                // Get values from inputs
+                const omnichannelConfig = {
+                    orgId: document.getElementById('orgId').value.trim(),
+                    orgUrl: document.getElementById('orgUrl').value.trim(),
+                    widgetId: document.getElementById('widgetId').value.trim(),
+                    channelId: 'lcw'
+                };
+
+                const authToken = document.getElementById('authToken').value.trim();
+                const pageSize = parseInt(document.getElementById('pageSize').value) || 5;
+                const requestIdInput = document.getElementById('requestId').value.trim();
+                const requestId = requestIdInput || 'test-request-' + Date.now();
+
                 logToConsole(`📋 Configuration:`, 'info');
                 logToConsole(`   Org ID: ${omnichannelConfig.orgId}`, 'info');
                 logToConsole(`   Org URL: ${omnichannelConfig.orgUrl}`, 'info');
@@ -372,17 +471,17 @@
                 logToConsole(`   Request ID: ${requestId}`, 'info');
                 logToConsole(`   Page Size: ${pageSize}`, 'info');
                 logToConsole(`   Auth Token Length: ${authToken.length} chars`, 'info');
-                
+
                 // Check if SDK is available
-                if (typeof window.Microsoft === 'undefined' || 
-                    typeof window.Microsoft.CRM === 'undefined' || 
-                    typeof window.Microsoft.CRM.Omnichannel === 'undefined' || 
+                if (typeof window.Microsoft === 'undefined' ||
+                    typeof window.Microsoft.CRM === 'undefined' ||
+                    typeof window.Microsoft.CRM.Omnichannel === 'undefined' ||
                     typeof window.Microsoft.CRM.Omnichannel.SDK === 'undefined') {
                     throw new Error('SDK not loaded. Make sure dist/SDK.js is properly built and loaded.');
                 }
-                
+
                 const sdk = window.Microsoft.CRM.Omnichannel.SDK.SDKProvider.getSDK(omnichannelConfig);
-                
+
                 const params = {
                     authenticatedUserToken: authToken,
                     pageSize: pageSize,
@@ -393,31 +492,31 @@
                 logToConsole(`   Request ID: ${requestId}`, 'info');
                 logToConsole(`   Page Size: ${params.pageSize}`, 'info');
                 logToConsole(`   Has Auth Token: ${!!params.authenticatedUserToken}`, 'info');
-                
+
                 logToConsole('🌐 Check the Network tab in DevTools to see the HTTP requests!', 'warning');
 
                 const startTime = Date.now();
                 const result = await sdk.getPersistentChatHistory(requestId, params);
                 const endTime = Date.now();
                 const duration = endTime - startTime;
-                
+
                 // Log message count validation
                 const requestedPageSize = params.pageSize;
                 const receivedMessages = result.messages || result.conversations || result.chatMessages || [];
                 const actualCount = Array.isArray(receivedMessages) ? receivedMessages.length : 0;
-                
+
                 logToConsole(`📊 Message Count Analysis:`, 'info');
                 logToConsole(`   Requested: ${requestedPageSize} messages`, 'info');
                 logToConsole(`   Received: ${actualCount} messages`, 'info');
                 const matchStatus = actualCount === requestedPageSize ? '✅ YES' : `❌ NO (difference: ${actualCount - requestedPageSize})`;
                 logToConsole(`   Match: ${matchStatus}`, actualCount === requestedPageSize ? 'success' : 'warning');
                 logToConsole(`   Response Time: ${duration}ms`, 'info');
-                
+
                 logToConsole('✅ Success! Result structure:', 'success');
                 logToConsole(`   Keys: ${Object.keys(result).join(', ')}`, 'info');
                 logToConsole('Full result:', 'info');
                 logToConsole(JSON.stringify(result, null, 2), 'info');
-                
+
                 // Store results for export
                 lastTestResults = {
                     config: omnichannelConfig,
@@ -428,7 +527,7 @@
                     duration,
                     result
                 };
-                
+
                 // Test pagination if nextPageToken exists
                 if (result.nextPageToken) {
                     logToConsole('📄 Testing pagination...', 'info');
@@ -436,26 +535,26 @@
                         ...params,
                         pageToken: result.nextPageToken
                     };
-                    
+
                     const nextPageStartTime = Date.now();
                     const nextPageResult = await sdk.getPersistentChatHistory(requestId, nextPageParams);
                     const nextPageEndTime = Date.now();
                     const nextPageDuration = nextPageEndTime - nextPageStartTime;
-                    
+
                     // Log next page message count validation
                     const nextPageMessages = nextPageResult.messages || nextPageResult.conversations || nextPageResult.chatMessages || [];
                     const nextPageActualCount = Array.isArray(nextPageMessages) ? nextPageMessages.length : 0;
-                    
+
                     logToConsole(`📊 Next Page Message Count Analysis:`, 'info');
                     logToConsole(`   Requested: ${params.pageSize} messages`, 'info');
                     logToConsole(`   Received: ${nextPageActualCount} messages`, 'info');
                     const nextMatchStatus = nextPageActualCount === params.pageSize ? '✅ YES' : `❌ NO (difference: ${nextPageActualCount - params.pageSize})`;
                     logToConsole(`   Match: ${nextMatchStatus}`, nextPageActualCount === params.pageSize ? 'success' : 'warning');
                     logToConsole(`   Response Time: ${nextPageDuration}ms`, 'info');
-                    
+
                     logToConsole('✅ Next page result:', 'success');
                     logToConsole(JSON.stringify(nextPageResult, null, 2), 'info');
-                    
+
                     // Update results with pagination info
                     lastTestResults.pagination = {
                         nextPageActualCount,
@@ -471,7 +570,7 @@
                 logToConsole('❌ Error: ' + error.message, 'error');
                 logToConsole('Full error:', 'error');
                 logToConsole(JSON.stringify(error, null, 2), 'error');
-                
+
                 // Common error scenarios to check:
                 if (error.message.includes('Authenticated user token is required')) {
                     logToConsole('💡 Tip: You need to provide a valid authenticatedUserToken', 'warning');
@@ -488,9 +587,9 @@
                 if (error.message.includes('CORS')) {
                     logToConsole('💡 Tip: CORS error - make sure your domain is whitelisted or serve via localhost', 'warning');
                 }
-                
+
                 showStatus('❌ Test failed. Check console for details.', 'error');
-                
+
                 // Store error results for export
                 lastTestResults = {
                     error: {
@@ -505,14 +604,14 @@
         }
 
         // Initialize the page
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             logToConsole('🔧 Page loaded. Ready to run tests!', 'info');
             logToConsole('📡 Open DevTools Network tab to monitor HTTP requests', 'warning');
-            
+
             // Check if SDK is available
-            if (typeof window.Microsoft === 'undefined' || 
-                typeof window.Microsoft.CRM === 'undefined' || 
-                typeof window.Microsoft.CRM.Omnichannel === 'undefined' || 
+            if (typeof window.Microsoft === 'undefined' ||
+                typeof window.Microsoft.CRM === 'undefined' ||
+                typeof window.Microsoft.CRM.Omnichannel === 'undefined' ||
                 typeof window.Microsoft.CRM.Omnichannel.SDK === 'undefined') {
                 logToConsole('⚠️ WARNING: SDK not detected. Make sure to build the project first:', 'error');
                 logToConsole('   npm run build:dev', 'error');
@@ -523,4 +622,5 @@
         });
     </script>
 </body>
+
 </html>
