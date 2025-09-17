@@ -4,11 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-## [0.5.21]
-
 ### Changed
+- Uptake [axios@1.2.0](https://www.npmjs.com/package/axios/v/1.2.0)
 
-- Uptake axios@^1.12.0
+### Fixed
+- Fixed `getPersistentChatHistory` method to make `requestId` a required parameter and ensure it is always provided by the caller.
+- Prevent mutation of default headers by creating a shallow copy before modification in `getPersistentChatHistory` method.
 
 ## [0.5.19] 2025-09-14
 

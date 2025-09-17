@@ -1226,13 +1226,9 @@ export default class SDK implements ISDK {
    * @param requestId RequestId of the omnichannel session (Optional).
    * @param getPersistentChatHistoryOptionalParams Optional parameters for get persistent chat history.
    */
-  public async getPersistentChatHistory(requestId?: string, getPersistentChatHistoryOptionalParams: IGetPersistentChatHistoryOptionalParams = {}): Promise<object> {
+  public async getPersistentChatHistory(requestId: string, getPersistentChatHistoryOptionalParams: IGetPersistentChatHistoryOptionalParams = {}): Promise<object> {
     const timer = Timer.TIMER();
     this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETPERSISTENTCHATHISTORYSTARTED, "Get Persistent Chat History Started", requestId);
-    
-    if (!requestId) {
-      requestId = uuidv4();
-    }
 
     const { authenticatedUserToken, pageSize, pageToken } = getPersistentChatHistoryOptionalParams;
 
@@ -1250,7 +1246,7 @@ export default class SDK implements ISDK {
       waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.getPersistentChatHistory
     });
 
-    const requestHeaders: StringMap = Constants.defaultHeaders;
+    const requestHeaders: StringMap = { ...Constants.defaultHeaders };
     requestHeaders[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
     requestHeaders[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
 
