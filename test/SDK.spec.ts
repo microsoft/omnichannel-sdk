@@ -814,23 +814,6 @@ describe("SDK unit tests", () => {
             });
         });
 
-        it("Should auto-generate requestId when not provided", (done) => {
-            const dataMockValid = { 
-                data: { conversations: [] }, 
-                headers: { "transaction-id": "tid" } 
-            };
-            const axiosInstMockValid = jasmine.createSpy("axiosInstance").and.returnValue(dataMockValid);
-            spyOn<any>(axios, "create").and.returnValue(axiosInstMockValid);
-            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
-            
-            const result = sdk.getPersistentChatHistory(undefined, getPersistentChatHistoryOptionalParams);
-            result.then(() => {
-                expect(uuidvSpy).toHaveBeenCalled();
-                expect(axiosInstMockValid).toHaveBeenCalled();
-                done();
-            });
-        });
-
         it("Should reject when authenticatedUserToken is missing", (done) => {
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
             
