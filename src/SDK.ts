@@ -1250,10 +1250,6 @@ export default class SDK implements ISDK {
     requestHeaders[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
     requestHeaders[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
 
-    if (pageToken) {
-      requestHeaders[OmnichannelHTTPHeaders.pageToken] = pageToken;
-    }
-
     this.addDefaultHeaders(requestId, requestHeaders);
 
     const params: OmnichannelQueryParameter = {};
@@ -1262,6 +1258,9 @@ export default class SDK implements ISDK {
       params.pageSize = pageSize.toString();
     }
 
+    // in case page token is assigned from mutated headers, we override with the actual value or empty
+    requestHeaders[OmnichannelHTTPHeaders.pageToken] = pageToken || "";
+   
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "GET";
     const options: AxiosRequestConfig = {

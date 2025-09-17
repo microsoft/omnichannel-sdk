@@ -5,9 +5,12 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Changed
+
 - Uptake [axios@1.2.0](https://www.npmjs.com/package/axios/v/1.2.0)
 
 ### Fixed
+
+- New approach to prevent pageToken header to contain wrong value for `getPersistentChatHistory`
 - Fixed `getPersistentChatHistory` method to make `requestId` a required parameter and ensure it is always provided by the caller.
 - Prevent mutation of default headers by creating a shallow copy before modification in `getPersistentChatHistory` method.
 
