@@ -68,7 +68,8 @@ export default class SDK implements ISDK {
     getAgentAvailability: 15000,
     sendTypingIndicator: 5000,
     validateAuthChatRecordTimeout: 15000,
-    getPersistentChatHistory: 15000
+    getPersistentChatHistory: 15000,
+    midConversationAuthenticateChat: 15000
   };
 
   private static defaultConfiguration: ISDKConfiguration = {
@@ -1465,7 +1466,7 @@ export default class SDK implements ISDK {
         const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
         const { headers } = response;
         this.setAuthCodeNonce(headers);
-
+    
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SECONDARYCHANNELEVENTREQUESTSUCCEEDED, "Secondary Channel Event Request Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders, httpRequestResponseTime);
         resolve();
@@ -1527,6 +1528,153 @@ export default class SDK implements ISDK {
 
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           reject( new Error(this.HTTPTimeOutErrorMessage));
+        }
+        reject(error);
+      }
+    });
+  }
+
+  /**
+   * Authenticates an ongoing (previously unauthenticated) chat session.
+   * Upgrades engagement context so subsequent calls use authenticated endpoints.
+   * @param requestId Current request/correlation id
+   * @param authenticateChatParams { chatId, authenticatedUserToken }
+   */
+  public async midConversationAuthenticateChat(requestId: string, authenticateChatParams: { chatId: string; authenticatedUserToken: string }): Promise<void> {
+    const timer = Timer.TIMER();
+    // Console logs for local diagnostics
+    console.log("[OCSDK][midConversationAuthenticateChat] started", { requestId, chatId: authenticateChatParams?.chatId });
+
+    this.logWithLogger(
+      LogLevel.INFO,
+      OCSDKTelemetryEvent.MIDAUTHENTICATECHATSTARTED,
+      "Authenticate Chat Started",
+      requestId
+    );
+
+    const { chatId, authenticatedUserToken } = authenticateChatParams;
+
+    if (!chatId || !authenticatedUserToken) {
+      console.error("[OCSDK][midConversationAuthenticateChat] invalid arguments", { chatIdPresent: !!chatId, tokenPresent: !!authenticatedUserToken });
+      throw new Error("chatId and authenticatedUserToken are required");
+    }
+
+    // Endpoint: /livechatconnector/auth/authenticateChat/{orgId}/{widgetAppId}/{requestId}
+    const requestPath = `/${OmnichannelEndpoints.LiveChatAuthMidConversationPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${chatId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
+    const method = "POST";
+    const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;  
+
+    const axiosInstance = axios.create();
+    axiosRetryHandler(axiosInstance, {
+      headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce],
+      retries: this.configuration.maxRequestRetriesOnFailure,
+      waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.midConversationAuthenticateChat
+    });
+
+    const requestHeaders: StringMap = { ...Constants.defaultHeaders };
+    requestHeaders[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+    requestHeaders[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
+
+    // Attach default/session/correlation headers
+    this.addDefaultHeaders(requestId, requestHeaders);
+    this.setRequestIdHeader(requestId, requestHeaders);
+
+    const payload = {
+      channelId: this.omnichannelConfiguration.channelId
+    };
+
+    console.log("[OCSDK][midConversationAuthenticateChat] request", {
+      url,
+      method,
+      requestId,
+      headers: {
+        hasAuthTokenHeader: !!requestHeaders[OmnichannelHTTPHeaders.authenticatedUserToken],
+        hasNonceHeader: !!requestHeaders[OmnichannelHTTPHeaders.authCodeNonce],
+        hasSessionIdHeader: !!requestHeaders[OmnichannelHTTPHeaders.ocSessionId],
+        hasRequestIdHeader: !!requestHeaders[OmnichannelHTTPHeaders.requestId],
+        hasCorrelationIdHeader: !!requestHeaders[OmnichannelHTTPHeaders.correlationId]
+      },
+      payload
+    });
+
+    const options: AxiosRequestConfig = {
+      data: JSON.stringify(payload),
+      headers: requestHeaders,
+      method,
+      url,
+      timeout:
+        this.configuration.defaultRequestTimeout ??
+        this.configuration.requestTimeoutConfig.midConversationAuthenticateChat
+    };
+
+    return new Promise(async (resolve, reject) => {
+      const backendTimer = Timer.TIMER();
+      try {
+        const response = await axiosInstance(options);
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
+        const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+
+        const { headers, status } = response;
+        this.setAuthCodeNonce(headers);
+
+        // Update sessionId from response headers if provided (similar to getChatToken/createConversation)
+        if (headers && headers[OmnichannelHTTPHeaders.ocSessionId.toLowerCase()]) {
+          this.sessionId = headers[OmnichannelHTTPHeaders.ocSessionId.toLowerCase()];
+        }
+
+        console.log("[OCSDK][midConversationAuthenticateChat] succeeded", {
+          status,
+          elapsedTimeInMilliseconds,
+          httpRequestResponseTime,
+          requestPath
+        });
+
+        this.logWithLogger(
+          LogLevel.INFO,
+          OCSDKTelemetryEvent.MIDAUTHENTICATECHATSUCCEEDED,
+          "Mid-Authenticate Chat Succeeded",
+          requestId,
+          response,
+          elapsedTimeInMilliseconds,
+          requestPath,
+          method,
+          undefined,
+          payload,
+          requestHeaders,
+          httpRequestResponseTime
+        );
+
+        resolve();
+      } catch (error) {
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
+        const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+
+        console.error("[OCSDK][midConversationAuthenticateChat] failed", {
+          message: (error as any)?.message,
+          status: (error as any)?.response?.status,
+          elapsedTimeInMilliseconds,
+          httpRequestResponseTime,
+          requestPath
+        });
+
+        this.logWithLogger(
+          LogLevel.ERROR,
+          OCSDKTelemetryEvent.MIDAUTHENTICATECHATFAILED,
+          "Mid-Authenticate Chat Failed",
+          requestId,
+          undefined,
+          elapsedTimeInMilliseconds,
+          requestPath,
+          method,
+          error,
+          payload,
+          requestHeaders,
+          httpRequestResponseTime
+        );
+
+        if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
+          reject(new Error(this.HTTPTimeOutErrorMessage));
+          return;
         }
         reject(error);
       }

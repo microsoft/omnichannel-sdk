@@ -24,4 +24,5 @@ export default interface ISDK {
   makeSecondaryChannelEventRequest(requestId: string, secondaryChannelEventRequestBody: object): Promise<void>;
   getAgentAvailability(requestId: string, queueAvailabilityOptionalParams: IGetQueueAvailabilityOptionalParams): Promise<object>
   sendTypingIndicator(requestId: string, currentLiveChatVersion: number): Promise<void>;
+  midConversationAuthenticateChat(requestId: string, authenticateChatParams: { chatId: string; authenticatedUserToken: string }): Promise<void>;
 }
