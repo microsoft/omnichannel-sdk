@@ -1298,7 +1298,7 @@ describe("SDK unit tests", () => {
             });
         });
 
-        it("Should include channelId in request payload", (done) => {
+        it("Should include channelId in request URL", (done) => {
             const dataMockSuccess = { data: {}, headers: { "transaction-id": "tid" } };
             const axiosInstMockSuccess = jasmine.createSpy("axiosInstance").and.returnValue(dataMockSuccess);
             spyOn<any>(axios, "create").and.returnValue(axiosInstMockSuccess);
@@ -1311,8 +1311,7 @@ describe("SDK unit tests", () => {
 
             result.then(() => {
                 const callArgs = axiosInstMockSuccess.calls.mostRecent().args[0];
-                const payload = JSON.parse(callArgs.data);
-                expect(payload.channelId).toEqual(ochannelConfig.channelId);
+                expect(callArgs.url).toContain(`channelId=${ochannelConfig.channelId}`);
                 done();
             });
         });
