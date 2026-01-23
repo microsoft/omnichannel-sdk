@@ -10,6 +10,15 @@ All notable changes to this project will be documented in this file.
 
 - Uptake [axios@1.2.0](https://www.npmjs.com/package/axios/v/1.2.0)
 - Updated lodash and babel packages for component governance fixes
+- Updated package-lock lockfileVersion to 3
+
+### Security
+
+- Fixed all remaining package vulnerabilities
+- Replaced deprecated `istanbul-instrumenter-loader@3.0.1` with [babel-plugin-istanbul@7.0.0](https://www.npmjs.com/package/babel-plugin-istanbul/v/7.0.0)
+- Resolved critical `babel-traverse` vulnerability (arbitrary code execution - GHSA-67hx-6x53-jw92)
+- Resolved moderate `ajv` vulnerability (prototype pollution - GHSA-v88g-cgmw-v5xw)
+- Removed deprecated `@babel/plugin-proposal-class-properties` (now handled by `@babel/preset-env`)
 
 ### Fixed
 
