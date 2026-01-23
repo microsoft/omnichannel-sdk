@@ -11,20 +11,26 @@ All notable changes to this project will be documented in this file.
 - Uptake [axios@1.2.0](https://www.npmjs.com/package/axios/v/1.2.0)
 - Updated lodash and babel packages for component governance fixes
 - Updated package-lock lockfileVersion to 3
+- Upgraded to Webpack 5 for improved build performance and security
 
 ### Security
 
-- Fixed all remaining package vulnerabilities
-- Replaced deprecated `istanbul-instrumenter-loader@3.0.1` with [babel-plugin-istanbul@7.0.0](https://www.npmjs.com/package/babel-plugin-istanbul/v/7.0.0)
+- Fixed all remaining package vulnerabilities (npm audit shows 0 vulnerabilities)
+- Replaced deprecated `istanbul-instrumenter-loader@3.0.1` with [@jsdevtools/coverage-istanbul-loader@3.0.5](https://www.npmjs.com/package/@jsdevtools/coverage-istanbul-loader)
 - Resolved critical `babel-traverse` vulnerability (arbitrary code execution - GHSA-67hx-6x53-jw92)
 - Resolved moderate `ajv` vulnerability (prototype pollution - GHSA-v88g-cgmw-v5xw)
-- Removed deprecated `@babel/plugin-proposal-class-properties` (now handled by `@babel/preset-env`)
+- Restored `@babel/plugin-proposal-class-properties@7.18.6` for compatibility
 
 ### Fixed
 
 - New approach to prevent pageToken header to contain wrong value for `getPersistentChatHistory`
 - Fixed `getPersistentChatHistory` method to make `requestId` a required parameter and ensure it is always provided by the caller.
 - Prevent mutation of default headers by creating a shallow copy before modification in `getPersistentChatHistory` method.
+- Fixed test compatibility with Webpack 5 - updated all test mocks to properly handle promise-based axios instances
+- Added `headers` property to all test response mocks to prevent undefined errors
+- Converted async tests to use proper async/await patterns instead of mixing done callbacks with promises
+- Added ChromeHeadlessCI launcher for CI/CD environments with `--no-sandbox` flag to fix Chrome sandbox errors in containerized environments (GitHub Actions, etc.)
+- Added puppeteer@23.11.1 for reliable headless Chrome testing across all environments
 
 ## [0.5.19] 2025-09-14
 
