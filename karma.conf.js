@@ -4,6 +4,8 @@
 const mode = 'development';
 const webpackConfig = require('./webpack.config')({}, { mode });
 const path = require('path');
+const puppeteer = require('puppeteer');
+process.env.CHROME_BIN = puppeteer.executablePath();
 
 module.exports = function (config) {
   config.set({

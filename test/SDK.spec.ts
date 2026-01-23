@@ -58,13 +58,13 @@ describe("SDK unit tests", () => {
             widgetId: "IdId"
         };
         ocsdkLogger = new OCSDKLogger(logger);
-        dataMock = { data: { requestId: "someId" } };
+        dataMock = { data: { requestId: "someId" }, headers: {} };
         uuidvSpy = spyOn(uuidvModule, "uuidv4").and.returnValue("reqId");
         spyOn(axiosRetryHandler, "default").and.callFake(() => {});
         spyOn(axiosRetryHandler, "axiosRetryHandlerWithNotFound").and.callFake(() => {});
-        axiosInstMock = jasmine.createSpy("axiosInstance").and.returnValue(dataMock);
-        axiosInstMockWithError = jasmine.createSpy("axiosInstance").and.throwError(AxiosError);
-        axiosInstEmptyMock = jasmine.createSpy("axiosInstance").and.returnValue({data: {}});
+        axiosInstMock = jasmine.createSpy("axiosInstance").and.callFake(() => Promise.resolve(dataMock));
+        axiosInstMockWithError = jasmine.createSpy("axiosInstance").and.callFake(() => Promise.reject(AxiosError));
+        axiosInstEmptyMock = jasmine.createSpy("axiosInstance").and.callFake(() => Promise.resolve({data: {}, headers: {}}));
     });
 
     describe("Test constructor", () => {
@@ -126,59 +126,56 @@ describe("SDK unit tests", () => {
 
     describe("Test getChatConfig method", () => {
 
-        it("Test getChatConfig method with pluggable telemetry", () => {
-            spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; }});
+        it("Test getChatConfig method with pluggable telemetry", async () => {
+            spyOn<any>(axios, "create").and.returnValue({ get: jasmine.createSpy("get").and.callFake(() => Promise.resolve(dataMock)) });
             spyOn(ocsdkLogger, "log").and.callFake(() => { });
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
-            sdk.getChatConfig("");
+            await sdk.getChatConfig("");
             expect(uuidvSpy).toHaveBeenCalled();
             expect(axios.create).toHaveBeenCalled();
             expect(axiosRetryHandler.default).toHaveBeenCalled();
             expect(ocsdkLogger.log).toHaveBeenCalled();
         });
 
-        it("Test getChatConfig method without pluggable telemetry", () => {
-            spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; }});
+        it("Test getChatConfig method without pluggable telemetry", async () => {
+            spyOn<any>(axios, "create").and.returnValue({ get: jasmine.createSpy("get").and.callFake(() => Promise.resolve(dataMock)) });
             spyOn(ocsdkLogger, "log").and.callFake(() => { });
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
-            sdk.getChatConfig("");
+            await sdk.getChatConfig("");
             expect(uuidvSpy).toHaveBeenCalled();
             expect(axios.create).toHaveBeenCalled();
             expect(axiosRetryHandler.default).toHaveBeenCalled();
             expect(ocsdkLogger.log).not.toHaveBeenCalled();
         });
 
-        it("Test getChatConfig method to set LiveChatVersion", () => {
-            const configmock = {data: { requestId: "someId", LiveChatVersion: 2 }};
-            spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return configmock;}});
+        it("Test getChatConfig method to set LiveChatVersion", async () => {
+            const configmock = {data: { requestId: "someId", LiveChatVersion: 2 }, headers: {}};
+            spyOn<any>(axios, "create").and.returnValue({ get: jasmine.createSpy("get").and.callFake(() => Promise.resolve(configmock)) });
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
-            axiosInstMock = jasmine.createSpy("axiosInstance").and.returnValue(configmock);
-            const config = sdk.getChatConfig("");
+            const result = await sdk.getChatConfig("") as any;
             expect(axios.create).toHaveBeenCalled();
-            config.then(function(result: any){
-                expect(result.LiveChatVersion).toEqual(sdk.liveChatVersion);
-            });
+            expect(result.LiveChatVersion).toEqual(sdk.liveChatVersion);
         });
 
-        it("Test getLWIDetails method with pluggable telemetry", () => {
-            spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; } });
+        it("Test getLWIDetails method with pluggable telemetry", async () => {
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMock);
             spyOn(ocsdkLogger, "log").and.callFake(() => { });
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
-            sdk.getLWIDetails("");
+            await sdk.getLWIDetails("");
             expect(uuidvSpy).toHaveBeenCalled();
             expect(axios.create).toHaveBeenCalled();
             expect(axiosRetryHandler.axiosRetryHandlerWithNotFound).toHaveBeenCalled();
             expect(ocsdkLogger.log).toHaveBeenCalled();
         });
 
-        it("Test getLWIDetails method without pluggable telemetry", () => {
-        spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; } });
+        it("Test getLWIDetails method without pluggable telemetry", async () => {
+        spyOn<any>(axios, "create").and.returnValue(axiosInstMock);
         spyOn(ocsdkLogger, "log").and.callFake(() => { });
         const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
-        sdk.getLWIDetails("");
+        await sdk.getLWIDetails("");
         expect(uuidvSpy).toHaveBeenCalled();
         expect(axios.create).toHaveBeenCalled();
-      
+
         expect(axiosRetryHandler.axiosRetryHandlerWithNotFound).toHaveBeenCalled();
         expect(ocsdkLogger.log).not.toHaveBeenCalled();
         });
@@ -186,7 +183,7 @@ describe("SDK unit tests", () => {
 
     describe("Test getLcwFcsDetails method", () => {
         it("Should return promise", async () => {
-            spyOn<any>(axios, "create").and.returnValue({ async get(endpoint: any) { return dataMock; } });
+            spyOn<any>(axios, "create").and.returnValue({ get: jasmine.createSpy("get").and.callFake(() => Promise.resolve(dataMock)) });
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
             const result = await sdk.getLcwFcsDetails();
             expect(result).not.toBeUndefined();
@@ -194,14 +191,17 @@ describe("SDK unit tests", () => {
             expect(axiosRetryHandler.default).toHaveBeenCalled();
         });
 
-        it("Should throw error when axiosInstance throws and error" , async(done) => {
-            spyOn<any>(axios, "create").and.returnValue(axiosInstMockWithError);
+        it("Should throw error when axiosInstance throws and error" , async () => {
+            const axiosGetMockWithError = jasmine.createSpy("get").and.callFake(() => Promise.reject(AxiosError));
+            spyOn<any>(axios, "create").and.returnValue({ get: axiosGetMockWithError });
             spyOn(ocsdkLogger, "log").and.callFake(() => { });
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
-            sdk.getLcwFcsDetails().then(() => {}, () => {
+            try {
+                await sdk.getLcwFcsDetails();
+                fail("Should have thrown an error");
+            } catch (error) {
                 expect(ocsdkLogger.log).toHaveBeenCalled();
-                done();
-            });
+            }
         });
     });
 
@@ -713,7 +713,7 @@ describe("SDK unit tests", () => {
 
         it("Should return promise when auth chat exists", (done) => {
             const dataMockValid = { data: { authChatExist: true }, headers: {"transaction-id": "tid"} };
-            const axiosInstMockValid = jasmine.createSpy("axiosInstance").and.returnValue(dataMockValid);
+            const axiosInstMockValid = jasmine.createSpy("axiosInstance").and.callFake(() => Promise.resolve(dataMockValid));
             spyOn<any>(axios, "create").and.returnValue(axiosInstMockValid);
             spyOn(ocsdkLogger, "log").and.callFake(() => { });
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
@@ -728,7 +728,7 @@ describe("SDK unit tests", () => {
 
         it("Should return promise reject when auth chat does not exist", (done) => {
             const dataMockInvalid = { data: { authChatExist: false }, headers: {"transaction-id": "tid"} };
-            const axiosInstMockInvalid = jasmine.createSpy("axiosInstance").and.returnValue(dataMockInvalid);
+            const axiosInstMockInvalid = jasmine.createSpy("axiosInstance").and.callFake(() => Promise.resolve(dataMockInvalid));
             spyOn<any>(axios, "create").and.returnValue(axiosInstMockInvalid);
             spyOn(ocsdkLogger, "log").and.callFake(() => { });
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
@@ -794,15 +794,15 @@ describe("SDK unit tests", () => {
                 ],
                 nextPageToken: "nextToken"
             };
-            const dataMockValid = { 
-                data: mockHistoryData, 
-                headers: { "transaction-id": "tid" } 
+            const dataMockValid = {
+                data: mockHistoryData,
+                headers: { "transaction-id": "tid" }
             };
-            const axiosInstMockValid = jasmine.createSpy("axiosInstance").and.returnValue(dataMockValid);
+            const axiosInstMockValid = jasmine.createSpy("axiosInstance").and.callFake(() => Promise.resolve(dataMockValid));
             spyOn<any>(axios, "create").and.returnValue(axiosInstMockValid);
             spyOn(ocsdkLogger, "log").and.callFake(() => { });
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
-            
+
             const result = sdk.getPersistentChatHistory(requestId, getPersistentChatHistoryOptionalParams);
             result.then((data) => {
                 expect(axiosInstMockValid).toHaveBeenCalled();
@@ -827,11 +827,11 @@ describe("SDK unit tests", () => {
         });
 
         it("Should include pageSize in query parameters when provided", (done) => {
-            const dataMockValid = { 
-                data: { conversations: [] }, 
-                headers: { "transaction-id": "tid" } 
+            const dataMockValid = {
+                data: { conversations: [] },
+                headers: { "transaction-id": "tid" }
             };
-            const axiosInstMockValid = jasmine.createSpy("axiosInstance").and.returnValue(dataMockValid);
+            const axiosInstMockValid = jasmine.createSpy("axiosInstance").and.callFake(() => Promise.resolve(dataMockValid));
             spyOn<any>(axios, "create").and.returnValue(axiosInstMockValid);
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
             
@@ -849,11 +849,11 @@ describe("SDK unit tests", () => {
         });
 
         it("Should include PageToken in headers when provided", (done) => {
-            const dataMockValid = { 
-                data: { conversations: [] }, 
-                headers: { "transaction-id": "tid" } 
+            const dataMockValid = {
+                data: { conversations: [] },
+                headers: { "transaction-id": "tid" }
             };
-            const axiosInstMockValid = jasmine.createSpy("axiosInstance").and.returnValue(dataMockValid);
+            const axiosInstMockValid = jasmine.createSpy("axiosInstance").and.returnValue(Promise.resolve(dataMockValid));
             spyOn<any>(axios, "create").and.returnValue(axiosInstMockValid);
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
             
@@ -885,11 +885,11 @@ describe("SDK unit tests", () => {
         });
 
         it("Should use correct endpoint path", (done) => {
-            const dataMockValid = { 
-                data: { conversations: [] }, 
-                headers: { "transaction-id": "tid" } 
+            const dataMockValid = {
+                data: { conversations: [] },
+                headers: { "transaction-id": "tid" }
             };
-            const axiosInstMockValid = jasmine.createSpy("axiosInstance").and.returnValue(dataMockValid);
+            const axiosInstMockValid = jasmine.createSpy("axiosInstance").and.callFake(() => Promise.resolve(dataMockValid));
             spyOn<any>(axios, "create").and.returnValue(axiosInstMockValid);
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
             

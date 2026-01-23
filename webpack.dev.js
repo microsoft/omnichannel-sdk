@@ -14,6 +14,18 @@ module.exports = {
         test: /\.tsx?$/,
         use: 'ts-loader',
         exclude: /node_modules/,
+      },
+      {
+        test: /\.ts$/,
+        exclude: [
+          /node_modules/,
+          /test/
+        ],
+        enforce: 'post',
+        use: {
+          loader: '@jsdevtools/coverage-istanbul-loader',
+          options: { esModules: true }
+        }
       }
     ],
   },

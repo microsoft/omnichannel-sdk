@@ -1,10 +1,8 @@
 module.exports = {
   ignore: ['**/*.d.ts'],
   plugins: [
-    '@babel/plugin-transform-runtime',
-    ['babel-plugin-istanbul', {
-      exclude: ['**/*.spec.ts', '**/test/**']
-    }]
+    '@babel/plugin-proposal-class-properties',
+    '@babel/plugin-transform-runtime'
   ],
   presets: [
     [
