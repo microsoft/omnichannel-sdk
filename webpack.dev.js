@@ -23,7 +23,7 @@ module.exports = {
         ],
         enforce: 'post',
         use: {
-          loader: 'istanbul-instrumenter-loader',
+          loader: '@jsdevtools/coverage-istanbul-loader',
           options: { esModules: true }
         }
       }
