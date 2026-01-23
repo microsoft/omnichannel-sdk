@@ -29,7 +29,6 @@
   "devDependencies": {
     "@babel/cli": "^7.26.10",
     "@babel/core": "^7.26.10",
-    "@babel/plugin-proposal-class-properties": "^7.26.10",
     "@babel/plugin-transform-runtime": "^7.26.10",
     "@babel/preset-env": "^7.26.10",
     "@babel/preset-typescript": "^7.26.10",
@@ -67,8 +66,6 @@
     "crypto-js": "^4.2.0"
   },
   "overrides": {
-    "lodash": "4.17.23",
-    "@babel/core": "^7.26.10",
-    "@babel/runtime-corejs3": "^7.26.10"
+    "lodash": "4.17.23"
   }
 }
