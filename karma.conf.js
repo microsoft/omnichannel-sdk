@@ -89,8 +89,21 @@ module.exports = function (config) {
 
     // start these browsers
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-    browsers: ['ChromeHeadless'],
+    // Use ChromeHeadlessCI in CI environments (GitHub Actions, etc.)
+    browsers: process.env.CI ? ['ChromeHeadlessCI'] : ['ChromeHeadless'],
 
+    // Custom launcher configuration for CI environments
+    customLaunchers: {
+      ChromeHeadlessCI: {
+        base: 'ChromeHeadless',
+        flags: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu'
+        ]
+      }
+    },
 
     // Continuous Integration mode
     // if true, Karma captures browsers, runs the tests and exits
