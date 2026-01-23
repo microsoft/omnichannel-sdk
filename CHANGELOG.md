@@ -4,9 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.5.20] - 2026-01-22
+
 ### Changed
 
 - Uptake [axios@1.2.0](https://www.npmjs.com/package/axios/v/1.2.0)
+- Updated lodash and babel packages for component governance fixes
 
 ### Fixed
 
