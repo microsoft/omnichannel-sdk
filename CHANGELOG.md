@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.5.21] - 2026-01-26
+
+### Fixed
+
+- Added webpack ProvidePlugin to properly polyfill Node.js `process` global for browser environments
+- Fixed "process is not defined" error in CICD fresh builds caused by axios dependency using `process.nextTick`
+- Added `process@0.11.10` to devDependencies for webpack 5 polyfill support
+- Updated webpack.common.js with `resolve.fallback` for process/browser polyfill
+
+### Changed
+
+- Webpack configuration now properly handles Node.js globals for browser compatibility
+
 ## [0.5.20] - 2026-01-22
 
 ### Changed
