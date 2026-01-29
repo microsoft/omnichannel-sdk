@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-## [0.5.21] - 2026-01-26
+## [0.5.21] - 2026-01-29
 
 ### Fixed
 
@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Fixed "process is not defined" error in CICD fresh builds caused by axios dependency using `process.nextTick`
 - Added `process@0.11.10` to devDependencies for webpack 5 polyfill support
 - Updated webpack.common.js with `resolve.fallback` for process/browser polyfill
+- Deprecated `contentBase` in dev wepback config
 
 ### Changed
 
