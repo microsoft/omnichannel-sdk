@@ -3,7 +3,7 @@ const path = require('path');
 console.log("webpack config: dev");
 module.exports = {
   devServer: {
-    contentBase: path.join(__dirname, 'dist'),
+    static: path.join(__dirname, 'dist'),
     compress: true,
     port: 9000
   },
