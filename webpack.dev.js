@@ -3,7 +3,7 @@ const path = require('path');
 console.log("webpack config: dev");
 module.exports = {
   devServer: {
-    contentBase: path.join(__dirname, 'dist'),
+    static: path.join(__dirname, 'dist'),
     compress: true,
     port: 9000
   },
@@ -23,7 +23,7 @@ module.exports = {
         ],
         enforce: 'post',
         use: {
-          loader: 'istanbul-instrumenter-loader',
+          loader: '@jsdevtools/coverage-istanbul-loader',
           options: { esModules: true }
         }
       }
