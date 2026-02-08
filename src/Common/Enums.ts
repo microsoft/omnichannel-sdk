@@ -94,6 +94,7 @@ export enum OCSDKTelemetryEvent {
   GETAGENTAVAILABILITYSTARTED = "GetAgentAvailabilityStarted",
   GETAGENTAVAILABILITYSUCCEEDED = "GetAgentAvailabilitySucceeded",
   GETAGENTAVAILABILITYFAILED = "GetAgentAvailabilityFailed",
+  SENDTYPINGINDICATORSTARTED = "SendTypingIndicatorStarted",
   SENDTYPINGINDICATORFAILED = "SendTypingIndicatorFailed",
   SENDTYPINGINDICATORSUCCEEDED = "SendTypingIndicatorSucceeded",
   GETPERSISTENTCHATHISTORYSTARTED = "GetPersistentChatHistoryStarted",
