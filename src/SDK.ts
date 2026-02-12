@@ -907,6 +907,7 @@ export default class SDK implements ISDK {
     const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
     const method = "POST";
     const options: AxiosRequestConfig = {
+      data,
       headers: requestHeaders,
       method,
       url,
