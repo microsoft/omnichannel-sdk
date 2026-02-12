@@ -917,7 +917,6 @@ describe("SDK unit tests", () => {
             defaultOpt = {
                 authenticatedUserToken: "token",
                 initContext: {},
-                getContext: true,
                 chatId: "chatId"
             };
             sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
