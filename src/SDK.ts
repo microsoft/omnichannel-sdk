@@ -1546,6 +1546,8 @@ export default class SDK implements ISDK {
     const { chatId, authenticatedUserToken } = authenticateChatParams;
 
     if (!chatId || !authenticatedUserToken) {
+      this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.MIDAUTHENTICATECHATFAILED,
+        "Mid-Authenticate Chat Failed - chatId and authenticatedUserToken are required", requestId);
       throw new Error("chatId and authenticatedUserToken are required");
     }
 

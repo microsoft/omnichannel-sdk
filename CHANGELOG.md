@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-### Added MidConversationAuthenticateChat Feature
+### Added
 
 - Added `midConversationAuthenticateChat` SDK method to authenticate an ongoing unauthenticated chat session mid-conversation
 - Added `livechatconnector/auth/authenticateChat` endpoint in `OmnichannelEndpoints`
