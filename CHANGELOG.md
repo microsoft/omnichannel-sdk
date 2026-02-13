@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Added `midConversationAuthenticateChat` SDK method to authenticate an ongoing unauthenticated chat session mid-conversation
+- Added `livechatconnector/auth/authenticateChat` endpoint in `OmnichannelEndpoints`
+- Added `MIDAUTHENTICATECHATSTARTED`, `MIDAUTHENTICATECHATSUCCEEDED`, `MIDAUTHENTICATECHATFAILED` telemetry events in `OCSDKTelemetryEvent` enum
+- Added `midConversationAuthenticateChat` to `ISDK` interface, `RequestTimeoutConfig` type, and `waitTimeBetweenRetriesConfigs`
+- Added retry support and `authCodeNonce` header handling for mid-conversation authentication
+- Updates `sessionId` from response headers after successful mid-conversation authentication
+
 ## [0.5.21] - 2026-01-29
 
 ### Fixed

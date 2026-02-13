@@ -1059,9 +1059,261 @@ describe("SDK unit tests", () => {
             }
         });
 
+        it("midConversationAuthenticateChat timeout test", async () => {
+            try {
+                mock.onPost(/.*/).timeout();
+                await sdk.midConversationAuthenticateChat(requestId, {
+                    chatId: "testChatId",
+                    authenticatedUserToken: "testToken"
+                });
+                fail("Should throw an error");
+            } catch (error: any) {
+                expect(error.message).toEqual(HTTPTimeOutErrorMessage);
+            }
+        });
+
         afterEach(() => {
             mock.restore();
             jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout;   //remove environment variable 
+        });
+    });
+
+    describe("Test midConversationAuthenticateChat method", () => {
+        const chatId = "testChatId";
+        const authenticatedUserToken = "testAuthToken";
+
+        it("Should throw error when chatId is missing", async () => {
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+            try {
+                await sdk.midConversationAuthenticateChat(requestId, {
+                    chatId: "",
+                    authenticatedUserToken: authenticatedUserToken
+                });
+                fail("Should throw an error");
+            } catch (error: any) {
+                expect(error.message).toEqual("chatId and authenticatedUserToken are required");
+            }
+        });
+
+        it("Should throw error when authenticatedUserToken is missing", async () => {
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+            try {
+                await sdk.midConversationAuthenticateChat(requestId, {
+                    chatId: chatId,
+                    authenticatedUserToken: ""
+                });
+                fail("Should throw an error");
+            } catch (error: any) {
+                expect(error.message).toEqual("chatId and authenticatedUserToken are required");
+            }
+        });
+
+        it("Should throw error when both chatId and authenticatedUserToken are missing", async () => {
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+            try {
+                await sdk.midConversationAuthenticateChat(requestId, {
+                    chatId: "",
+                    authenticatedUserToken: ""
+                });
+                fail("Should throw an error");
+            } catch (error: any) {
+                expect(error.message).toEqual("chatId and authenticatedUserToken are required");
+            }
+        });
+
+        it("Should return promise resolve on successful authentication", (done) => {
+            const dataMockSuccess = { data: {}, headers: { "transaction-id": "tid" } };
+            const axiosInstMockSuccess = jasmine.createSpy("axiosInstance").and.returnValue(dataMockSuccess);
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockSuccess);
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+
+            const result = sdk.midConversationAuthenticateChat(requestId, {
+                chatId: chatId,
+                authenticatedUserToken: authenticatedUserToken
+            });
+
+            result.then(() => {
+                expect(axiosInstMockSuccess).toHaveBeenCalled();
+                expect(axios.create).toHaveBeenCalled();
+                expect(axiosRetryHandler.default).toHaveBeenCalled();
+                done();
+            });
+        });
+
+        it("Should call logger on successful authentication", (done) => {
+            const dataMockSuccess = { data: {}, headers: { "transaction-id": "tid" } };
+            const axiosInstMockSuccess = jasmine.createSpy("axiosInstance").and.returnValue(dataMockSuccess);
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockSuccess);
+            spyOn(ocsdkLogger, "log").and.callFake(() => { });
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
+
+            const result = sdk.midConversationAuthenticateChat(requestId, {
+                chatId: chatId,
+                authenticatedUserToken: authenticatedUserToken
+            });
+
+            result.then(() => {
+                expect(ocsdkLogger.log).toHaveBeenCalled();
+                done();
+            });
+        });
+
+        it("Should reject when axiosInstance throws an error", (done) => {
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockWithError);
+            spyOn(ocsdkLogger, "log").and.callFake(() => { });
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
+
+            const result = sdk.midConversationAuthenticateChat(requestId, {
+                chatId: chatId,
+                authenticatedUserToken: authenticatedUserToken
+            });
+
+            result.then(() => {
+                fail("Promise should reject");
+            }, () => {
+                expect(ocsdkLogger.log).toHaveBeenCalled();
+                done();
+            });
+        });
+
+        it("Should update sessionId from response headers", (done) => {
+            const mockSessionId = "mock-session-id-123";
+            const dataMockWithSessionId = { 
+                data: {}, 
+                headers: { 
+                    "transaction-id": "tid",
+                    "oc-sessionid": mockSessionId
+                } 
+            };
+            const axiosInstMockWithSessionId = jasmine.createSpy("axiosInstance").and.returnValue(dataMockWithSessionId);
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockWithSessionId);
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+
+            const result = sdk.midConversationAuthenticateChat(requestId, {
+                chatId: chatId,
+                authenticatedUserToken: authenticatedUserToken
+            });
+
+            result.then(() => {
+                expect(sdk.sessionId).toEqual(mockSessionId);
+                done();
+            });
+        });
+
+        it("Should update authCodeNonce from response headers", (done) => {
+            const mockAuthCodeNonce = "new-auth-code-nonce";
+            const dataMockWithNonce = { 
+                data: {}, 
+                headers: { 
+                    "transaction-id": "tid",
+                    "authcodenonce": mockAuthCodeNonce
+                } 
+            };
+            const axiosInstMockWithNonce = jasmine.createSpy("axiosInstance").and.returnValue(dataMockWithNonce);
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockWithNonce);
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+
+            const result = sdk.midConversationAuthenticateChat(requestId, {
+                chatId: chatId,
+                authenticatedUserToken: authenticatedUserToken
+            });
+
+            result.then(() => {
+                expect((sdk as any).configuration.authCodeNonce).toEqual(mockAuthCodeNonce);
+                done();
+            });
+        });
+
+        it("Should use correct endpoint path", (done) => {
+            const dataMockSuccess = { data: {}, headers: { "transaction-id": "tid" } };
+            const axiosInstMockSuccess = jasmine.createSpy("axiosInstance").and.returnValue(dataMockSuccess);
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockSuccess);
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+
+            const result = sdk.midConversationAuthenticateChat(requestId, {
+                chatId: chatId,
+                authenticatedUserToken: authenticatedUserToken
+            });
+
+            result.then(() => {
+                expect(axiosInstMockSuccess).toHaveBeenCalled();
+                const callArgs = axiosInstMockSuccess.calls.mostRecent().args[0];
+                expect(callArgs.url).toContain(`/livechatconnector/auth/authenticateChat/${ochannelConfig.orgId}/${ochannelConfig.widgetId}/${chatId}/${requestId}`);
+                expect(callArgs.url).toContain(`channelId=${ochannelConfig.channelId}`);
+                done();
+            });
+        });
+
+        it("Should include authenticatedUserToken in request headers", (done) => {
+            const dataMockSuccess = { data: {}, headers: { "transaction-id": "tid" } };
+            const axiosInstMockSuccess = jasmine.createSpy("axiosInstance").and.returnValue(dataMockSuccess);
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockSuccess);
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+
+            const result = sdk.midConversationAuthenticateChat(requestId, {
+                chatId: chatId,
+                authenticatedUserToken: authenticatedUserToken
+            });
+
+            result.then(() => {
+                const callArgs = axiosInstMockSuccess.calls.mostRecent().args[0];
+                expect(callArgs.headers["AuthenticatedUserToken"]).toEqual(authenticatedUserToken);
+                done();
+            });
+        });
+
+        it("Should include authCodeNonce in request headers", (done) => {
+            const dataMockSuccess = { data: {}, headers: { "transaction-id": "tid" } };
+            const axiosInstMockSuccess = jasmine.createSpy("axiosInstance").and.returnValue(dataMockSuccess);
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockSuccess);
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+
+            const result = sdk.midConversationAuthenticateChat(requestId, {
+                chatId: chatId,
+                authenticatedUserToken: authenticatedUserToken
+            });
+
+            result.then(() => {
+                const callArgs = axiosInstMockSuccess.calls.mostRecent().args[0];
+                expect(callArgs.headers["AuthCodeNonce"]).toBeDefined();
+                done();
+            });
+        });
+
+        it("Should use POST method", (done) => {
+            const dataMockSuccess = { data: {}, headers: { "transaction-id": "tid" } };
+            const axiosInstMockSuccess = jasmine.createSpy("axiosInstance").and.returnValue(dataMockSuccess);
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockSuccess);
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+
+            const result = sdk.midConversationAuthenticateChat(requestId, {
+                chatId: chatId,
+                authenticatedUserToken: authenticatedUserToken
+            });
+
+            result.then(() => {
+                const callArgs = axiosInstMockSuccess.calls.mostRecent().args[0];
+                expect(callArgs.method).toEqual("POST");
+                done();
+            });
+        });
+
+        it("Should include channelId in request URL", (done) => {
+            const dataMockSuccess = { data: {}, headers: { "transaction-id": "tid" } };
+            const axiosInstMockSuccess = jasmine.createSpy("axiosInstance").and.returnValue(dataMockSuccess);
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockSuccess);
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+
+            const result = sdk.midConversationAuthenticateChat(requestId, {
+                chatId: chatId,
+                authenticatedUserToken: authenticatedUserToken
+            });
+
+            result.then(() => {
+                const callArgs = axiosInstMockSuccess.calls.mostRecent().args[0];
+                expect(callArgs.url).toContain(`channelId=${ochannelConfig.channelId}`);
+                done();
+            });
         });
     });
 });

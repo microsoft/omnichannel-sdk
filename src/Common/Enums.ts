@@ -98,7 +98,10 @@ export enum OCSDKTelemetryEvent {
   SENDTYPINGINDICATORSUCCEEDED = "SendTypingIndicatorSucceeded",
   GETPERSISTENTCHATHISTORYSTARTED = "GetPersistentChatHistoryStarted",
   GETPERSISTENTCHATHISTORYSUCCEEDED = "GetPersistentChatHistorySucceeded",
-  GETPERSISTENTCHATHISTORYFAILED = "GetPersistentChatHistoryFailed"
+  GETPERSISTENTCHATHISTORYFAILED = "GetPersistentChatHistoryFailed",
+  MIDAUTHENTICATECHATSTARTED = "MidAuthenticateChatStarted",
+  MIDAUTHENTICATECHATSUCCEEDED = "MidAuthenticateChatSucceeded",
+  MIDAUTHENTICATECHATFAILED = "MidAuthenticateChatFailed",
 }
 
 export enum LiveChatVersion {
