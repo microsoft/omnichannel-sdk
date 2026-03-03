@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- Switch npm publishing to GitHub Actions OIDC trusted publishing (no NPM_TOKEN needed)
+- Dev versions now auto-publish on push to main (e.g. `0.5.21-main.abc1234`)
+
 ## [0.5.21] - 2026-01-29
 
 ### Fixed
