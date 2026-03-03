@@ -6,6 +6,11 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Switch npm publishing to GitHub Actions OIDC trusted publishing (no NPM_TOKEN needed)
+
+## [0.5.20] - 2026-01-22
+### Changed
+
 - Uptake [axios@1.2.0](https://www.npmjs.com/package/axios/v/1.2.0)
 
 ### Fixed
