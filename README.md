@@ -266,6 +266,10 @@ These are the available config options with its default values for the SDK.
 }
 ```
 
+# Releasing
+
+See [docs/RELEASING.md](docs/RELEASING.md) for how to publish new versions to npm.
+
 # Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
