@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Switch npm publishing to GitHub Actions OIDC trusted publishing (no NPM_TOKEN needed)
+- Use latest dist-tag for all npm publishes
 
 ## [0.5.20] - 2026-01-22
 ### Changed
