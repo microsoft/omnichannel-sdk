@@ -47,4 +47,4 @@ jobs:
           NODE_OPTIONS: --openssl-legacy-provider
 
       - name: Publish ${{ steps.read-package-json.outputs.name }}@${{ steps.read-package-json.outputs.version }}
-        run: npm publish --provenance --access public
+        run: npm publish --provenance --tag latest --access public
