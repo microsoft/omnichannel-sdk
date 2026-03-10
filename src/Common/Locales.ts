@@ -8,6 +8,7 @@ export default class Locales {
     "de-de",
     "el-gr",
     "en-us",
+    "en-au",
     "es-es",
     "et-ee",
     "eu-es",

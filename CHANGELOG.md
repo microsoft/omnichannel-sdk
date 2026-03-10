@@ -2,12 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.5.20-hotfix.enau.1]
+
+### Added
+
+- Add `en-au` (Australian English) to `supportedLocales` list
 
 ### Changed
 
 - Switch npm publishing to GitHub Actions OIDC trusted publishing (no NPM_TOKEN needed)
-- Use latest dist-tag for all npm publishes
+- Add `hotfix/**` branch trigger to npm-release workflow
 
 ### Fixed
 
