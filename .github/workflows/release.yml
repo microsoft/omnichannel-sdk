@@ -12,6 +12,7 @@ env:
 
 jobs:
   build:
+    if: github.repository == 'microsoft/omnichannel-sdk'
     runs-on: ubuntu-latest
 
     steps:
