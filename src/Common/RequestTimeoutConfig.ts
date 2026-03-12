@@ -18,4 +18,5 @@ export type RequestTimeoutConfig = {
     sendTypingIndicator: number;
     validateAuthChatRecordTimeout: number;
     getPersistentChatHistory: number;
+    midConversationAuthenticateChat: number;
 }
