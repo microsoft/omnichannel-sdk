@@ -13,6 +13,20 @@ All notable changes to this project will be documented in this file.
 - Added retry support and `authCodeNonce` header handling for mid-conversation authentication
 - Updates `sessionId` from response headers after successful mid-conversation authentication
 
+### Added
+
+- Add `en-au` (Australian English) to `supportedLocales` list
+
+### Changed
+
+- Switch npm publishing to GitHub Actions OIDC trusted publishing (no NPM_TOKEN needed)
+- Dev versions now auto-publish on push to main (e.g. `0.5.22-main.abc1234`)
+- Add `hotfix/**` branch trigger to npm-release workflow
+
+### Fixed
+
+- Fix npm publish failing for prerelease versions by adding `--tag latest` to publish command
+
 ## [0.5.21] - 2026-01-29
 
 ### Fixed
