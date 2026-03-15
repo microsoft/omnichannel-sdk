@@ -1490,6 +1490,8 @@ export default class SDK implements ISDK {
       return Promise.resolve();
     }
     const timer = Timer.TIMER();
+    this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SENDTYPINGINDICATORSTARTED, "Send Typing Indicator Started", requestId);
+
     const { customerDisplayName } = sendTypingIndicatorOptionalParams;
     if (!currentLiveChatVersion || currentLiveChatVersion !== LiveChatVersion.V2) { throw new Error('Typing indicator is only supported on v2') }
     const requestPath = `/${OmnichannelEndpoints.SendTypingIndicatorPath}/${requestId}`;
