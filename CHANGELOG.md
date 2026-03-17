@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Add `github.repository` guard to release workflows to prevent them from running on forks
 - Switch npm publishing to GitHub Actions OIDC trusted publishing (no NPM_TOKEN needed)
 - Dev versions now auto-publish on push to main (e.g. `0.5.22-main.abc1234`)
 - Add `hotfix/**` branch trigger to npm-release workflow
