@@ -27,6 +27,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - Fix npm publish failing for prerelease versions by adding `--tag latest` to publish command
+- Use `npx npm@11.12.1` for publish step to fix OIDC trusted publishing (npm 10.9.7 can't do OIDC, and `npm install -g` crashes during self-upgrade)
 
 ## [0.5.21] - 2026-01-29
 
