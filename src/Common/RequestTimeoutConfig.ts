@@ -19,4 +19,6 @@ export type RequestTimeoutConfig = {
     validateAuthChatRecordTimeout: number;
     getPersistentChatHistory: number;
     midConversationAuthenticateChat: number;
+    getUnreadMessageCount: number;
+    sendReadReceipt: number;
 }

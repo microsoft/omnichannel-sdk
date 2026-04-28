@@ -69,7 +69,9 @@ export default class SDK implements ISDK {
     sendTypingIndicator: 5000,
     validateAuthChatRecordTimeout: 15000,
     getPersistentChatHistory: 15000,
-    midConversationAuthenticateChat: 15000
+    midConversationAuthenticateChat: 15000,
+    getUnreadMessageCount: 15000,
+    sendReadReceipt: 5000
   };
 
   private static defaultConfiguration: ISDKConfiguration = {
@@ -1595,6 +1597,118 @@ export default class SDK implements ISDK {
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.MIDAUTHENTICATECHATFAILED, "Mid-Authenticate Chat Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders, httpRequestResponseTime);
 
+        if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
+          reject(new Error(this.HTTPTimeOutErrorMessage));
+          return;
+        }
+        reject(error);
+      }
+    });
+  }
+
+  /**
+   * Fetches unread message count for the authenticated user.
+   * Auth-only endpoint — does not require an active chat session.
+   * @param authenticatedUserToken Auth token for the user.
+   */
+  public async getUnreadMessageCount(authenticatedUserToken: string): Promise<object> {
+    const timer = Timer.TIMER();
+    const requestId = uuidv4();
+    this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETUNREADMESSAGECOUNTSTARTED, "Get Unread Message Count Started", requestId);
+
+    const requestPath = `/${OmnichannelEndpoints.LiveChatConnectorAuthPath}/${this.omnichannelConfiguration.orgId}/widgetapp/${this.omnichannelConfiguration.widgetId}/unreadmessages`;
+    const axiosInstance = axios.create();
+    axiosRetryHandler(axiosInstance, {
+      retries: this.configuration.maxRequestRetriesOnFailure,
+      waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.getUnreadMessageCount
+    });
+
+    const requestHeaders: StringMap = Constants.defaultHeaders;
+    requestHeaders[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+    requestHeaders[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
+
+    this.addDefaultHeaders(requestId, requestHeaders);
+
+    const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
+    const method = "GET";
+    const options: AxiosRequestConfig = {
+      headers: requestHeaders,
+      method,
+      url,
+      timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.getUnreadMessageCount
+    };
+
+    return new Promise(async (resolve, reject) => {
+      const backendTimer = Timer.TIMER();
+      try {
+        const response = await axiosInstance(options);
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
+        const { data, headers } = response;
+        this.setAuthCodeNonce(headers);
+        const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETUNREADMESSAGECOUNTSUCCEEDED, "Get Unread Message Count Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders, httpRequestResponseTime);
+        resolve(data);
+      } catch (error) {
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
+        const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETUNREADMESSAGECOUNTFAILED, "Get Unread Message Count Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders, httpRequestResponseTime);
+        if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
+          reject(new Error(this.HTTPTimeOutErrorMessage));
+          return;
+        }
+        reject(error);
+      }
+    });
+  }
+
+  /**
+   * Sends a read receipt for a specific message in an authenticated conversation.
+   * Updates the unread message counter on the server and forwards the receipt to ACS.
+   * @param requestId RequestId (conversationThreadId) of the conversation.
+   * @param messageId The ACS message ID to mark as read.
+   * @param authenticatedUserToken Auth token for the user.
+   */
+  public async sendReadReceipt(requestId: string, messageId: string, authenticatedUserToken: string): Promise<void> {
+    const timer = Timer.TIMER();
+    this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SENDREADRECEIPTSTARTED, "Send Read Receipt Started", requestId);
+
+    const requestPath = `/${OmnichannelEndpoints.LiveChatConnectorAuthPath}/${this.omnichannelConfiguration.orgId}/widgetapp/${this.omnichannelConfiguration.widgetId}/conversations/${requestId}/readreceipt`;
+    const axiosInstance = axios.create();
+    axiosRetryHandler(axiosInstance, {
+      retries: this.configuration.maxRequestRetriesOnFailure,
+      waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.sendReadReceipt
+    });
+
+    const requestHeaders: StringMap = Constants.defaultHeaders;
+    requestHeaders[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+    requestHeaders[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
+
+    this.addDefaultHeaders(requestId, requestHeaders);
+
+    const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
+    const method = "POST";
+    const options: AxiosRequestConfig = {
+      data: JSON.stringify({ messageId }),
+      headers: requestHeaders,
+      method,
+      url,
+      timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.sendReadReceipt
+    };
+
+    return new Promise(async (resolve, reject) => {
+      const backendTimer = Timer.TIMER();
+      try {
+        const response = await axiosInstance(options);
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
+        const { headers } = response;
+        this.setAuthCodeNonce(headers);
+        const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.SENDREADRECEIPTSUCCEEDED, "Send Read Receipt Succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders, httpRequestResponseTime);
+        resolve();
+      } catch (error) {
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
+        const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.SENDREADRECEIPTFAILED, "Send Read Receipt Failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders, httpRequestResponseTime);
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           reject(new Error(this.HTTPTimeOutErrorMessage));
           return;

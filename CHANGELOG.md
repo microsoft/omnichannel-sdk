@@ -6,6 +6,11 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Added `getUnreadMessageCount` SDK method to fetch unread message count for authenticated users (auth-only, pre-session badge use case)
+- Added `sendReadReceipt` SDK method to mark messages as read (authenticated: via MRT, unauthenticated: via ACS)
+- Added `GETUNREADMESSAGECOUNTSTARTED`, `GETUNREADMESSAGECOUNTSUCCEEDED`, `GETUNREADMESSAGECOUNTFAILED`, `SENDREADRECEIPTSTARTED`, `SENDREADRECEIPTSUCCEEDED`, `SENDREADRECEIPTFAILED` telemetry events in `OCSDKTelemetryEvent` enum
+- Added `getUnreadMessageCount` and `sendReadReceipt` to `ISDK` interface, `RequestTimeoutConfig` type, and `waitTimeBetweenRetriesConfigs`
+
 - Added `midConversationAuthenticateChat` SDK method to authenticate an ongoing unauthenticated chat session mid-conversation
 - Added `livechatconnector/auth/authenticateChat` endpoint in `OmnichannelEndpoints`
 - Added `MIDAUTHENTICATECHATSTARTED`, `MIDAUTHENTICATECHATSUCCEEDED`, `MIDAUTHENTICATECHATFAILED` telemetry events in `OCSDKTelemetryEvent` enum

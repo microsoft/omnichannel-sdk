@@ -25,4 +25,6 @@ export default interface ISDK {
   getAgentAvailability(requestId: string, queueAvailabilityOptionalParams: IGetQueueAvailabilityOptionalParams): Promise<object>
   sendTypingIndicator(requestId: string, currentLiveChatVersion: number): Promise<void>;
   midConversationAuthenticateChat(requestId: string, authenticateChatParams: { chatId: string; authenticatedUserToken: string }): Promise<void>;
+  getUnreadMessageCount(authenticatedUserToken: string): Promise<object>;
+  sendReadReceipt(requestId: string, messageId: string, authenticatedUserToken: string): Promise<void>;
 }
