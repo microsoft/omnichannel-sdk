@@ -1623,7 +1623,7 @@ export default class SDK implements ISDK {
       waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.getUnreadMessageCount
     });
 
-    const requestHeaders: StringMap = Constants.defaultHeaders;
+    const requestHeaders: StringMap = { ...Constants.defaultHeaders };
     requestHeaders[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
     requestHeaders[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
 
@@ -1679,7 +1679,7 @@ export default class SDK implements ISDK {
       waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.sendReadReceipt
     });
 
-    const requestHeaders: StringMap = Constants.defaultHeaders;
+    const requestHeaders: StringMap = { ...Constants.defaultHeaders };
     requestHeaders[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
     requestHeaders[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
 
