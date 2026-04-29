@@ -917,7 +917,7 @@ describe("SDK unit tests", () => {
             defaultOpt = {
                 authenticatedUserToken: "token",
                 initContext: {},
-                getContext: true,
+                getContext: false,
                 chatId: "chatId"
             };
             sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
@@ -1312,6 +1312,171 @@ describe("SDK unit tests", () => {
             result.then(() => {
                 const callArgs = axiosInstMockSuccess.calls.mostRecent().args[0];
                 expect(callArgs.url).toContain(`channelId=${ochannelConfig.channelId}`);
+                done();
+            });
+        });
+    });
+
+    describe("Test getUnreadMessageCount method", () => {
+        const authenticatedUserToken = "validAuthToken";
+
+        it("Should use correct endpoint path", (done) => {
+            const dataMockSuccess = { data: { unreadMessageCount: 3 }, headers: {} };
+            const axiosInstMockSuccess = jasmine.createSpy("axiosInstance").and.callFake(() => Promise.resolve(dataMockSuccess));
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockSuccess);
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+
+            const result = sdk.getUnreadMessageCount(authenticatedUserToken);
+            result.then(() => {
+                const callArgs = axiosInstMockSuccess.calls.mostRecent().args[0];
+                expect(callArgs.url).toContain(`/livechatconnector/auth/organization/${ochannelConfig.orgId}/widgetapp/${ochannelConfig.widgetId}/unreadmessages`);
+                done();
+            });
+        });
+
+        it("Should return promise with unread message data", (done) => {
+            const mockUnreadData = { unreadMessageCount: 3, mostRecentUnreadMessage: { id: "123", content: "Hello" } };
+            const dataMockValid = { data: mockUnreadData, headers: {} };
+            const axiosInstMockValid = jasmine.createSpy("axiosInstance").and.callFake(() => Promise.resolve(dataMockValid));
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockValid);
+            spyOn(ocsdkLogger, "log").and.callFake(() => { });
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
+
+            const result = sdk.getUnreadMessageCount(authenticatedUserToken);
+            result.then((data) => {
+                expect(axiosInstMockValid).toHaveBeenCalled();
+                expect(data).toEqual(mockUnreadData);
+                expect(ocsdkLogger.log).toHaveBeenCalled();
+                done();
+            }).catch(() => {
+                fail("Promise should resolve");
+            });
+        });
+
+        it("Should use GET method", (done) => {
+            const dataMockSuccess = { data: { unreadMessageCount: 0 }, headers: {} };
+            const axiosInstMockSuccess = jasmine.createSpy("axiosInstance").and.callFake(() => Promise.resolve(dataMockSuccess));
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockSuccess);
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+
+            const result = sdk.getUnreadMessageCount(authenticatedUserToken);
+            result.then(() => {
+                const callArgs = axiosInstMockSuccess.calls.mostRecent().args[0];
+                expect(callArgs.method).toEqual("GET");
+                done();
+            });
+        });
+
+        it("Should include authenticatedUserToken in request headers", (done) => {
+            const dataMockSuccess = { data: { unreadMessageCount: 0 }, headers: {} };
+            const axiosInstMockSuccess = jasmine.createSpy("axiosInstance").and.callFake(() => Promise.resolve(dataMockSuccess));
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockSuccess);
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+
+            const result = sdk.getUnreadMessageCount(authenticatedUserToken);
+            result.then(() => {
+                const callArgs = axiosInstMockSuccess.calls.mostRecent().args[0];
+                expect(callArgs.headers["AuthenticatedUserToken"]).toEqual(authenticatedUserToken);
+                done();
+            });
+        });
+
+        it("Should reject when axiosInstance throws an error", (done) => {
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockWithError);
+            spyOn(ocsdkLogger, "log").and.callFake(() => { });
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
+
+            const result = sdk.getUnreadMessageCount(authenticatedUserToken);
+            result.then(() => {
+                fail("Promise should reject");
+            }, () => {
+                expect(ocsdkLogger.log).toHaveBeenCalled();
+                done();
+            });
+        });
+    });
+
+    describe("Test sendReadReceipt method", () => {
+        const authenticatedUserToken = "validAuthToken";
+        const messageId = "1777185788167";
+
+        it("Should use correct endpoint path", (done) => {
+            const dataMockSuccess = { data: {}, headers: {} };
+            const axiosInstMockSuccess = jasmine.createSpy("axiosInstance").and.callFake(() => Promise.resolve(dataMockSuccess));
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockSuccess);
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+
+            const result = sdk.sendReadReceipt(requestId, messageId, authenticatedUserToken);
+            result.then(() => {
+                const callArgs = axiosInstMockSuccess.calls.mostRecent().args[0];
+                expect(callArgs.url).toContain(`/livechatconnector/auth/organization/${ochannelConfig.orgId}/widgetapp/${ochannelConfig.widgetId}/conversations/${requestId}/readreceipt`);
+                done();
+            });
+        });
+
+        it("Should return promise resolve", (done) => {
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMock);
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+
+            const result = sdk.sendReadReceipt(requestId, messageId, authenticatedUserToken);
+            result.then(() => {
+                expect(axiosInstMock).toHaveBeenCalled();
+                done();
+            });
+        });
+
+        it("Should use POST method", (done) => {
+            const dataMockSuccess = { data: {}, headers: {} };
+            const axiosInstMockSuccess = jasmine.createSpy("axiosInstance").and.callFake(() => Promise.resolve(dataMockSuccess));
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockSuccess);
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+
+            const result = sdk.sendReadReceipt(requestId, messageId, authenticatedUserToken);
+            result.then(() => {
+                const callArgs = axiosInstMockSuccess.calls.mostRecent().args[0];
+                expect(callArgs.method).toEqual("POST");
+                done();
+            });
+        });
+
+        it("Should include messageId in request body", (done) => {
+            const dataMockSuccess = { data: {}, headers: {} };
+            const axiosInstMockSuccess = jasmine.createSpy("axiosInstance").and.callFake(() => Promise.resolve(dataMockSuccess));
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockSuccess);
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+
+            const result = sdk.sendReadReceipt(requestId, messageId, authenticatedUserToken);
+            result.then(() => {
+                const callArgs = axiosInstMockSuccess.calls.mostRecent().args[0];
+                expect(callArgs.data).toEqual(JSON.stringify({ messageId }));
+                done();
+            });
+        });
+
+        it("Should include authenticatedUserToken in request headers", (done) => {
+            const dataMockSuccess = { data: {}, headers: {} };
+            const axiosInstMockSuccess = jasmine.createSpy("axiosInstance").and.callFake(() => Promise.resolve(dataMockSuccess));
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockSuccess);
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+
+            const result = sdk.sendReadReceipt(requestId, messageId, authenticatedUserToken);
+            result.then(() => {
+                const callArgs = axiosInstMockSuccess.calls.mostRecent().args[0];
+                expect(callArgs.headers["AuthenticatedUserToken"]).toEqual(authenticatedUserToken);
+                done();
+            });
+        });
+
+        it("Should reject when axiosInstance throws an error", (done) => {
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockWithError);
+            spyOn(ocsdkLogger, "log").and.callFake(() => { });
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
+
+            const result = sdk.sendReadReceipt(requestId, messageId, authenticatedUserToken);
+            result.then(() => {
+                fail("Promise should reject");
+            }, () => {
+                expect(ocsdkLogger.log).toHaveBeenCalled();
                 done();
             });
         });

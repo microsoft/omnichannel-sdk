@@ -18,5 +18,7 @@ export const waitTimeBetweenRetriesConfigs : RequestTimeoutConfig =  {
     sendTypingIndicator: 1000,
     validateAuthChatRecordTimeout: 1000,
     getPersistentChatHistory: 1000,
-    midConversationAuthenticateChat: 1000
+    midConversationAuthenticateChat: 1000,
+    getUnreadMessageCount: 1000,
+    sendReadReceipt: 1000
   };

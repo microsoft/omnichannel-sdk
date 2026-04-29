@@ -102,6 +102,12 @@ export enum OCSDKTelemetryEvent {
   MIDAUTHENTICATECHATSTARTED = "MidAuthenticateChatStarted",
   MIDAUTHENTICATECHATSUCCEEDED = "MidAuthenticateChatSucceeded",
   MIDAUTHENTICATECHATFAILED = "MidAuthenticateChatFailed",
+  GETUNREADMESSAGECOUNTSTARTED = "GetUnreadMessageCountStarted",
+  GETUNREADMESSAGECOUNTSUCCEEDED = "GetUnreadMessageCountSucceeded",
+  GETUNREADMESSAGECOUNTFAILED = "GetUnreadMessageCountFailed",
+  SENDREADRECEIPTSTARTED = "SendReadReceiptStarted",
+  SENDREADRECEIPTSUCCEEDED = "SendReadReceiptSucceeded",
+  SENDREADRECEIPTFAILED = "SendReadReceiptFailed",
 }
 
 export enum LiveChatVersion {
