@@ -207,13 +207,16 @@ export default class SDK implements ISDK {
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
       const { data } = response;
 
-      if (data.LiveChatVersion) {
-        this.liveChatVersion = data.LiveChatVersion;
-      }
+      // Add type guard to prevent TypeError when backend returns non-object (e.g., empty string, null, undefined)
+      if (typeof data === 'object' && data !== null) {
+        if (data.LiveChatVersion) {
+          this.liveChatVersion = data.LiveChatVersion;
+        }
 
-      data.headers = {};
-      if (response.headers && response.headers["date"]) {
-        data.headers["date"] = response.headers["date"];
+        data.headers = {};
+        if (response.headers && response.headers["date"]) {
+          data.headers["date"] = response.headers["date"];
+        }
       }
       this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATCONFIGSUCCEEDED, "Get Chat config succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders, httpRequestResponseTime);
 

@@ -157,6 +157,126 @@ describe("SDK unit tests", () => {
             expect(result.LiveChatVersion).toEqual(sdk.liveChatVersion);
         });
 
+        // Bug fix tests: Handle empty string response (ADO #6383438)
+        it("getChatConfig should handle empty string response without TypeError", async () => {
+            // Simulate backend returning empty string instead of object
+            const emptyStringResponse = { data: "", headers: { date: "Mon, 12 May 2026 15:04:00 GMT" } };
+            spyOn<any>(axios, "create").and.returnValue({
+                async get(endpoint: any) {
+                    return emptyStringResponse;
+                }
+            });
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+
+            const result = await sdk.getChatConfig("test-request-id");
+
+            // Should return the empty string without throwing TypeError
+            expect(result).toEqual("");
+            // Should not have headers property when data is not an object
+            expect((result as any).headers).toBeUndefined();
+        });
+
+        it("getChatConfig should handle null response without TypeError", async () => {
+            const nullResponse = { data: null, headers: { date: "Mon, 12 May 2026 15:04:00 GMT" } };
+            spyOn<any>(axios, "create").and.returnValue({
+                async get(endpoint: any) {
+                    return nullResponse;
+                }
+            });
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+
+            const result = await sdk.getChatConfig("test-request-id");
+
+            expect(result).toBeNull();
+        });
+
+        it("getChatConfig should add headers property when data is valid object", async () => {
+            const validResponse = {
+                data: { requestId: "someId", LiveChatVersion: 2 },
+                headers: { date: "Mon, 12 May 2026 15:04:00 GMT" }
+            };
+            spyOn<any>(axios, "create").and.returnValue({
+                async get(endpoint: any) {
+                    return validResponse;
+                }
+            });
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+
+            const result: any = await sdk.getChatConfig("test-request-id");
+
+            // Should successfully add headers property to object response
+            expect(result.headers).toBeDefined();
+            expect(result.headers.date).toEqual("Mon, 12 May 2026 15:04:00 GMT");
+            expect(result.requestId).toEqual("someId");
+            expect(result.LiveChatVersion).toEqual(2);
+        });
+
+        it("getChatConfig should add headers property even when response headers missing date", async () => {
+            const noDateResponse = {
+                data: { requestId: "someId" },
+                headers: { "content-type": "application/json" }
+            };
+            spyOn<any>(axios, "create").and.returnValue({
+                async get(endpoint: any) {
+                    return noDateResponse;
+                }
+            });
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+
+            const result: any = await sdk.getChatConfig("test-request-id");
+
+            // Should add headers property but without date field
+            expect(result.headers).toBeDefined();
+            expect(result.headers.date).toBeUndefined();
+            expect(result.requestId).toEqual("someId");
+        });
+
+        it("getChatConfig should handle undefined data property", async () => {
+            const undefinedDataResponse = { data: undefined, headers: { date: "Mon, 12 May 2026 15:04:00 GMT" } };
+            spyOn<any>(axios, "create").and.returnValue({
+                async get(endpoint: any) {
+                    return undefinedDataResponse;
+                }
+            });
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+
+            const result = await sdk.getChatConfig("test-request-id");
+
+            expect(result).toBeUndefined();
+        });
+
+        it("getChatConfig should handle number response without TypeError", async () => {
+            // Edge case: backend returns number instead of object
+            const numberResponse = { data: 0, headers: { date: "Mon, 12 May 2026 15:04:00 GMT" } };
+            spyOn<any>(axios, "create").and.returnValue({
+                async get(endpoint: any) {
+                    return numberResponse;
+                }
+            });
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+
+            const result = await sdk.getChatConfig("test-request-id");
+
+            expect(result).toEqual(0);
+            expect((result as any).headers).toBeUndefined();
+        });
+
+        it("getChatConfig should handle boolean response without TypeError", async () => {
+            // Edge case: backend returns boolean instead of object
+            const booleanResponse = { data: false, headers: { date: "Mon, 12 May 2026 15:04:00 GMT" } };
+            spyOn<any>(axios, "create").and.returnValue({
+                async get(endpoint: any) {
+                    return booleanResponse;
+                }
+            });
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+
+            const result = await sdk.getChatConfig("test-request-id");
+
+            expect(result).toEqual(false);
+            expect((result as any).headers).toBeUndefined();
+        });
+
         it("Test getLWIDetails method with pluggable telemetry", async () => {
             spyOn<any>(axios, "create").and.returnValue(axiosInstMock);
             spyOn(ocsdkLogger, "log").and.callFake(() => { });
