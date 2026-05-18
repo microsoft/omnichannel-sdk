@@ -208,7 +208,7 @@ export default class SDK implements ISDK {
       const { data } = response;
 
       // Add type guard to prevent TypeError when backend returns non-object (e.g., empty string, null, undefined)
-      if (typeof data === 'object' && data !== null) {
+      if (typeof data === "object" && data !== null) {
         if (data.LiveChatVersion) {
           this.liveChatVersion = data.LiveChatVersion;
         }
