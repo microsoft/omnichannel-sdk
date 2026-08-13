@@ -4,15 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-### Security
-
-- Updated Axios to `^1.19.0`, which requires patched `form-data` and `follow-redirects` versions without adding unused direct dependencies.
-- Removed the stale dev-only Lodash override; the regenerated lockfile resolves the patched version through normal transitive constraints.
-
-### Changed
-
-- Standardized local, pull-request, and release builds on Node.js 22 and declared Node.js `>=22.12.0` as the supported runtime.
-- Axios now installs proxy support for its Node.js HTTP adapter; the browser bundle remains unchanged.
+## [0.6.0] - 2026-08-12
 
 ### Added
 
@@ -20,20 +12,20 @@ All notable changes to this project will be documented in this file.
 - Added `sendReadReceipt` SDK method to mark messages as read (authenticated: via MRT, unauthenticated: via ACS)
 - Added `GETUNREADMESSAGECOUNTSTARTED`, `GETUNREADMESSAGECOUNTSUCCEEDED`, `GETUNREADMESSAGECOUNTFAILED`, `SENDREADRECEIPTSTARTED`, `SENDREADRECEIPTSUCCEEDED`, `SENDREADRECEIPTFAILED` telemetry events in `OCSDKTelemetryEvent` enum
 - Added `getUnreadMessageCount` and `sendReadReceipt` to `ISDK` interface, `RequestTimeoutConfig` type, and `waitTimeBetweenRetriesConfigs`
-
 - Added `midConversationAuthenticateChat` SDK method to authenticate an ongoing unauthenticated chat session mid-conversation
 - Added `livechatconnector/auth/authenticateChat` endpoint in `OmnichannelEndpoints`
 - Added `MIDAUTHENTICATECHATSTARTED`, `MIDAUTHENTICATECHATSUCCEEDED`, `MIDAUTHENTICATECHATFAILED` telemetry events in `OCSDKTelemetryEvent` enum
 - Added `midConversationAuthenticateChat` to `ISDK` interface, `RequestTimeoutConfig` type, and `waitTimeBetweenRetriesConfigs`
 - Added retry support and `authCodeNonce` header handling for mid-conversation authentication
 - Updates `sessionId` from response headers after successful mid-conversation authentication
-
-### Added
-
 - Add `en-au` (Australian English) to `supportedLocales` list
 
 ### Changed
 
+- Added automatic GitHub Releases with changelog notes and the npm tarball for `v*` tags.
+- Documented that automatic `main` prereleases and official releases both use the npm `latest` dist-tag.
+- Standardized local, pull-request, and release builds on Node.js 22 and declared Node.js `>=22.12.0` as the supported runtime.
+- Axios now installs proxy support for its Node.js HTTP adapter; the browser bundle remains unchanged.
 - Add `github.repository` guard to release workflows to prevent them from running on forks
 - Switch npm publishing to GitHub Actions OIDC trusted publishing (no NPM_TOKEN needed)
 - Dev versions now auto-publish on push to main (e.g. `0.5.22-main.abc1234`)
@@ -43,6 +35,11 @@ All notable changes to this project will be documented in this file.
 
 - Fix npm publish failing for prerelease versions by adding `--tag latest` to publish command
 - Use `npx npm@11.12.1` for publish step to fix OIDC trusted publishing (npm 10.9.7 can't do OIDC, and `npm install -g` crashes during self-upgrade)
+
+### Security
+
+- Updated Axios to `^1.19.0`, which requires patched `form-data` and `follow-redirects` versions without adding unused direct dependencies.
+- Removed the stale dev-only Lodash override; the regenerated lockfile resolves the patched version through normal transitive constraints.
 
 ## [0.5.21] - 2026-01-29
 

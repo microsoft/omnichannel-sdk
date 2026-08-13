@@ -1,7 +1,7 @@
 # Omnichannel SDK
 
 [![npm version](https://badge.fury.io/js/%40microsoft%2Focsdk.svg)](https://badge.fury.io/js/%40microsoft%2Focsdk)
-![Release CI](https://github.com/microsoft/omnichannel-sdk/workflows/Release%20CI/badge.svg)
+[![npm Release](https://github.com/microsoft/omnichannel-sdk/actions/workflows/npm-release.yml/badge.svg)](https://github.com/microsoft/omnichannel-sdk/actions/workflows/npm-release.yml)
 
 This repo contains the source code for getting up and running with the Omnichannel SDK on the web using standard web technologies and on mobile using React Native.
 
@@ -9,7 +9,7 @@ This repo contains the source code for getting up and running with the Omnichann
 
 ## Prerequisites
 
-- [Node v12.13.0](https://nodejs.org/en/) (or equivalent)
+- [Node.js 22.12.0 or later](https://nodejs.org/en/)
 - [npm](https://www.npmjs.com/)
 
 ## Installation
@@ -266,11 +266,11 @@ These are the available config options with its default values for the SDK.
 }
 ```
 
-# Releasing
+## Releasing
 
-See [docs/RELEASING.md](docs/RELEASING.md) for how to publish new versions to npm.
+See [docs/RELEASING.md](docs/RELEASING.md) for development builds, official npm and GitHub releases, legacy artifacts, and hotfixes.
 
-# Contributing
+## Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
 Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
