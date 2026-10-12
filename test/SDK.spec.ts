@@ -148,6 +148,21 @@ describe("SDK unit tests", () => {
             expect(ocsdkLogger.log).not.toHaveBeenCalled();
         });
 
+        it("getChatConfig should retry on 429 by default", async () => {
+            spyOn<any>(axios, "create").and.returnValue({ get: jasmine.createSpy("get").and.callFake(() => Promise.resolve(dataMock)) });
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+            await sdk.getChatConfig("");
+            expect((sdk as any).configuration.getChatConfigRetryOn429).toBe(true);
+            expect(axiosRetryHandler.default).toHaveBeenCalledWith(jasmine.anything(), jasmine.objectContaining({ retryOn429: true }));
+        });
+
+        it("getChatConfig should not retry on 429 when getChatConfigRetryOn429 is false", async () => {
+            spyOn<any>(axios, "create").and.returnValue({ get: jasmine.createSpy("get").and.callFake(() => Promise.resolve(dataMock)) });
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, { getChatConfigRetryOn429: false } as ISDKConfiguration);
+            await sdk.getChatConfig("");
+            expect(axiosRetryHandler.default).toHaveBeenCalledWith(jasmine.anything(), jasmine.objectContaining({ retryOn429: false }));
+        });
+
         it("Test getChatConfig method to set LiveChatVersion", async () => {
             const configmock = {data: { requestId: "someId", LiveChatVersion: 2 }, headers: {}};
             spyOn<any>(axios, "create").and.returnValue({ get: jasmine.createSpy("get").and.callFake(() => Promise.resolve(configmock)) });

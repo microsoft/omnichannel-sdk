@@ -3,6 +3,14 @@ import axiosRetry, { isNetworkError } from "axios-retry";
 import Constants from "../Common/Constants";
 import IAxiosRetryOptions from "../Interfaces/IAxiosRetryOptions";
 
+const defaultTooManyRequestsRetryDelayInMs = 5000;
+const maxRetryJitterInMs = 1000;
+
+/**
+ * Adds positive random jitter so throttled clients don't retry in lockstep, and never retry before the server-requested delay.
+ */
+const withJitter = (delayInMs: number): number => delayInMs + Math.floor(Math.random() * maxRetryJitterInMs);
+
 /**
  * Determines if the error is retryable.
  *
@@ -60,7 +68,8 @@ const axiosRetryHandler = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryO
       if (retryAfterHeader) {
         const retryAfterValue = parseInt(retryAfterHeader);
         if (!isNaN(retryAfterValue)) {
-          retryAfterTime = retryAfterValue * timeBetweenRetry;
+          // Numeric retry-after is in seconds (RFC 9110 §10.2.3)
+          retryAfterTime = retryAfterValue * 1000;
         } else {
           const retryAfterDate = new Date(retryAfterHeader);
           const currentTime = new Date().getTime();
@@ -69,13 +78,12 @@ const axiosRetryHandler = (axios: AxiosInstance, axiosRetryOptions: IAxiosRetryO
             retryAfterTime = Math.max(0, retryAfterDate.getTime() - currentTime);
           }
         }
-        return retryAfterTime;
+        return withJitter(retryAfterTime);
       }
       if (error.response?.status === Constants.tooManyRequestsStatusCode) {
-        // Retry after 5 seconds for 429 status code
-        return 5000;
+        return withJitter(defaultTooManyRequestsRetryDelayInMs);
       }
-      return Math.pow(2, retryCount) * timeBetweenRetry;
+      return withJitter(Math.pow(2, retryCount) * timeBetweenRetry);
     },
   });
 };

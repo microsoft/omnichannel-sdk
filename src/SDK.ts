@@ -79,6 +79,7 @@ export default class SDK implements ISDK {
     getChatTokenRetryCount: 10,
     getChatTokenTimeBetweenRetriesOnFailure: 10000,
     getChatTokenRetryOn429: true,
+    getChatConfigRetryOn429: true,
     maxRequestRetriesOnFailure: 5,
     defaultRequestTimeout: undefined,
     requestTimeoutConfig: SDK.defaultRequestTimeoutConfig,
@@ -187,6 +188,7 @@ export default class SDK implements ISDK {
     const axiosInstance = axios.create();
     axiosRetryHandler(axiosInstance, {
       retries: this.configuration.maxRequestRetriesOnFailure,
+      retryOn429: this.configuration.getChatConfigRetryOn429,
       waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.getChatConfig
     });
 
