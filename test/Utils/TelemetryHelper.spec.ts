@@ -8,7 +8,8 @@ describe("Test Utils TelemetryHelper", () => {
         ExceptionDetails: {ErrorDetails: "test Error"},
         Region: "Test Region",
         RequestId: "Test RequestId",
-        TransactionId: "Test TransactionId"
+        TransactionId: "Test TransactionId",
+        RetryCount: 2
     };
 
     it("Telemetry data should be returned with valid values", () => {
@@ -20,5 +21,6 @@ describe("Test Utils TelemetryHelper", () => {
         expect(eventData.Region).toEqual(customData.Region);
         expect(eventData.RequestId).toEqual(customData.RequestId);
         expect(eventData.TransactionId).toEqual(customData.TransactionId);
+        expect(eventData.RetryCount).toEqual(customData.RetryCount);
     });
 });

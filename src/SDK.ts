@@ -1,6 +1,6 @@
 import { ChannelId, LiveChatVersion, OCSDKTelemetryEvent, SDKError } from "./Common/Enums";
-import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
-import axiosRetryHandler, { axiosRetryHandlerWithNotFound } from "./Utils/axiosRetryHandler";
+import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
+import axiosRetryHandler, { axiosRetryHandlerWithNotFound, getRetryCount } from "./Utils/axiosRetryHandler";
 
 import { BrowserInfo } from "./Utils/BrowserInfo";
 import Constants from "./Common/Constants";
@@ -220,13 +220,14 @@ export default class SDK implements ISDK {
           data.headers["date"] = response.headers["date"];
         }
       }
-      this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATCONFIGSUCCEEDED, "Get Chat config succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders, httpRequestResponseTime);
+      this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATCONFIGSUCCEEDED, "Get Chat config succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders, httpRequestResponseTime, getRetryCount(response?.config));
 
       return data;
     } catch (error) {
       const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
       const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
-      this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETCHATCONFIGFAILED, "Get Chat config failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders, httpRequestResponseTime);
+      const retryCount = getRetryCount((error as AxiosError)?.config);
+      this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETCHATCONFIGFAILED, "Get Chat config failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders, httpRequestResponseTime, retryCount);
       return Promise.reject(error);
     }
   }
@@ -1737,7 +1738,7 @@ export default class SDK implements ISDK {
    * @param error Error
    * @param data Data
    */
-  private logWithLogger(logLevel: LogLevel, telemetryEventType: OCSDKTelemetryEvent, description: string, requestId?: string, response?: AxiosResponse<any>, elapsedTimeInMilliseconds?: number, requestPath?: string, method?: string, error?: unknown, requestPayload?: any, requestHeaders?: any, httpRequestResponseTime?: number): void { // eslint-disable-line @typescript-eslint/no-explicit-any
+  private logWithLogger(logLevel: LogLevel, telemetryEventType: OCSDKTelemetryEvent, description: string, requestId?: string, response?: AxiosResponse<any>, elapsedTimeInMilliseconds?: number, requestPath?: string, method?: string, error?: unknown, requestPayload?: any, requestHeaders?: any, httpRequestResponseTime?: number, retryCount?: number): void { // eslint-disable-line @typescript-eslint/no-explicit-any
     if (!this.logger) {
       return;
     }
@@ -1802,7 +1803,8 @@ export default class SDK implements ISDK {
       RequestPayload: sanitizedRequestPayload,
       RequestHeaders: sanitizedRequestHeaders,
       ResponseErrorcode: error ? (error as any).response?.headers?.errorcode : undefined, // eslint-disable-line @typescript-eslint/no-explicit-any
-      AuthTokenDetails: authTokenDetails
+      AuthTokenDetails: authTokenDetails,
+      RetryCount: retryCount
     };
     this.logger.log(logLevel, telemetryEventType, customData, description);
   }

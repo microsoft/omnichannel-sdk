@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Added `getChatConfigRetryOn429` SDK configuration (default `true`) so `getChatConfig` retries on HTTP 429
+- Added `RetryCount` to `GetChatConfigSucceeded` and `GetChatConfigFailed` telemetry events
 
 ### Fixed
 

@@ -97,6 +97,16 @@ export function isRetryableError(error: AxiosError): boolean {
   );
 }
 
+/**
+ * Number of retries axios-retry performed for a request.
+ *
+ * @param config The request config from an Axios response or error.
+ * @returns The retry count, or 0 when the request was not retried.
+ */
+export function getRetryCount(config?: AxiosRequestConfig): number {
+  return config?.["axios-retry"]?.retryCount ?? 0;
+}
+
 export function axiosRetryHandlerWithNotFound(axios: AxiosInstance, axiosRetryOptions: IAxiosRetryOptions): void {
   axiosRetryHandler(axios, {
     retries: axiosRetryOptions.retries,

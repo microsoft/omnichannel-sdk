@@ -163,6 +163,58 @@ describe("SDK unit tests", () => {
             expect(axiosRetryHandler.default).toHaveBeenCalledWith(jasmine.anything(), jasmine.objectContaining({ retryOn429: false }));
         });
 
+        describe("getChatConfig retry count telemetry", () => {
+            let mock: MockAdapter;
+            let logSpy: jasmine.Spy;
+
+            const findLoggedEvent = (eventName: string): any => logSpy.calls.allArgs().find((args) => args[1]?.Event === eventName)?.[1];
+
+            beforeEach(() => {
+                (axiosRetryHandler.default as jasmine.Spy).and.callThrough();
+                mock = new MockAdapter(axios);
+                // Spy at the consumer-facing logger so the assertion covers the TelemetryHelper field mapping
+                logSpy = spyOn(logger, "logClientSdkTelemetryEvent").and.callFake(() => { });
+
+                // Fire retry delays immediately so specs don't wait real seconds
+                const originalSetTimeout = window.setTimeout.bind(window);
+                spyOn(window, "setTimeout").and.callFake(((handler: () => void) => originalSetTimeout(handler, 0)) as any);
+            });
+
+            afterEach(() => {
+                mock.restore();
+            });
+
+            it("logs the retry count when getChatConfig recovers after a 429", async () => {
+                mock.onGet(/.*/).replyOnce(429).onGet(/.*/).replyOnce(200, { LiveChatVersion: 2 });
+                const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
+
+                await sdk.getChatConfig("");
+
+                expect(mock.history.get.length).toBe(2);
+                expect(findLoggedEvent("GetChatConfigSucceeded").RetryCount).toBe(1);
+            });
+
+            it("logs the retry count when getChatConfig fails after exhausting retries on 429", async () => {
+                mock.onGet(/.*/).reply(429);
+                const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
+
+                await expectAsync(sdk.getChatConfig("")).toBeRejected();
+
+                const maxRetries = (SDK as any).defaultConfiguration.maxRequestRetriesOnFailure;
+                expect(mock.history.get.length).toBe(maxRetries + 1);
+                expect(findLoggedEvent("GetChatConfigFailed").RetryCount).toBe(maxRetries);
+            });
+
+            it("logs a retry count of 0 when getChatConfig succeeds on the first attempt", async () => {
+                mock.onGet(/.*/).replyOnce(200, { LiveChatVersion: 2 });
+                const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
+
+                await sdk.getChatConfig("");
+
+                expect(findLoggedEvent("GetChatConfigSucceeded").RetryCount).toBe(0);
+            });
+        });
+
         it("Test getChatConfig method to set LiveChatVersion", async () => {
             const configmock = {data: { requestId: "someId", LiveChatVersion: 2 }, headers: {}};
             spyOn<any>(axios, "create").and.returnValue({ get: jasmine.createSpy("get").and.callFake(() => Promise.resolve(configmock)) });

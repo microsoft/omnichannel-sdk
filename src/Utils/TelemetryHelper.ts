@@ -20,7 +20,8 @@ export default class TelemetryHelper {
       RequestMethod: customData.RequestMethod,
       ResponseStatusCode: customData.ResponseStatusCode,
       ResponseErrorcode: customData.ResponseErrorcode,
-      AuthTokenDetails: customData.AuthTokenDetails
+      AuthTokenDetails: customData.AuthTokenDetails,
+      RetryCount: customData.RetryCount
     };
 
     return logData;
