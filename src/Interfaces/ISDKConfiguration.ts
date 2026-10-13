@@ -16,6 +16,10 @@ export default interface ISDKConfiguration {
    */
   getChatTokenRetryOn429: boolean;
   /**
+   * Whether to retry on getchatconfig 429 HTTP status code response.
+   */
+  getChatConfigRetryOn429: boolean;
+  /**
    * Maximum number of request retries before failing.
    */
   maxRequestRetriesOnFailure: number;

@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Added `getChatConfigRetryOn429` SDK configuration (default `true`) so `getChatConfig` retries on HTTP 429
+- Added `RetryCount` to `GetChatConfigSucceeded` and `GetChatConfigFailed` telemetry events
+
+### Fixed
+
+- Fixed numeric `retry-after` header being multiplied by `waitTimeInMsBetweenRetries` instead of converted from seconds to milliseconds
+- Added random jitter (up to 1s) to retry delays so throttled clients don't retry in lockstep
+
 ## [0.6.0] - 2026-08-12
 
 ### Added

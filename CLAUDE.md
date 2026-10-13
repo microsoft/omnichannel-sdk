@@ -316,8 +316,8 @@ if (reconnectId) {
 - **Max retries on failure:** 5 (`maxRequestRetriesOnFailure`)
 - **getChatToken retry count:** 10 (`getChatTokenRetryCount`)
 - **getChatToken retry interval:** 10,000ms (`getChatTokenTimeBetweenRetriesOnFailure`)
-- **Retry on 429:** true for getChatToken, false by default for others
-- **Retry strategy:** Exponential backoff (`2^retryCount * waitTime`), respects `retry-after` header
+- **Retry on 429:** true for getChatToken (`getChatTokenRetryOn429`), getChatConfig (`getChatConfigRetryOn429`), sessionInit, and createConversation; false by default for others
+- **Retry strategy:** Exponential backoff (`2^retryCount * waitTime`), respects `retry-after` header (seconds or HTTP-date), 5s fallback on 429; all delays add up to 1s of positive jitter
 - **Retryable conditions:** 5xx status, network errors, no response, optionally 429
 
 ### Default Timeouts (per endpoint)
