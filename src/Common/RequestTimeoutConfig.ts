@@ -21,4 +21,5 @@ export type RequestTimeoutConfig = {
     midConversationAuthenticateChat: number;
     getUnreadMessageCount: number;
     sendReadReceipt: number;
+    renewChatToken: number;
 }

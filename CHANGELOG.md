@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 
 - Added `getChatConfigRetryOn429` SDK configuration (default `true`) so `getChatConfig` retries on HTTP 429
 - Added `RetryCount` to `GetChatConfigSucceeded` and `GetChatConfigFailed` telemetry events
+- Added `renewChatToken` to renew the ACS chat token of an open conversation (`livechatconnector/v2/renewchattoken` and `livechatconnector/v2/auth/renewchattoken`)
 
 ### Fixed
 
