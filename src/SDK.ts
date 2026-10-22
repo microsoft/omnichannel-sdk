@@ -447,7 +447,7 @@ export default class SDK implements ISDK {
    * Renews the ACS chat token of the visitor in an open conversation, so the chat can continue after the token
    * from getChatToken expires. Rejects when the API is not available or the conversation can't be renewed (e.g. 404);
    * callers should keep their current token in that case.
-   * @param requestId RequestId of the conversation.
+   * @param requestId RequestId of the conversation, or the reconnect id for a reconnected chat.
    * @param renewChatTokenOptionalParams Optional parameters for renew chat token.
    */
   public async renewChatToken(requestId: string, renewChatTokenOptionalParams: IRenewChatTokenOptionalParams = {}): Promise<RenewChatTokenResponse> {
