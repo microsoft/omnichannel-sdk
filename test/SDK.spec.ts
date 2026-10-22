@@ -1750,7 +1750,6 @@ describe("SDK unit tests", () => {
 
             sdk.renewChatToken(requestId).then(() => fail("Promise should reject"), (error) => {
                 expect(error).toBe(notFoundError);
-                expect(axiosInstMockNotFound).toHaveBeenCalledTimes(1);
                 expect(ocsdkLogger.log).toHaveBeenCalled();
                 done();
             });
@@ -1773,6 +1772,74 @@ describe("SDK unit tests", () => {
         it("Should throw when requestId is missing", async () => {
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
             await expectAsync(sdk.renewChatToken("")).toBeRejectedWithError("Invalid requestId");
+        });
+
+        // Uses the real retry handler and axios so retries, headers and logging run end to end
+        describe("with the real retry handler", () => {
+            let mock: MockAdapter;
+            let logSpy: jasmine.Spy;
+
+            beforeEach(() => {
+                (axiosRetryHandler.default as jasmine.Spy).and.callThrough();
+                mock = new MockAdapter(axios);
+                logSpy = spyOn(logger, "logClientSdkTelemetryEvent").and.callFake(() => { });
+                const originalSetTimeout = window.setTimeout.bind(window);
+                spyOn(window, "setTimeout").and.callFake(((handler: () => void) => originalSetTimeout(handler, 0)) as any);
+            });
+
+            afterEach(() => {
+                mock.restore();
+            });
+
+            it("Should not retry a 404", async () => {
+                mock.onGet(/.*/).reply(404);
+                const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
+
+                await expectAsync(sdk.renewChatToken(requestId)).toBeRejected();
+
+                expect(mock.history.get.length).toBe(1);
+            });
+
+            it("Should retry a 5xx", async () => {
+                mock.onGet(/.*/).replyOnce(500).onGet(/.*/).replyOnce(200, { ...renewResponse });
+                const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
+
+                const data = await sdk.renewChatToken(requestId);
+
+                expect(mock.history.get.length).toBe(2);
+                expect(data.Token).toEqual(renewResponse.Token);
+            });
+
+            it("Should send the AuthCodeNonce on the auth route and keep the new nonce", async () => {
+                mock.onGet(/.*/).replyOnce(200, { ...renewResponse }, { authcodenonce: "nonce2" });
+                const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
+                (sdk as any).configuration.authCodeNonce = "nonce1";
+
+                await sdk.renewChatToken(requestId, { authenticatedUserToken: "authToken" });
+
+                expect(mock.history.get[0].headers?.[OmnichannelHTTPHeaders.authCodeNonce]).toEqual("nonce1");
+                expect((sdk as any).configuration.authCodeNonce).toEqual("nonce2");
+            });
+
+            it("Should not log the renewed token or the authenticated user token", async () => {
+                mock.onGet(/.*/).replyOnce(200, { ...renewResponse });
+                const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
+
+                await sdk.renewChatToken(requestId, { authenticatedUserToken: "authToken" });
+
+                expect(logSpy).toHaveBeenCalled();
+                const logged = JSON.stringify(logSpy.calls.allArgs());
+                expect(logged).not.toContain(renewResponse.Token);
+                expect(logged).not.toContain(renewResponse.VoiceVideoCallToken.Token);
+                expect(logged).not.toContain("authToken");
+            });
+
+            it("Should reject with the invalid data error when the body is null and a logger is set", async () => {
+                mock.onGet(/.*/).replyOnce(200, null);
+                const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
+
+                await expectAsync(sdk.renewChatToken(requestId)).toBeRejectedWithError("Invalid data received from renewChatToken");
+            });
         });
     });
 });

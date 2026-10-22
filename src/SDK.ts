@@ -500,7 +500,8 @@ export default class SDK implements ISDK {
 
         if (!data || typeof data !== "object" || !data.Token) {
           const error = new Error("Invalid data received from renewChatToken");
-          this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.RENEWCHATTOKENFAILED, "Renew Chat Token failed", requestId, response, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders, httpRequestResponseTime);
+          // Not passing response: logWithLogger reads response.data.Region, which throws when data is null
+          this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.RENEWCHATTOKENFAILED, "Renew Chat Token failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders, httpRequestResponseTime);
           reject(error);
           return;
         }
