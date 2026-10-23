@@ -53,8 +53,21 @@ export class LoggingSanitizer {
     }
   }
 
+  // Keeps the header key so telemetry still shows a session id was present, but never its value.
+  public static stripSessionId(headers: any): void { // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+    if (headers && typeof headers === 'object') {
+      const sessionIdHeader = OmnichannelHTTPHeaders.ocSessionId.toLowerCase();
+      Object.keys(headers).forEach((key) => {
+        if (key.toLowerCase() === sessionIdHeader && headers[`${key}`]) {
+          headers[`${key}`] = Constants.hiddenContentPlaceholder;
+        }
+      });
+    }
+  }
+
   public static stripRequestHeadersSensitiveProperties(headers: any): void { // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
     LoggingSanitizer.stripAuthenticationUserToken(headers);
+    LoggingSanitizer.stripSessionId(headers);
 
     if (Object.keys(headers).includes(OmnichannelHTTPHeaders.authorization)) {
       headers[OmnichannelHTTPHeaders.authorization] = Constants.hiddenContentPlaceholder;
@@ -99,6 +112,7 @@ export class LoggingSanitizer {
     if (errorObject.isAxiosError) {
       if (errorObject?.config?.headers) {
         LoggingSanitizer.stripAuthenticationUserToken(errorObject?.config?.headers);
+        LoggingSanitizer.stripSessionId(errorObject?.config?.headers);
       }
 
       if (errorObject?.config?.data) {
@@ -111,7 +125,10 @@ export class LoggingSanitizer {
 
       if (errorObject?.response?.config?.headers) {
         LoggingSanitizer.stripAuthenticationUserToken(errorObject?.response?.config?.headers);
+        LoggingSanitizer.stripSessionId(errorObject?.response?.config?.headers);
       }
+
+      LoggingSanitizer.stripSessionId(errorObject?.response?.headers);
     }
   }
 

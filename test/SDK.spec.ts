@@ -1692,6 +1692,41 @@ describe("SDK unit tests", () => {
             }, () => fail("Promise should resolve"));
         });
 
+        it("Should log only that a session id was sent, never its value", (done) => {
+            const axiosInstMockSuccess = jasmine.createSpy("axiosInstance").and.callFake(() => Promise.resolve({ data: { ...renewResponse }, headers: {} }));
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockSuccess);
+            spyOn(ocsdkLogger, "log").and.callFake(() => { });
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
+            (sdk as any).sessionId = "session-secret";
+
+            sdk.renewChatToken(requestId).then(() => {
+                const logged = (ocsdkLogger.log as jasmine.Spy).calls.mostRecent().args[2];
+                expect(logged.RequestHeaders[OmnichannelHTTPHeaders.ocSessionId]).toEqual(Constants.hiddenContentPlaceholder);
+                expect(JSON.stringify(logged)).not.toContain("session-secret");
+                expect(axiosInstMockSuccess.calls.mostRecent().args[0].headers[OmnichannelHTTPHeaders.ocSessionId]).toEqual("session-secret");
+                done();
+            }, () => fail("Promise should resolve"));
+        });
+
+        it("Should not log the session id value when renewal fails", (done) => {
+            const axiosInstMockWithError = jasmine.createSpy("axiosInstance").and.callFake((config: any) => Promise.reject({
+                isAxiosError: true,
+                config: { headers: { ...config.headers } },
+                response: { status: 401, headers: { "oc-sessionid": "session-secret" }, config: { headers: { ...config.headers } } }
+            }));
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockWithError);
+            spyOn(ocsdkLogger, "log").and.callFake(() => { });
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
+            (sdk as any).sessionId = "session-secret";
+
+            sdk.renewChatToken(requestId).then(() => fail("Promise should reject"), () => {
+                const calls = (ocsdkLogger.log as jasmine.Spy).calls.all();
+                expect(calls.length).toBeGreaterThan(0);
+                calls.forEach((call) => expect(JSON.stringify(call.args[2])).not.toContain("session-secret"));
+                done();
+            });
+        });
+
         it("Should call the authenticated endpoint with the authenticated user token", (done) => {
             const axiosInstMockSuccess = jasmine.createSpy("axiosInstance").and.callFake(() => Promise.resolve({ data: { ...renewResponse }, headers: {} }));
             spyOn<any>(axios, "create").and.returnValue(axiosInstMockSuccess);
