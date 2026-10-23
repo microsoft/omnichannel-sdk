@@ -11,6 +11,10 @@ module.exports = {
   ],
   rules: {
     'no-async-promise-executor': 'off',
-    '@typescript-eslint/ban-types': 'off'
+    '@typescript-eslint/ban-types': 'off',
+    'no-restricted-syntax': ['error', {
+      selector: ":matches(VariableDeclarator > MemberExpression.init, AssignmentExpression > MemberExpression.right)[object.name='Constants'][property.name=/Headers$/]",
+      message: 'Copy shared Constants headers per request ({ ...Constants.defaultHeaders }); never assign them by reference.'
+    }]
   }
 };

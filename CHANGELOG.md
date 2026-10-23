@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 
 - Fixed numeric `retry-after` header being multiplied by `waitTimeInMsBetweenRetries` instead of converted from seconds to milliseconds
 - Added random jitter (up to 1s) to retry delays so throttled clients don't retry in lockstep
+- Fixed SDK methods mutating the shared default request headers, which could send a previous call's auth and session headers on later requests
 
 ## [0.6.0] - 2026-08-12
 
