@@ -19,6 +19,7 @@ import IGetSurveyInviteLinkOptionalParams from "./Interfaces/IGetSurveyInviteLin
 import IOmnichannelConfiguration from "./Interfaces/IOmnichannelConfiguration";
 import IReconnectAvailabilityOptionalParams from "./Interfaces/IReconnectAvailabilityOptionalParams";
 import IReconnectableChatsParams from "./Interfaces/IReconnectableChatsParams";
+import IRenewChatTokenOptionalParams from "./Interfaces/IRenewChatTokenOptionalParams";
 import ISDK from "./Interfaces/ISDK";
 import ISDKConfiguration from "./Interfaces/ISDKConfiguration";
 import ISecondaryChannelEventOptionalParams from "./Interfaces/ISecondaryChannelEventOptionalParams";
@@ -39,6 +40,7 @@ import OmnichannelQueryParameter from "./Interfaces/OmnichannelQueryParameter";
 import QueueAvailability from "./Model/QueueAvailability";
 import ReconnectAvailability from "./Model/ReconnectAvailability";
 import ReconnectMappingRecord from "./Model/ReconnectMappingRecord";
+import RenewChatTokenResponse from "./Model/RenewChatTokenResponse";
 import { RequestTimeoutConfig } from "./Common/RequestTimeoutConfig";
 import SHA256 from "crypto-js/sha256";
 import { StringMap } from "./Common/Mappings";
@@ -71,7 +73,8 @@ export default class SDK implements ISDK {
     getPersistentChatHistory: 15000,
     midConversationAuthenticateChat: 15000,
     getUnreadMessageCount: 15000,
-    sendReadReceipt: 5000
+    sendReadReceipt: 5000,
+    renewChatToken: 15000
   };
 
   private static defaultConfiguration: ISDKConfiguration = {
@@ -434,6 +437,85 @@ export default class SDK implements ISDK {
         this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.GETCHATTOKENFAILED, "Get Chat Token failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders, httpRequestResponseTime);
         if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
           reject( new Error(this.HTTPTimeOutErrorMessage));
+        }
+        reject(error);
+      }
+    });
+  }
+
+  /**
+   * Renews the ACS chat token of the visitor in an open conversation, so the chat can continue after the token
+   * from getChatToken expires. Rejects when the API is not available or the conversation can't be renewed (e.g. 404);
+   * callers should keep their current token in that case.
+   * @param requestId RequestId of the conversation, or the reconnect id for a reconnected chat.
+   * @param renewChatTokenOptionalParams Optional parameters for renew chat token.
+   */
+  public async renewChatToken(requestId: string, renewChatTokenOptionalParams: IRenewChatTokenOptionalParams = {}): Promise<RenewChatTokenResponse> {
+    const timer = Timer.TIMER();
+    const { authenticatedUserToken } = renewChatTokenOptionalParams;
+    this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.RENEWCHATTOKENSTARTED, "Renew Chat Token Started", requestId);
+
+    if (!requestId) {
+      throw new Error(`Invalid requestId`);
+    }
+
+    const requestHeaders: StringMap = { ...Constants.defaultHeaders };
+    if (authenticatedUserToken) {
+      requestHeaders[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
+      requestHeaders[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
+    }
+    this.addDefaultHeaders(requestId, requestHeaders);
+
+    const endpoint = authenticatedUserToken ? OmnichannelEndpoints.LiveChatv2AuthRenewChatTokenPath : OmnichannelEndpoints.LiveChatv2RenewChatTokenPath;
+    const requestPath = `/${endpoint}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}`;
+    const params: OmnichannelQueryParameter = {
+      channelId: this.omnichannelConfiguration.channelId
+    };
+
+    const url = `${this.omnichannelConfiguration.orgUrl}${requestPath}`;
+    const method = "GET";
+    const options: AxiosRequestConfig = {
+      headers: requestHeaders,
+      method,
+      url,
+      params,
+      timeout: this.configuration.defaultRequestTimeout ?? this.configuration.requestTimeoutConfig.renewChatToken
+    };
+
+    const axiosInstance = axios.create();
+    axiosRetryHandler(axiosInstance, {
+      headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce],
+      retries: this.configuration.maxRequestRetriesOnFailure,
+      waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig?.renewChatToken ?? waitTimeBetweenRetriesConfigs.renewChatToken
+    });
+
+    return new Promise(async (resolve, reject) => {
+      const backendTimer = Timer.TIMER();
+      try {
+        const response = await axiosInstance(options);
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
+        const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+        const { data, headers } = response;
+        this.setAuthCodeNonce(headers);
+
+        if (!data || typeof data !== "object" || !data.Token) {
+          const error = new Error("Invalid data received from renewChatToken");
+          // Not passing response: logWithLogger reads response.data.Region, which throws when data is null
+          this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.RENEWCHATTOKENFAILED, "Renew Chat Token failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders, httpRequestResponseTime);
+          reject(error);
+          return;
+        }
+
+        data.requestId = requestId;
+        this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.RENEWCHATTOKENSUCCEEDED, "Renew Chat Token succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders, httpRequestResponseTime);
+        resolve(data);
+      } catch (error) {
+        const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
+        const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
+        this.logWithLogger(LogLevel.ERROR, OCSDKTelemetryEvent.RENEWCHATTOKENFAILED, "Renew Chat Token failed", requestId, undefined, elapsedTimeInMilliseconds, requestPath, method, error, undefined, requestHeaders, httpRequestResponseTime);
+        if (isExpectedAxiosError(error, Constants.axiosTimeoutErrorCode)) {
+          reject(new Error(this.HTTPTimeOutErrorMessage));
+          return;
         }
         reject(error);
       }

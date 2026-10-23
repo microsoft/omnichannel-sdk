@@ -108,6 +108,9 @@ export enum OCSDKTelemetryEvent {
   SENDREADRECEIPTSTARTED = "SendReadReceiptStarted",
   SENDREADRECEIPTSUCCEEDED = "SendReadReceiptSucceeded",
   SENDREADRECEIPTFAILED = "SendReadReceiptFailed",
+  RENEWCHATTOKENSTARTED = "RenewChatTokenStarted",
+  RENEWCHATTOKENSUCCEEDED = "RenewChatTokenSucceeded",
+  RENEWCHATTOKENFAILED = "RenewChatTokenFailed",
 }
 
 export enum LiveChatVersion {

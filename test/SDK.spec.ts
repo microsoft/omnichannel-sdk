@@ -6,6 +6,7 @@ import * as axiosRetryHandler from "../src/Utils/axiosRetryHandler";
 import * as uuidvModule from "../src/Utils/uuid";
 
 import { BrowserInfo } from "../src/Utils/BrowserInfo";
+import Constants from "../src/Common/Constants";
 import { DeviceInfo } from "../src/Utils/DeviceInfo";
 import IGetChatTranscriptsOptionalParams from "../src/Interfaces/IGetChatTranscriptsOptionalParams";
 import IGetPersistentChatHistoryOptionalParams from "../src/Interfaces/IGetPersistentChatHistoryOptionalParams";
@@ -25,6 +26,7 @@ import { LocationInfo } from "../src/Utils/LocationInfo";
 import { LogLevel } from "../src/Model/LogLevel";
 import MockAdapter from 'axios-mock-adapter';
 import OCSDKLogger from "../src/Common/OCSDKLogger";
+import OmnichannelHTTPHeaders from "../src/Common/OmnichannelHTTPHeaders";
 import { OSInfo } from "../src/Utils/OSInfo";
 import SDK from "../src/SDK";
 import { SDKError } from "../src/Common/Enums";
@@ -1665,6 +1667,213 @@ describe("SDK unit tests", () => {
             }, () => {
                 expect(ocsdkLogger.log).toHaveBeenCalled();
                 done();
+            });
+        });
+    });
+
+    describe("Test renewChatToken method", () => {
+        const renewResponse = { ChatId: "chatId", VisitorId: "visitorId", Token: "newToken", ExpiresOn: "2030-01-01T00:00:00Z", ExpiresIn: "86400", ACSEndpoint: "https://acs", VoiceVideoCallToken: { Token: "vvToken" } };
+
+        it("Should call the unauthenticated endpoint with session and correlation headers", (done) => {
+            const axiosInstMockSuccess = jasmine.createSpy("axiosInstance").and.callFake(() => Promise.resolve({ data: { ...renewResponse }, headers: {} }));
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockSuccess);
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+            (sdk as any).sessionId = "sessionId";
+
+            sdk.renewChatToken(requestId).then(() => {
+                const callArgs = axiosInstMockSuccess.calls.mostRecent().args[0];
+                expect(callArgs.method).toEqual("GET");
+                expect(callArgs.url).toEqual(`${ochannelConfig.orgUrl}/livechatconnector/v2/renewchattoken/${ochannelConfig.orgId}/${ochannelConfig.widgetId}/${requestId}`);
+                expect(callArgs.params).toEqual({ channelId: ochannelConfig.channelId });
+                expect(callArgs.headers[OmnichannelHTTPHeaders.ocSessionId]).toEqual("sessionId");
+                expect(callArgs.headers[OmnichannelHTTPHeaders.correlationId]).toEqual(requestId);
+                expect(callArgs.timeout).toEqual(15000);
+                done();
+            }, () => fail("Promise should resolve"));
+        });
+
+        it("Should log only that a session id was sent, never its value", (done) => {
+            const axiosInstMockSuccess = jasmine.createSpy("axiosInstance").and.callFake(() => Promise.resolve({ data: { ...renewResponse }, headers: {} }));
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockSuccess);
+            spyOn(ocsdkLogger, "log").and.callFake(() => { });
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
+            (sdk as any).sessionId = "session-secret";
+
+            sdk.renewChatToken(requestId).then(() => {
+                const logged = (ocsdkLogger.log as jasmine.Spy).calls.mostRecent().args[2];
+                expect(logged.RequestHeaders[OmnichannelHTTPHeaders.ocSessionId]).toEqual(Constants.hiddenContentPlaceholder);
+                expect(JSON.stringify(logged)).not.toContain("session-secret");
+                expect(axiosInstMockSuccess.calls.mostRecent().args[0].headers[OmnichannelHTTPHeaders.ocSessionId]).toEqual("session-secret");
+                done();
+            }, () => fail("Promise should resolve"));
+        });
+
+        it("Should not log the session id value when renewal fails", (done) => {
+            const axiosInstMockWithError = jasmine.createSpy("axiosInstance").and.callFake((config: any) => Promise.reject({
+                isAxiosError: true,
+                config: { headers: { ...config.headers } },
+                response: { status: 401, headers: { "oc-sessionid": "session-secret" }, config: { headers: { ...config.headers } } }
+            }));
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockWithError);
+            spyOn(ocsdkLogger, "log").and.callFake(() => { });
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
+            (sdk as any).sessionId = "session-secret";
+
+            sdk.renewChatToken(requestId).then(() => fail("Promise should reject"), () => {
+                const calls = (ocsdkLogger.log as jasmine.Spy).calls.all();
+                expect(calls.length).toBeGreaterThan(0);
+                calls.forEach((call) => expect(JSON.stringify(call.args[2])).not.toContain("session-secret"));
+                done();
+            });
+        });
+
+        it("Should call the authenticated endpoint with the authenticated user token", (done) => {
+            const axiosInstMockSuccess = jasmine.createSpy("axiosInstance").and.callFake(() => Promise.resolve({ data: { ...renewResponse }, headers: {} }));
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockSuccess);
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+
+            sdk.renewChatToken(requestId, { authenticatedUserToken: "authToken" }).then(() => {
+                const callArgs = axiosInstMockSuccess.calls.mostRecent().args[0];
+                expect(callArgs.url).toEqual(`${ochannelConfig.orgUrl}/livechatconnector/v2/auth/renewchattoken/${ochannelConfig.orgId}/${ochannelConfig.widgetId}/${requestId}`);
+                expect(callArgs.headers["AuthenticatedUserToken"]).toEqual("authToken");
+                done();
+            }, () => fail("Promise should resolve"));
+        });
+
+        it("Should not mutate the shared default headers", (done) => {
+            const axiosInstMockSuccess = jasmine.createSpy("axiosInstance").and.callFake(() => Promise.resolve({ data: { ...renewResponse }, headers: {} }));
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockSuccess);
+            const defaultHeadersBefore = { ...Constants.defaultHeaders };
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+
+            sdk.renewChatToken(requestId, { authenticatedUserToken: "authToken" }).then(() => {
+                expect(Constants.defaultHeaders).toEqual(defaultHeadersBefore);
+                done();
+            }, () => fail("Promise should resolve"));
+        });
+
+        it("Should resolve the renewed token with the requestId", (done) => {
+            const axiosInstMockSuccess = jasmine.createSpy("axiosInstance").and.callFake(() => Promise.resolve({ data: { ...renewResponse }, headers: {} }));
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockSuccess);
+            spyOn(ocsdkLogger, "log").and.callFake(() => { });
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
+
+            sdk.renewChatToken(requestId).then((data) => {
+                expect(data).toEqual({ ...renewResponse, requestId } as any);
+                expect(ocsdkLogger.log).toHaveBeenCalled();
+                done();
+            }, () => fail("Promise should resolve"));
+        });
+
+        it("Should reject when the response has no token", (done) => {
+            spyOn<any>(axios, "create").and.returnValue(axiosInstEmptyMock);
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+
+            sdk.renewChatToken(requestId).then(() => fail("Promise should reject"), (error) => {
+                expect(error.message).toEqual("Invalid data received from renewChatToken");
+                done();
+            });
+        });
+
+        it("Should reject when the API is not available", (done) => {
+            const notFoundError = new Error("Not Found");
+            (notFoundError as any).response = { status: 404 };
+            const axiosInstMockNotFound = jasmine.createSpy("axiosInstance").and.callFake(() => Promise.reject(notFoundError));
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockNotFound);
+            spyOn(ocsdkLogger, "log").and.callFake(() => { });
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
+
+            sdk.renewChatToken(requestId).then(() => fail("Promise should reject"), (error) => {
+                expect(error).toBe(notFoundError);
+                expect(ocsdkLogger.log).toHaveBeenCalled();
+                done();
+            });
+        });
+
+        it("Should reject with the timeout error message on timeout", (done) => {
+            const timeoutError = new Error("timeout");
+            (timeoutError as any).isAxiosError = true;
+            (timeoutError as any).code = "ECONNABORTED";
+            const axiosInstMockTimeout = jasmine.createSpy("axiosInstance").and.callFake(() => Promise.reject(timeoutError));
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMockTimeout);
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+
+            sdk.renewChatToken(requestId).then(() => fail("Promise should reject"), (error) => {
+                expect(error.message).toEqual((sdk as any).HTTPTimeOutErrorMessage);
+                done();
+            });
+        });
+
+        it("Should throw when requestId is missing", async () => {
+            const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+            await expectAsync(sdk.renewChatToken("")).toBeRejectedWithError("Invalid requestId");
+        });
+
+        // Uses the real retry handler and axios so retries, headers and logging run end to end
+        describe("with the real retry handler", () => {
+            let mock: MockAdapter;
+            let logSpy: jasmine.Spy;
+
+            beforeEach(() => {
+                (axiosRetryHandler.default as jasmine.Spy).and.callThrough();
+                mock = new MockAdapter(axios);
+                logSpy = spyOn(logger, "logClientSdkTelemetryEvent").and.callFake(() => { });
+                const originalSetTimeout = window.setTimeout.bind(window);
+                spyOn(window, "setTimeout").and.callFake(((handler: () => void) => originalSetTimeout(handler, 0)) as any);
+            });
+
+            afterEach(() => {
+                mock.restore();
+            });
+
+            it("Should not retry a 404", async () => {
+                mock.onGet(/.*/).reply(404);
+                const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
+
+                await expectAsync(sdk.renewChatToken(requestId)).toBeRejected();
+
+                expect(mock.history.get.length).toBe(1);
+            });
+
+            it("Should retry a 5xx", async () => {
+                mock.onGet(/.*/).replyOnce(500).onGet(/.*/).replyOnce(200, { ...renewResponse });
+                const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
+
+                const data = await sdk.renewChatToken(requestId);
+
+                expect(mock.history.get.length).toBe(2);
+                expect(data.Token).toEqual(renewResponse.Token);
+            });
+
+            it("Should send the AuthCodeNonce on the auth route and keep the new nonce", async () => {
+                mock.onGet(/.*/).replyOnce(200, { ...renewResponse }, { authcodenonce: "nonce2" });
+                const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
+                (sdk as any).configuration.authCodeNonce = "nonce1";
+
+                await sdk.renewChatToken(requestId, { authenticatedUserToken: "authToken" });
+
+                expect(mock.history.get[0].headers?.[OmnichannelHTTPHeaders.authCodeNonce]).toEqual("nonce1");
+                expect((sdk as any).configuration.authCodeNonce).toEqual("nonce2");
+            });
+
+            it("Should not log the renewed token or the authenticated user token", async () => {
+                mock.onGet(/.*/).replyOnce(200, { ...renewResponse });
+                const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
+
+                await sdk.renewChatToken(requestId, { authenticatedUserToken: "authToken" });
+
+                expect(logSpy).toHaveBeenCalled();
+                const logged = JSON.stringify(logSpy.calls.allArgs());
+                expect(logged).not.toContain(renewResponse.Token);
+                expect(logged).not.toContain(renewResponse.VoiceVideoCallToken.Token);
+                expect(logged).not.toContain("authToken");
+            });
+
+            it("Should reject with the invalid data error when the body is null and a logger is set", async () => {
+                mock.onGet(/.*/).replyOnce(200, null);
+                const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, undefined, ocsdkLogger);
+
+                await expectAsync(sdk.renewChatToken(requestId)).toBeRejectedWithError("Invalid data received from renewChatToken");
             });
         });
     });

@@ -4,6 +4,8 @@ import IGetPersistentChatHistoryOptionalParams from "./IGetPersistentChatHistory
 import IGetQueueAvailabilityOptionalParams from "./IGetQueueAvailabilityOptionalParams";
 import IReconnectableChatsParams from "../Interfaces/IReconnectableChatsParams";
 import IReconnectAvailabilityOptionalParams from "./IReconnectAvailabilityOptionalParams";
+import IRenewChatTokenOptionalParams from "./IRenewChatTokenOptionalParams";
+import RenewChatTokenResponse from "../Model/RenewChatTokenResponse";
 
 export default interface ISDK {
   getLcwFcsDetails(): Promise<object | void>;
@@ -27,4 +29,5 @@ export default interface ISDK {
   midConversationAuthenticateChat(requestId: string, authenticateChatParams: { chatId: string; authenticatedUserToken: string }): Promise<void>;
   getUnreadMessageCount(authenticatedUserToken: string): Promise<object>;
   sendReadReceipt(requestId: string, messageId: string, authenticatedUserToken: string): Promise<void>;
+  renewChatToken(requestId: string, renewChatTokenOptionalParams?: IRenewChatTokenOptionalParams): Promise<RenewChatTokenResponse>;
 }

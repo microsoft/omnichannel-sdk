@@ -8,11 +8,15 @@ All notable changes to this project will be documented in this file.
 
 - Added `getChatConfigRetryOn429` SDK configuration (default `true`) so `getChatConfig` retries on HTTP 429
 - Added `RetryCount` to `GetChatConfigSucceeded` and `GetChatConfigFailed` telemetry events
+- Added `renewChatToken` SDK method to renew the ACS chat token of an open conversation (`livechatconnector/v2/renewchattoken` and `livechatconnector/v2/auth/renewchattoken`)
+- Added `RENEWCHATTOKENSTARTED`, `RENEWCHATTOKENSUCCEEDED`, `RENEWCHATTOKENFAILED` telemetry events in `OCSDKTelemetryEvent` enum
+- Added `renewChatToken` to `ISDK` interface, `RequestTimeoutConfig` type, and `waitTimeBetweenRetriesConfigs`; TypeScript consumers that build a full `RequestTimeoutConfig` object must add a `renewChatToken` timeout
 
 ### Fixed
 
 - Fixed numeric `retry-after` header being multiplied by `waitTimeInMsBetweenRetries` instead of converted from seconds to milliseconds
 - Added random jitter (up to 1s) to retry delays so throttled clients don't retry in lockstep
+- Masked the `Oc-Sessionid` header value in telemetry (request headers and axios errors); only its presence is logged
 
 ## [0.6.0] - 2026-08-12
 
