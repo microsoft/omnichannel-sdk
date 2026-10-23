@@ -2,13 +2,13 @@ import { ChannelId } from "./Enums";
 
 export default class Constants {
   public static readonly requiredOmnichannelConfigurationParameters = ["orgUrl", "orgId", "widgetId"];
-  public static readonly defaultHeaders = {
+  public static readonly defaultHeaders = Object.freeze({
     "Content-Type": "application/json"
-  };
-  public static readonly bypassCacheHeaders = {
+  });
+  public static readonly bypassCacheHeaders = Object.freeze({
     "Cache-Control": "no-store, must-revalidate, no-cache",
     "X-Cache-Control": "no-store"
-  };
+  });
   public static readonly defaultChannelId = ChannelId.LCW;
   public static readonly defaultLocale = "en-us";
   public static readonly noContentStatusCode = 204;

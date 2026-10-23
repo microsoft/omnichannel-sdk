@@ -9,10 +9,16 @@ All notable changes to this project will be documented in this file.
 - Added `getChatConfigRetryOn429` SDK configuration (default `true`) so `getChatConfig` retries on HTTP 429
 - Added `RetryCount` to `GetChatConfigSucceeded` and `GetChatConfigFailed` telemetry events
 
+### Changed
+
+- Requests no longer reuse `Oc-Sessionid`, `AuthenticatedUserToken`, `AuthCodeNonce`, `Authorization`, `OrganizationId`, or `widgetAppId` from earlier calls; each request sends only the headers it sets
+- A caller that clears `sessionId` (as `omnichannel-chat-sdk` `endChat` does) no longer sends the previous session key on later calls, so on orgs that validate it, `getChatTranscripts` (v2) and `makeSecondaryChannelEventRequest` return 401 unless `sessionId` is set again
+
 ### Fixed
 
 - Fixed numeric `retry-after` header being multiplied by `waitTimeInMsBetweenRetries` instead of converted from seconds to milliseconds
 - Added random jitter (up to 1s) to retry delays so throttled clients don't retry in lockstep
+- Fixed SDK methods mutating the shared default request headers, which could send a previous call's auth and session headers on later requests
 
 ## [0.6.0] - 2026-08-12
 
