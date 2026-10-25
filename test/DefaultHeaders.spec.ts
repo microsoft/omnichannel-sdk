@@ -112,7 +112,7 @@ describe("Shared default headers", () => {
     await sdk.getChatConfig("config", true);
     await callAllHeaderMethods(sdk, authenticatedUserToken);
 
-    expect(captured.length).toBe(15);
+    expect(captured.length).toBe(16);
     captured.forEach((request) => {
       expect(request.headersRef).withContext(request.url).not.toBe(Constants.defaultHeaders);
       expect(request.headersRef).withContext(request.url).not.toBe(Constants.bypassCacheHeaders);
