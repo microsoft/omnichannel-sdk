@@ -12,11 +12,17 @@ All notable changes to this project will be documented in this file.
 - Added `RENEWCHATTOKENSTARTED`, `RENEWCHATTOKENSUCCEEDED`, `RENEWCHATTOKENFAILED` telemetry events in `OCSDKTelemetryEvent` enum
 - Added `renewChatToken` to `ISDK` interface, `RequestTimeoutConfig` type, and `waitTimeBetweenRetriesConfigs`; TypeScript consumers that build a full `RequestTimeoutConfig` object must add a `renewChatToken` timeout
 
+### Changed
+
+- Requests no longer reuse `Oc-Sessionid`, `AuthenticatedUserToken`, `AuthCodeNonce`, `Authorization`, `OrganizationId`, or `widgetAppId` from earlier calls; each request sends only the headers it sets
+- A caller that clears `sessionId` (as `omnichannel-chat-sdk` `endChat` does) no longer sends the previous session key on later calls, so on orgs that validate it, `getChatTranscripts` (v2) and `makeSecondaryChannelEventRequest` return 401 unless `sessionId` is set again
+
 ### Fixed
 
 - Fixed numeric `retry-after` header being multiplied by `waitTimeInMsBetweenRetries` instead of converted from seconds to milliseconds
 - Added random jitter (up to 1s) to retry delays so throttled clients don't retry in lockstep
 - Masked the `Oc-Sessionid` header value in telemetry (request headers and axios errors); only its presence is logged
+- Fixed SDK methods mutating the shared default request headers, which could send a previous call's auth and session headers on later requests
 
 ## [0.6.0] - 2026-08-12
 

@@ -259,7 +259,7 @@ export default class SDK implements ISDK {
 
     // Extract auth token and reconnect id from optional param
     const { authenticatedUserToken, reconnectId } = getLWIDetailsOptionalParams;
-    const requestHeaders: StringMap = Constants.defaultHeaders;
+    const requestHeaders: StringMap = { ...Constants.defaultHeaders };
 
     // updated auth endpoint for authenticated chats and add auth token in header
     if (authenticatedUserToken) {
@@ -340,7 +340,7 @@ export default class SDK implements ISDK {
       requestId = uuidv4();
     }
 
-    const requestHeaders: StringMap = Constants.defaultHeaders;
+    const requestHeaders: StringMap = { ...Constants.defaultHeaders };
     this.addDefaultHeaders(requestId, requestHeaders);
 
     const endpoint = createGetChatTokenEndpoint(currentLiveChatVersion as LiveChatVersion || this.liveChatVersion, authenticatedUserToken ? true : false, multiBot);
@@ -533,7 +533,7 @@ export default class SDK implements ISDK {
     const requestId = reconnectableChatsParams?.requestId;
 
     const requestPath = `/${OmnichannelEndpoints.LiveChatGetReconnectableChatsPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${requestId}?channelId=${this.omnichannelConfiguration.channelId}`;
-    const requestHeaders: StringMap = Constants.defaultHeaders;
+    const requestHeaders: StringMap = { ...Constants.defaultHeaders };
     requestHeaders[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
     requestHeaders[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
 
@@ -590,7 +590,7 @@ export default class SDK implements ISDK {
     this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETRECONNECTAVAILABILITYSTARTED, "Get Reconnectable availability Started");
 
     const requestPath = `/${OmnichannelEndpoints.LiveChatReconnectAvailabilityPath}/${this.omnichannelConfiguration.orgId}/${this.omnichannelConfiguration.widgetId}/${reconnectId}`;
-    const requestHeaders: StringMap = Constants.defaultHeaders;
+    const requestHeaders: StringMap = { ...Constants.defaultHeaders };
 
     this.addDefaultHeaders(optionalParams?.requestId, requestHeaders);
 
@@ -654,7 +654,7 @@ export default class SDK implements ISDK {
 
     const { authenticatedUserToken, initContext, getContext } = queueAvailabilityOptionalParams;
 
-    const requestHeaders: StringMap = Constants.defaultHeaders;
+    const requestHeaders: StringMap = { ...Constants.defaultHeaders };
 
     if (authenticatedUserToken) {
       requestHeaders[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
@@ -974,7 +974,7 @@ export default class SDK implements ISDK {
 
     const { authenticatedUserToken, isReconnectChat, isPersistentChat, chatId } = sessionCloseOptionalParams;
 
-    const requestHeaders: StringMap = Constants.defaultHeaders;
+    const requestHeaders: StringMap = { ...Constants.defaultHeaders };
     const data: any = {}; // eslint-disable-line @typescript-eslint/no-explicit-any
     data.chatId = chatId;
 
@@ -1047,7 +1047,7 @@ export default class SDK implements ISDK {
       waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.validateAuthChatRecord
     });
 
-    const requestHeaders: StringMap = Constants.defaultHeaders;
+    const requestHeaders: StringMap = { ...Constants.defaultHeaders };
     if (authenticatedUserToken) {
       requestHeaders[OmnichannelHTTPHeaders.authenticatedUserToken] = authenticatedUserToken;
       requestHeaders[OmnichannelHTTPHeaders.authCodeNonce] = this.configuration.authCodeNonce;
@@ -1122,7 +1122,7 @@ export default class SDK implements ISDK {
     });
 
     const { authenticatedUserToken } = submitPostChatResponseOptionalParams;
-    const requestHeaders: StringMap = Constants.defaultHeaders;
+    const requestHeaders: StringMap = { ...Constants.defaultHeaders };
     this.addDefaultHeaders(requestId, requestHeaders);
 
     if (authenticatedUserToken) {
@@ -1190,7 +1190,7 @@ export default class SDK implements ISDK {
 
     const { authenticatedUserToken, requestId } = getsurveyInviteLinkOptionalParams;
 
-    const requestHeaders: StringMap = Constants.defaultHeaders;
+    const requestHeaders: StringMap = { ...Constants.defaultHeaders };
 
     if (authenticatedUserToken) {
       requestPath = `/${OmnichannelEndpoints.LiveChatAuthGetSurveyInviteLinkPath}/${this.omnichannelConfiguration.orgId}/${surveyOwnerId}`;
@@ -1258,7 +1258,7 @@ export default class SDK implements ISDK {
     });
 
     const { authenticatedUserToken, currentLiveChatVersion } = getChatTranscriptsOptionalParams;
-    const requestHeaders: StringMap = Constants.defaultHeaders;
+    const requestHeaders: StringMap = { ...Constants.defaultHeaders };
     requestHeaders[OmnichannelHTTPHeaders.organizationId] = this.omnichannelConfiguration.orgId;
     requestHeaders[OmnichannelHTTPHeaders.widgetAppId] = this.omnichannelConfiguration.widgetId;
     requestHeaders[OmnichannelHTTPHeaders.authorization] = token;
@@ -1407,7 +1407,7 @@ export default class SDK implements ISDK {
     });
 
     const { authenticatedUserToken } = emailTranscriptOptionalParams;
-    const requestHeaders: StringMap = Constants.defaultHeaders;
+    const requestHeaders: StringMap = { ...Constants.defaultHeaders };
     requestHeaders[OmnichannelHTTPHeaders.organizationId] = this.omnichannelConfiguration.orgId;
     requestHeaders[OmnichannelHTTPHeaders.widgetAppId] = this.omnichannelConfiguration.widgetId;
     requestHeaders[OmnichannelHTTPHeaders.authorization] = token;
@@ -1471,7 +1471,7 @@ export default class SDK implements ISDK {
       waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig.fetchDataMaskingInfo
     });
 
-    const requestHeaders: StringMap = Constants.defaultHeaders;
+    const requestHeaders: StringMap = { ...Constants.defaultHeaders };
     requestHeaders[OmnichannelHTTPHeaders.organizationId] = this.omnichannelConfiguration.orgId;
     requestHeaders[OmnichannelHTTPHeaders.requestId] = requestId;
 
@@ -1526,7 +1526,7 @@ export default class SDK implements ISDK {
     });
 
     const { authenticatedUserToken } = secondaryChannelEventOptionalParams;
-    const requestHeaders: StringMap = Constants.defaultHeaders;
+    const requestHeaders: StringMap = { ...Constants.defaultHeaders };
     requestHeaders[OmnichannelHTTPHeaders.organizationId] = this.omnichannelConfiguration.orgId;
 
     if (authenticatedUserToken) {
@@ -1585,7 +1585,7 @@ export default class SDK implements ISDK {
     const requestPath = `/${OmnichannelEndpoints.SendTypingIndicatorPath}/${requestId}`;
     const axiosInstance = axios.create();
 
-    const requestHeaders: StringMap = Constants.defaultHeaders;
+    const requestHeaders: StringMap = { ...Constants.defaultHeaders };
     requestHeaders[OmnichannelHTTPHeaders.organizationId] = this.omnichannelConfiguration.orgId;
     if (customerDisplayName) {
       requestHeaders[Constants.customerDisplayName] = customerDisplayName;
