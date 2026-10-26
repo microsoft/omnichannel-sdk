@@ -39,7 +39,7 @@ describe("Shared default headers", () => {
     const send = (options: any) => {
       // Snapshot at send time; a shared object would otherwise change after the call.
       captured.push({ url: options.url, headersRef: options.headers, headers: { ...options.headers } });
-      return Promise.resolve({ data: { requestId: "reqId", authChatExist: true }, headers: responseHeaders, status: 200 });
+      return Promise.resolve({ data: { requestId: "reqId", authChatExist: true, Token: "acsToken" }, headers: responseHeaders, status: 200 });
     };
     const axiosInstance: any = jasmine.createSpy("axiosInstance").and.callFake(send);
     axiosInstance.get = (url: string, config: any) => send({ ...config, url });
@@ -61,6 +61,7 @@ describe("Shared default headers", () => {
     await sdk.fetchDataMaskingInfo("r12");
     await sdk.makeSecondaryChannelEventRequest("r13", {}, { authenticatedUserToken: token });
     await sdk.sendTypingIndicator("r14", LiveChatVersion.V2, { customerDisplayName: "name" });
+    await sdk.renewChatToken("r15", { authenticatedUserToken: token });
   };
 
   it("does not send AuthenticatedUserToken on an anonymous call after an authenticated call", async () => {
@@ -111,7 +112,7 @@ describe("Shared default headers", () => {
     await sdk.getChatConfig("config", true);
     await callAllHeaderMethods(sdk, authenticatedUserToken);
 
-    expect(captured.length).toBe(15);
+    expect(captured.length).toBe(16);
     captured.forEach((request) => {
       expect(request.headersRef).withContext(request.url).not.toBe(Constants.defaultHeaders);
       expect(request.headersRef).withContext(request.url).not.toBe(Constants.bypassCacheHeaders);

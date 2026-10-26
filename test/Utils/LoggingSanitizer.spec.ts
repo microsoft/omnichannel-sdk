@@ -255,4 +255,32 @@ describe("LoggingSanitized unit tests", () => {
       done();
     });
   });
+
+  describe("Test masking of the session id header", () => {
+    it("Request headers keep the session id key but hide its value", () => {
+      const headers: any = { "Oc-Sessionid": "session-secret", "Content-Type": "application/json" }; // eslint-disable-line @typescript-eslint/no-explicit-any
+      LoggingSanitizer.stripRequestHeadersSensitiveProperties(headers);
+      expect(headers["Oc-Sessionid"]).toEqual(Constants.hiddenContentPlaceholder);
+      expect(headers["Content-Type"]).toEqual("application/json");
+    });
+
+    it("Request headers without a session id are unchanged", () => {
+      const headers: any = { "Content-Type": "application/json" }; // eslint-disable-line @typescript-eslint/no-explicit-any
+      LoggingSanitizer.stripRequestHeadersSensitiveProperties(headers);
+      expect(headers).toEqual({ "Content-Type": "application/json" });
+    });
+
+    it("Axios error request and response headers hide the session id", () => {
+      const error: any = { // eslint-disable-line @typescript-eslint/no-explicit-any
+        isAxiosError: true,
+        config: { headers: { "Oc-Sessionid": "session-secret" } },
+        response: { headers: { "oc-sessionid": "session-secret" }, config: { headers: { "Oc-Sessionid": "session-secret" } } }
+      };
+      LoggingSanitizer.stripErrorSensitiveProperties(error);
+      expect(JSON.stringify(error)).not.toContain("session-secret");
+      expect(error.config.headers["Oc-Sessionid"]).toEqual(Constants.hiddenContentPlaceholder);
+      expect(error.response.headers["oc-sessionid"]).toEqual(Constants.hiddenContentPlaceholder);
+      expect(error.response.config.headers["Oc-Sessionid"]).toEqual(Constants.hiddenContentPlaceholder);
+    });
+  });
 });
