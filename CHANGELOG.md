@@ -14,6 +14,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Release builds use lockfile-only installation and local version preparation; only the separate tarball-publishing job receives OIDC permission.
+
 - Requests no longer reuse `Oc-Sessionid`, `AuthenticatedUserToken`, `AuthCodeNonce`, `Authorization`, `OrganizationId`, or `widgetAppId` from earlier calls; each request sends only the headers it sets
 - A caller that clears `sessionId` (as `omnichannel-chat-sdk` `endChat` does) no longer sends the previous session key on later calls, so on orgs that validate it, `getChatTranscripts` (v2) and `makeSecondaryChannelEventRequest` return 401 unless `sessionId` is set again
 
