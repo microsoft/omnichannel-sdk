@@ -30,7 +30,7 @@ import OmnichannelHTTPHeaders from "../src/Common/OmnichannelHTTPHeaders";
 import { OSInfo } from "../src/Utils/OSInfo";
 import SDK from "../src/SDK";
 import { SDKError } from "../src/Common/Enums";
-import axios from "axios";
+import axios, { AxiosAdapter, AxiosError as AxiosRequestError, AxiosHeaders, InternalAxiosRequestConfig } from "axios";
 
 describe("SDK unit tests", () => {
 
@@ -1807,6 +1807,170 @@ describe("SDK unit tests", () => {
         it("Should throw when requestId is missing", async () => {
             const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
             await expectAsync(sdk.renewChatToken("")).toBeRejectedWithError("Invalid requestId");
+        });
+
+        describe("with per-call retry limits and real scheduling", () => {
+            const timers = new Set<number>();
+
+            beforeEach(() => {
+                (axiosRetryHandler.default as jasmine.Spy).and.callThrough();
+                spyOn(Math, "random").and.returnValue(0);
+            });
+
+            afterEach(() => {
+                timers.forEach((timer) => window.clearTimeout(timer));
+                timers.clear();
+            });
+
+            const installTransport = (adapter: AxiosAdapter): void => {
+                const create = axios.create.bind(axios);
+                spyOn(axios, "create").and.callFake(() => create({ adapter }));
+            };
+
+            const serviceError = (config: InternalAxiosRequestConfig): AxiosRequestError =>
+                new AxiosRequestError("Service unavailable", AxiosRequestError.ERR_BAD_RESPONSE, config, undefined, {
+                    status: 503,
+                    statusText: "Service Unavailable",
+                    data: {},
+                    headers: new AxiosHeaders({ "x-renewal": "preserved" }),
+                    config
+                });
+
+            const retryConfiguration = (retries: number, wait: number): ISDKConfiguration => ({
+                maxRequestRetriesOnFailure: retries,
+                waitTimeBetweenRetriesConfig: { renewChatToken: wait }
+            } as ISDKConfiguration);
+
+            [503, undefined].forEach((status) => {
+                it(`Should make one request and preserve the original ${status ?? "network"} error with maxRetries zero`, async () => {
+                    const errors: AxiosRequestError[] = [];
+                    installTransport((config) => {
+                        const error = status ? serviceError(config) :
+                            new AxiosRequestError("Network Error", AxiosRequestError.ERR_NETWORK, config);
+                        errors.push(error);
+                        return Promise.reject(error);
+                    });
+                    const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, retryConfiguration(2, 0));
+                    const options = { maxRetries: 0, authenticatedUserToken: undefined };
+                    let caught: unknown;
+
+                    try {
+                        await sdk.renewChatToken(requestId, options);
+                        fail("Renewal should reject");
+                    } catch (error) {
+                        caught = error;
+                    }
+
+                    expect(errors.length).toBe(1);
+                    expect(caught).toBe(errors[0]);
+                    expect(errors[0].response?.status).toBe(status);
+                    if (status) {
+                        expect(errors[0].response?.headers["x-renewal"]).toBe("preserved");
+                    }
+                });
+            });
+
+            it("Should override only one call with a positive retry limit", async () => {
+                let attempts = 0;
+                installTransport((config) => {
+                    attempts++;
+                    return Promise.reject(serviceError(config));
+                });
+                const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, retryConfiguration(3, 0));
+                const options = { maxRetries: 1, authenticatedUserToken: "authToken" };
+
+                await expectAsync(sdk.renewChatToken(requestId, options)).toBeRejected();
+                expect(attempts).toBe(2);
+                attempts = 0;
+                await expectAsync(sdk.renewChatToken(requestId)).toBeRejected();
+                expect(attempts).toBe(4);
+            });
+
+            [undefined, -1, 1.5, NaN].forEach((maxRetries) => {
+                it(`Should preserve the configured retry count for ${String(maxRetries)}`, async () => {
+                    let attempts = 0;
+                    installTransport((config) => {
+                        attempts++;
+                        return Promise.reject(serviceError(config));
+                    });
+                    const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, retryConfiguration(2, 0));
+                    const options = { maxRetries, authenticatedUserToken: undefined };
+
+                    await expectAsync(sdk.renewChatToken(requestId, options)).toBeRejected();
+                    expect(attempts).toBe(3);
+                });
+            });
+
+            const deadlineTransport = (timeouts: number[], stallsAfter: number): AxiosAdapter => (config) => {
+                timeouts.push(config.timeout ?? 0);
+                if (timeouts.length <= stallsAfter) {
+                    return Promise.reject(serviceError(config));
+                }
+                return new Promise((resolve, reject) => {
+                    const timer = window.setTimeout(() => {
+                        timers.delete(timer);
+                        reject(new AxiosRequestError("Transport deadline", AxiosRequestError.ECONNABORTED, config));
+                    }, config.timeout);
+                    timers.add(timer);
+                });
+            };
+
+            it("Should share the default 15 second deadline across real retry delays and transport timeouts", async () => {
+                const timeouts: number[] = [];
+                installTransport(deadlineTransport(timeouts, 3));
+                const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration);
+                const started = performance.now();
+
+                await expectAsync(sdk.renewChatToken(requestId)).toBeRejectedWithError(sdk.HTTPTimeOutErrorMessage);
+
+                const elapsed = performance.now() - started;
+                expect(timeouts.length).toBe(4);
+                expect(timeouts[0]).toBe(15000);
+                expect(timeouts[1]).toBeLessThanOrEqual(13000);
+                expect(timeouts[2]).toBeLessThanOrEqual(9000);
+                expect(timeouts[3]).toBeLessThanOrEqual(1000);
+                expect(timeouts[3]).toBeGreaterThan(0);
+                expect(elapsed).toBeGreaterThanOrEqual(14500);
+                expect(elapsed).toBeLessThan(18000);
+            }, 22000);
+
+            it("Should share a custom timeout without resetting it on retry", async () => {
+                const timeouts: number[] = [];
+                installTransport(deadlineTransport(timeouts, 1));
+                const configuration = retryConfiguration(2, 20);
+                configuration.defaultRequestTimeout = 400;
+                const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, configuration);
+                const started = performance.now();
+
+                await expectAsync(sdk.renewChatToken(requestId)).toBeRejectedWithError(sdk.HTTPTimeOutErrorMessage);
+
+                expect(timeouts.length).toBe(2);
+                expect(timeouts[0]).toBe(400);
+                expect(timeouts[1]).toBeLessThanOrEqual(360);
+                expect(timeouts[1]).toBeGreaterThan(0);
+                expect(performance.now() - started).toBeLessThan(800);
+            });
+
+            it("Should preserve a disabled timeout across real retries", async () => {
+                const timeouts: number[] = [];
+                installTransport((config) => {
+                    timeouts.push(config.timeout ?? 0);
+                    if (timeouts.length === 1) {
+                        return Promise.reject(serviceError(config));
+                    }
+                    return Promise.resolve({
+                        data: { ...renewResponse }, status: 200, statusText: "OK", headers: new AxiosHeaders(), config
+                    });
+                });
+                const configuration = retryConfiguration(1, 10);
+                configuration.defaultRequestTimeout = 0;
+                const sdk = new SDK(ochannelConfig as IOmnichannelConfiguration, configuration);
+
+                const response = await sdk.renewChatToken(requestId);
+
+                expect(timeouts).toEqual([0, 0]);
+                expect(response.Token).toBe(renewResponse.Token);
+            });
         });
 
         // Uses the real retry handler and axios so retries, headers and logging run end to end

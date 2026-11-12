@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Added per-call `renewChatToken.maxRetries`: nonnegative integers override only that call's retry count, `0` disables retries, and omitted or invalid values keep the configured default; existing timeout and raw non-timeout error behavior is unchanged
 - Added `getChatConfigRetryOn429` SDK configuration (default `true`) so `getChatConfig` retries on HTTP 429
 - Added `RetryCount` to `GetChatConfigSucceeded` and `GetChatConfigFailed` telemetry events
 - Added `renewChatToken` SDK method to renew the ACS chat token of an open conversation (`livechatconnector/v2/renewchattoken` and `livechatconnector/v2/auth/renewchattoken`)

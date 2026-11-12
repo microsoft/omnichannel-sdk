@@ -123,6 +123,28 @@ try {
 
 ```
 
+### Renew Chat Token
+
+```js
+// Disable retries for this renewal only; existing authentication options still apply.
+const renewedToken = await ocsdk.renewChatToken(requestId, {
+  maxRetries: 0,
+  authenticatedUserToken: authToken // Omit for an unauthenticated conversation.
+});
+```
+
+`maxRetries` counts retries after the first request. A nonnegative integer overrides
+`maxRequestRetriesOnFailure` for this call only; omitted or invalid values (such as
+`-1`, `1.5`, or `NaN`) keep the configured retry count. With `0`, a failed renewal
+sends one request. Non-timeout failures retain their original axios error, including
+`response.status` and `response.headers`; timeouts keep the existing SDK timeout error.
+
+The configured renewal timeout (15 seconds by default) is shared by the request,
+retry delays and retries, not restarted for each attempt. A custom timeout uses
+the same budget; `0` disables the timeout. The retry limit does not override this
+budget or change which failures are retryable. Higher-level SDK callers must pass
+this option explicitly; this API does not change consumer retry behavior.
+
 ### Session Init
 
 ```js
