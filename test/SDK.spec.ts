@@ -29,7 +29,7 @@ import OCSDKLogger from "../src/Common/OCSDKLogger";
 import OmnichannelHTTPHeaders from "../src/Common/OmnichannelHTTPHeaders";
 import { OSInfo } from "../src/Utils/OSInfo";
 import SDK from "../src/SDK";
-import { SDKError } from "../src/Common/Enums";
+import { OCSDKTelemetryEvent, SDKError } from "../src/Common/Enums";
 import axios, { AxiosAdapter, AxiosError as AxiosRequestError, AxiosHeaders, InternalAxiosRequestConfig } from "axios";
 
 describe("SDK unit tests", () => {
@@ -448,6 +448,112 @@ describe("SDK unit tests", () => {
             } catch (error:any) {
                 expect(error.message).toEqual("Empty data received from getChatToken");
             }
+        });
+    });
+
+    describe("Empty 2xx settlement", () => {
+        const bounded = async (promise: Promise<unknown>): Promise<unknown> => {
+            let timeout: number | undefined;
+            try {
+                return await Promise.race([
+                    promise,
+                    new Promise<never>((_, reject) => {
+                        timeout = window.setTimeout(() => reject(new Error("Promise did not settle")), 250);
+                    })
+                ]);
+            } finally {
+                window.clearTimeout(timeout);
+            }
+        };
+
+        for (const method of ["getChatToken", "getAgentAvailability"] as const) {
+            const failedEvent = method === "getChatToken"
+                ? OCSDKTelemetryEvent.GETCHATTOKENFAILED
+                : OCSDKTelemetryEvent.GETAGENTAVAILABILITYFAILED;
+            const succeededEvent = method === "getChatToken"
+                ? OCSDKTelemetryEvent.GETCHATTOKENSUCCEEDED
+                : OCSDKTelemetryEvent.GETAGENTAVAILABILITYSUCCEEDED;
+
+            for (const response of [
+                { status: 200, data: "" },
+                { status: 204, data: "" },
+                { status: 200, data: null },
+                { status: 204, data: undefined }
+            ]) {
+                it(`${method} rejects empty ${response.status} (${String(response.data)}) with status and FAILED telemetry`, async () => {
+                    dataMock = { ...response, headers: {} };
+                    spyOn<any>(axios, "create").and.returnValue(axiosInstMock);
+                    const logSpy = spyOn(ocsdkLogger, "log");
+                    const sdk = new SDK(ochannelConfig, undefined, ocsdkLogger);
+
+                    await bounded(sdk[method](requestId)).then(() => fail("Should reject"), (error: unknown) => {
+                        expect(error instanceof Error).toBe(true);
+                        expect(error).toEqual(jasmine.objectContaining({
+                            message: `Empty data received from ${method}`,
+                            response: { status: response.status }
+                        }));
+                    });
+
+                    expect(axiosInstMock.calls.count()).toBe(1);
+                    expect(logSpy.calls.allArgs().filter((args) => args[1] === failedEvent)).toEqual([
+                        [LogLevel.ERROR, failedEvent, jasmine.objectContaining({ ResponseStatusCode: response.status }), jasmine.any(String)]
+                    ]);
+                    expect(logSpy.calls.allArgs().some((args) => args[1] === succeededEvent)).toBe(false);
+                });
+            }
+
+            it(`${method} preserves valid data and SUCCEEDED telemetry`, async () => {
+                const data = method === "getChatToken" ? { Token: "synthetic-token" } : { AgentAvailability: true };
+                dataMock = { status: 200, data, headers: { authcodenonce: "synthetic-nonce" } };
+                spyOn<any>(axios, "create").and.returnValue(axiosInstMock);
+                const logSpy = spyOn(ocsdkLogger, "log");
+                const sdk = new SDK(ochannelConfig, undefined, ocsdkLogger);
+
+                expect(await bounded(sdk[method](requestId))).toBe(data);
+                if (method === "getChatToken") {
+                    expect(data).toEqual(jasmine.objectContaining({ requestId }));
+                }
+                expect(logSpy.calls.allArgs().some((args) => args[1] === succeededEvent)).toBe(true);
+                expect(logSpy.calls.allArgs().some((args) => args[1] === failedEvent)).toBe(false);
+            });
+
+            for (const originalError of [
+                Object.assign(new Error("Synthetic server error"), { response: { status: 503 } }),
+                new Error("Synthetic network error")
+            ]) {
+                it(`${method} preserves the original ${originalError.message}`, async () => {
+                    const axiosInstance = jasmine.createSpy("axiosInstance").and.returnValue(Promise.reject(originalError));
+                    spyOn<any>(axios, "create").and.returnValue(axiosInstance);
+                    const sdk = new SDK(ochannelConfig);
+
+                    await bounded(sdk[method](requestId)).then(() => fail("Should reject"), (error: unknown) => {
+                        expect(error).toBe(originalError);
+                    });
+                });
+            }
+        }
+
+        for (const data of ["", null, undefined]) {
+            it(`getChatToken preserves the original 204 reconnect response (${String(data)})`, async () => {
+                dataMock = { status: 204, data, headers: { authcodenonce: "synthetic-nonce" } };
+                spyOn<any>(axios, "create").and.returnValue(axiosInstMock);
+                const sdk = new SDK(ochannelConfig);
+
+                await bounded(sdk.getChatToken(requestId, { reconnectId: "synthetic-reconnect" })).then(
+                    () => fail("Should reject"),
+                    (error: unknown) => expect(error).toBe(dataMock)
+                );
+                expect(axiosInstMock.calls.count()).toBe(1);
+            });
+        }
+
+        it("getChatToken does not treat an empty 200 as reconnect redirection", async () => {
+            dataMock = { status: 200, data: "", headers: {} };
+            spyOn<any>(axios, "create").and.returnValue(axiosInstMock);
+            const sdk = new SDK(ochannelConfig);
+
+            await expectAsync(bounded(sdk.getChatToken(requestId, { reconnectId: "synthetic-reconnect" })))
+                .toBeRejectedWith(jasmine.objectContaining({ response: { status: 200 } }));
         });
     });
 

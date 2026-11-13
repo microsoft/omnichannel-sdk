@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Fixed `getChatToken` and `getAgentAvailability` leaving promises pending on empty 2xx responses; they now reject with an `Error` carrying `response.status` and log FAILED telemetry, preserving the existing 204 token reconnect response
 - Fixed numeric `retry-after` header being multiplied by `waitTimeInMsBetweenRetries` instead of converted from seconds to milliseconds
 - Added random jitter (up to 1s) to retry delays so throttled clients don't retry in lockstep
 - Masked the `Oc-Sessionid` header value in telemetry (request headers and axios errors); only its presence is logged
