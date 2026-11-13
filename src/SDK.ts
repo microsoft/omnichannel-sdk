@@ -452,7 +452,7 @@ export default class SDK implements ISDK {
    */
   public async renewChatToken(requestId: string, renewChatTokenOptionalParams: IRenewChatTokenOptionalParams = {}): Promise<RenewChatTokenResponse> {
     const timer = Timer.TIMER();
-    const { authenticatedUserToken } = renewChatTokenOptionalParams;
+    const { authenticatedUserToken, maxRetries } = renewChatTokenOptionalParams;
     this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.RENEWCHATTOKENSTARTED, "Renew Chat Token Started", requestId);
 
     if (!requestId) {
@@ -485,7 +485,8 @@ export default class SDK implements ISDK {
     const axiosInstance = axios.create();
     axiosRetryHandler(axiosInstance, {
       headerOverwrites: [OmnichannelHTTPHeaders.authCodeNonce],
-      retries: this.configuration.maxRequestRetriesOnFailure,
+      retries: typeof maxRetries === "number" && Number.isInteger(maxRetries) && maxRetries >= 0
+        ? maxRetries : this.configuration.maxRequestRetriesOnFailure,
       waitTimeInMsBetweenRetries: this.configuration.waitTimeBetweenRetriesConfig?.renewChatToken ?? waitTimeBetweenRetriesConfigs.renewChatToken
     });
 
