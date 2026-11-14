@@ -411,14 +411,7 @@ export default class SDK implements ISDK {
         }
 
         // Resolves only if it contains chat token response which only happens on status 200
-        if (data) {
-          
-          // check if data is empty, if so, then reject the promise
-          if (Object.keys(data).length === 0) {
-            reject(new Error("Empty data received from getChatToken"));
-            return;
-          }
-
+        if (data && Object.keys(data).length > 0) {
           data.requestId = requestId;
           this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETCHATTOKENSUCCEEDED, "Get Chat Token succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders, httpRequestResponseTime);
           resolve(data);
@@ -426,10 +419,14 @@ export default class SDK implements ISDK {
         }
 
         // No content for reconnect chat case shouldn't be retried.
-        if (reconnectId && response.status === Constants.noContentStatusCode) {
+        if (!data && reconnectId && response.status === Constants.noContentStatusCode) {
           reject(response);
           return;
         }
+
+        throw Object.assign(new Error("Empty data received from getChatToken"), {
+          response: { status: response.status }
+        });
 
       } catch (error) {
         const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
@@ -727,7 +724,11 @@ export default class SDK implements ISDK {
           this.logWithLogger(LogLevel.INFO, OCSDKTelemetryEvent.GETAGENTAVAILABILITYSUCCEEDED, "Get agent availability succeeded", requestId, response, elapsedTimeInMilliseconds, requestPath, method, undefined, undefined, requestHeaders, httpRequestResponseTime);
 
           resolve(data);
+          return;
         }
+        throw Object.assign(new Error("Empty data received from getAgentAvailability"), {
+          response: { status: response.status }
+        });
       } catch (error) {
         const httpRequestResponseTime = backendTimer.milliSecondsElapsed;
         const elapsedTimeInMilliseconds = timer.milliSecondsElapsed;
