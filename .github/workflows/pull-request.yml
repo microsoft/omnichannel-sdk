@@ -21,6 +21,9 @@ jobs:
         with:
           node-version-file: .nvmrc
 
+      - name: Test release metadata validation
+        run: node --test .github/scripts/prepare-release.test.cjs
+
       - name: Fetch Base Branch
         run: |
           git fetch origin main
